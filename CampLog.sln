@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31025.194
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CampLog", "CampLog\CampLog.csproj", "{438FA2AD-8549-46D1-9C63-30C0BF13025D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CampLogTest", "CampLogTest\CampLogTest.csproj", "{BC9754D4-3266-4C14-966F-07E71BBE855A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{438FA2AD-8549-46D1-9C63-30C0BF13025D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{438FA2AD-8549-46D1-9C63-30C0BF13025D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{438FA2AD-8549-46D1-9C63-30C0BF13025D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{438FA2AD-8549-46D1-9C63-30C0BF13025D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC9754D4-3266-4C14-966F-07E71BBE855A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC9754D4-3266-4C14-966F-07E71BBE855A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC9754D4-3266-4C14-966F-07E71BBE855A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC9754D4-3266-4C14-966F-07E71BBE855A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4DF119AE-4BD4-45D6-A803-A8949E0A448E}
+	EndGlobalSection
+EndGlobal
