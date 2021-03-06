@@ -217,5 +217,19 @@ namespace CampLogTest {
             Assert.AreEqual(foo, bar);
             Assert.IsTrue(ReferenceEquals(bar.containers[1], bar.containers[2]));
         }
+
+        [TestMethod]
+        public void test_value() {
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .5m);
+
+            ItemSpec foo = new ItemSpec("Gem", c1, 100, 0);
+            Assert.AreEqual(foo.value, 100);
+
+            ItemSpec bar = new ItemSpec("Longsword", c2, 30, 3);
+            Assert.AreEqual(bar.value, 15);
+
+            ItemSpec baz = new ItemSpec("MacGuffin", c1, 100, 0, 75);
+            Assert.AreEqual(baz.value, 75);
+        }
     }
 }
