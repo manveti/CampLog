@@ -59,12 +59,14 @@ namespace CampLog {
         [DataMember] public Dictionary<string, string> properties;
 
         public ItemSpec(string name, ItemCategory category, decimal cost, decimal weight, decimal? sale_value = null, ContainerSpec[] containers = null) {
+            if (category is null) { throw new ArgumentNullException(nameof(category)); }
             this.name = name;
             this.category = category;
             this.cost = cost;
             this.weight = weight;
             this.sale_value = sale_value;
             this.containers = containers;
+            this.properties = new Dictionary<string, string>();
         }
 
         public override bool Equals(object obj) {
@@ -91,5 +93,126 @@ namespace CampLog {
             return true;
         }
         public static bool operator !=(ItemSpec i1, ItemSpec i2) => !(i1 == i2);
+    }
+
+
+    [KnownType(typeof(ItemStack))]
+    [KnownType(typeof(SingleItem))]
+    [Serializable]
+    public abstract class InventoryEntry {
+        public ItemSpec item;
+        public abstract string name { get; }
+        public abstract decimal weight { get; }
+        public abstract decimal value { get; }
+    }
+
+
+    [Serializable]
+    public class Inventory {
+        public Dictionary<ItemCategory, List<InventoryEntry>> contents;
+        public decimal weight {
+            get {
+                decimal weight = 0;
+                foreach (ItemCategory cat in contents.Keys) {
+                    foreach (InventoryEntry entry in contents[cat]) {
+                        weight += entry.weight;
+                    }
+                }
+                return weight;
+            }
+        }
+        public decimal value {
+            get {
+                decimal value = 0;
+                foreach (ItemCategory cat in contents.Keys) {
+                    foreach (InventoryEntry entry in contents[cat]) {
+                        value += entry.value;
+                    }
+                }
+                return value;
+            }
+        }
+
+        public Inventory() {
+            this.contents = new Dictionary<ItemCategory, List<InventoryEntry>>();
+        }
+
+        public void add(InventoryEntry ent) {
+            if (ent is null) { throw new ArgumentNullException(nameof(ent)); }
+            if (!this.contents.ContainsKey(ent.item.category)) {
+                this.contents[ent.item.category] = new List<InventoryEntry>();
+            }
+            this.contents[ent.item.category].Add(ent);
+        }
+    }
+
+
+    [Serializable]
+    public class ItemStack : InventoryEntry {
+        public ulong count;
+        public ulong unidentified;
+
+        public override string name {
+            get {
+                string n;
+                if (this.count == 1) { n = this.item.name; }
+                else { n = string.Format("{0}x {1}", this.count, this.item.name); }
+                if (this.unidentified == this.count) { n += " (unidentified)"; }
+                else if (this.unidentified > 0) { n += string.Format(" ({0} unidentified)", this.unidentified); }
+                return n;
+            }
+        }
+        public override decimal weight { get => this.count * this.item.weight; }
+        public override decimal value { get => this.count * this.item.value; }
+
+        public ItemStack(ItemSpec item, ulong count = 1, ulong unidentified = 0) {
+            if (item is null) { throw new ArgumentNullException(nameof(item)); }
+            if (unidentified > count) { throw new ArgumentOutOfRangeException(nameof(unidentified)); }
+
+            this.item = item;
+            this.count = count;
+            this.unidentified = unidentified;
+        }
+    }
+
+
+    [Serializable]
+    public class SingleItem : InventoryEntry {
+        public Inventory[] containers;
+        public decimal contents_weight {
+            get {
+                if (containers is null) { return 0; }
+                decimal weight = 0;
+                for (int i = 0; i < this.containers.Length; i++) {
+                    weight += this.containers[i].weight * this.item.containers[i].weight_factor;
+                }
+                return weight;
+            }
+        }
+        public decimal contents_value {
+            get {
+                if (containers is null) { return 0; }
+                decimal value = 0;
+                foreach (Inventory inv in containers) {
+                    value += inv.value;
+                }
+                return value;
+            }
+        }
+        public Dictionary<string, string> properties;
+        public override string name { get => item.name; }
+        public override decimal weight { get => item.weight + this.contents_weight; }
+        public override decimal value { get => item.value + this.contents_value; }
+
+        public SingleItem(ItemSpec item) {
+            if (item is null) { throw new ArgumentNullException(nameof(item)); }
+
+            this.item = item;
+            if (item.containers is not null) {
+                this.containers = new Inventory[item.containers.Length];
+                for (int i = 0; i < this.containers.Length; i++) { this.containers[i] = new Inventory(); }
+            }
+            this.properties = new Dictionary<string, string>();
+        }
     }
 }
