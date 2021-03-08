@@ -272,15 +272,12 @@ namespace CampLogTest {
                 bar = (Inventory)(fmt.ReadObject(xr, true));
             }
             Assert.AreEqual(foo.contents.Count, bar.contents.Count);
-            foreach (ItemCategory cat in foo.contents.Keys) {
-                Assert.IsTrue(bar.contents.ContainsKey(cat));
-                Assert.AreEqual(foo.contents[cat].Count, bar.contents[cat].Count);
-                for (int i = 0; i < foo.contents[cat].Count; i++) {
-                    Assert.AreEqual(foo.contents[cat][i].item, bar.contents[cat][i].item);
-                    Assert.AreEqual(foo.contents[cat][i].name, bar.contents[cat][i].name);
-                    Assert.AreEqual(foo.contents[cat][i].weight, bar.contents[cat][i].weight);
-                    Assert.AreEqual(foo.contents[cat][i].value, bar.contents[cat][i].value);
-                }
+            foreach (Guid guid in foo.contents.Keys) {
+                Assert.IsTrue(bar.contents.ContainsKey(guid));
+                Assert.AreEqual(foo.contents[guid].item, bar.contents[guid].item);
+                Assert.AreEqual(foo.contents[guid].name, bar.contents[guid].name);
+                Assert.AreEqual(foo.contents[guid].weight, bar.contents[guid].weight);
+                Assert.AreEqual(foo.contents[guid].value, bar.contents[guid].value);
             }
             Assert.AreEqual(foo.weight, bar.weight);
             Assert.AreEqual(foo.value, bar.value);
@@ -299,33 +296,32 @@ namespace CampLogTest {
             ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), gp = new ItemSpec("GP", c1, 1, 0), sword = new ItemSpec("Longsword", c2, 30, 3);
             ItemStack gem_stack = new ItemStack(gem, 3), gp_stack = new ItemStack(gp, 150), sword_stack = new ItemStack(sword, 2);
             Inventory inv = new Inventory();
+            Guid gem_guid, gp_guid, sword_guid;
 
-            inv.add(gem_stack);
+            gem_guid = inv.add(gem_stack);
             Assert.AreEqual(inv.contents.Count, 1);
-            Assert.IsTrue(inv.contents.ContainsKey(c1));
-            Assert.AreEqual(inv.contents[c1].Count, 1);
-            Assert.AreEqual(inv.contents[c1][0], gem_stack);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_guid));
+            Assert.AreEqual(inv.contents[gem_guid], gem_stack);
             Assert.AreEqual(inv.weight, 3);
             Assert.AreEqual(inv.value, 300);
 
-            inv.add(gp_stack);
-            Assert.AreEqual(inv.contents.Count, 1);
-            Assert.IsTrue(inv.contents.ContainsKey(c1));
-            Assert.AreEqual(inv.contents[c1].Count, 2);
-            Assert.AreEqual(inv.contents[c1][0], gem_stack);
-            Assert.AreEqual(inv.contents[c1][1], gp_stack);
+            gp_guid = inv.add(gp_stack);
+            Assert.AreEqual(inv.contents.Count, 2);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_guid));
+            Assert.IsTrue(inv.contents.ContainsKey(gp_guid));
+            Assert.AreEqual(inv.contents[gem_guid], gem_stack);
+            Assert.AreEqual(inv.contents[gp_guid], gp_stack);
             Assert.AreEqual(inv.weight, 3);
             Assert.AreEqual(inv.value, 450);
 
-            inv.add(sword_stack);
-            Assert.AreEqual(inv.contents.Count, 2);
-            Assert.IsTrue(inv.contents.ContainsKey(c1));
-            Assert.AreEqual(inv.contents[c1].Count, 2);
-            Assert.AreEqual(inv.contents[c1][0], gem_stack);
-            Assert.AreEqual(inv.contents[c1][1], gp_stack);
-            Assert.IsTrue(inv.contents.ContainsKey(c2));
-            Assert.AreEqual(inv.contents[c2].Count, 1);
-            Assert.AreEqual(inv.contents[c2][0], sword_stack);
+            sword_guid = inv.add(sword_stack);
+            Assert.AreEqual(inv.contents.Count, 3);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_guid));
+            Assert.IsTrue(inv.contents.ContainsKey(gp_guid));
+            Assert.IsTrue(inv.contents.ContainsKey(sword_guid));
+            Assert.AreEqual(inv.contents[gem_guid], gem_stack);
+            Assert.AreEqual(inv.contents[gp_guid], gp_stack);
+            Assert.AreEqual(inv.contents[sword_guid], sword_stack);
             Assert.AreEqual(inv.weight, 9);
             Assert.AreEqual(inv.value, 480);
         }

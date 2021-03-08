@@ -109,14 +109,12 @@ namespace CampLog {
 
     [Serializable]
     public class Inventory {
-        public Dictionary<ItemCategory, List<InventoryEntry>> contents;
+        public Dictionary<Guid, InventoryEntry> contents;
         public decimal weight {
             get {
                 decimal weight = 0;
-                foreach (ItemCategory cat in contents.Keys) {
-                    foreach (InventoryEntry entry in contents[cat]) {
-                        weight += entry.weight;
-                    }
+                foreach (InventoryEntry entry in contents.Values) {
+                    weight += entry.weight;
                 }
                 return weight;
             }
@@ -124,25 +122,23 @@ namespace CampLog {
         public decimal value {
             get {
                 decimal value = 0;
-                foreach (ItemCategory cat in contents.Keys) {
-                    foreach (InventoryEntry entry in contents[cat]) {
-                        value += entry.value;
-                    }
+                foreach (InventoryEntry entry in contents.Values) {
+                    value += entry.value;
                 }
                 return value;
             }
         }
 
         public Inventory() {
-            this.contents = new Dictionary<ItemCategory, List<InventoryEntry>>();
+            this.contents = new Dictionary<Guid, InventoryEntry>();
         }
 
-        public void add(InventoryEntry ent) {
+        public Guid add(InventoryEntry ent, Guid? guid = null) {
             if (ent is null) { throw new ArgumentNullException(nameof(ent)); }
-            if (!this.contents.ContainsKey(ent.item.category)) {
-                this.contents[ent.item.category] = new List<InventoryEntry>();
-            }
-            this.contents[ent.item.category].Add(ent);
+            Guid ent_guid = guid ?? Guid.NewGuid();
+            if (this.contents.ContainsKey(ent_guid)) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+            this.contents[ent_guid] = ent;
+            return ent_guid;
         }
     }
 
