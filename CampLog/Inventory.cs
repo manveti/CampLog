@@ -140,6 +140,11 @@ namespace CampLog {
             this.contents[ent_guid] = ent;
             return ent_guid;
         }
+
+        public void remove(Guid guid) {
+            if (!this.contents.ContainsKey(guid)) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+            this.contents.Remove(guid);
+        }
     }
 
 

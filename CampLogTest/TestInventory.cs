@@ -327,6 +327,48 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_add_duplicate_guid() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1), gp = new ItemSpec("GP", cat, 1, 0);
+            ItemStack gem_stack = new ItemStack(gem, 3), gp_stack = new ItemStack(gp, 150);
+            Guid test_guid = Guid.NewGuid(), gem_guid;
+            Inventory inv = new Inventory();
+
+            gem_guid = inv.add(gem_stack, test_guid);
+            Assert.AreEqual(gem_guid, test_guid);
+
+            _ = inv.add(gp_stack, test_guid);
+        }
+
+        [TestMethod]
+        public void test_remove() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1), gp = new ItemSpec("GP", cat, 1, 0.02m);
+            ItemStack gem_stack = new ItemStack(gem, 3), gp_stack = new ItemStack(gp, 150);
+            Guid gem_guid, gp_guid;
+            Inventory inv = new Inventory();
+
+            gem_guid = inv.add(gem_stack);
+            gp_guid = inv.add(gp_stack);
+            Assert.AreEqual(inv.contents.Count, 2);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_guid));
+            Assert.IsTrue(inv.contents.ContainsKey(gp_guid));
+            Assert.AreEqual(inv.contents[gem_guid], gem_stack);
+            Assert.AreEqual(inv.contents[gp_guid], gp_stack);
+            Assert.AreEqual(inv.weight, 6);
+            Assert.AreEqual(inv.value, 450);
+
+            inv.remove(gem_guid);
+            Assert.AreEqual(inv.contents.Count, 1);
+            Assert.IsFalse(inv.contents.ContainsKey(gem_guid));
+            Assert.IsTrue(inv.contents.ContainsKey(gp_guid));
+            Assert.AreEqual(inv.contents[gp_guid], gp_stack);
+            Assert.AreEqual(inv.weight, 3);
+            Assert.AreEqual(inv.value, 150);
+        }
+
+        [TestMethod]
         public void test_update() {
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
