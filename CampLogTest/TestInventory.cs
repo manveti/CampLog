@@ -237,6 +237,9 @@ namespace CampLogTest {
 
             ItemSpec baz = new ItemSpec("MacGuffin", c1, 100, 0, 75);
             Assert.AreEqual(baz.value, 75);
+
+            ItemSpec qux = new ItemSpec("Magic Sword", c2, 1000, 3, 750);
+            Assert.AreEqual(qux.value, 750);
         }
     }
 
@@ -475,6 +478,21 @@ namespace CampLogTest {
             Assert.AreEqual(itm.name, "Wand of Kaplowie");
             Assert.AreEqual(itm.weight, 1);
             Assert.AreEqual(itm.value, 100);
+        }
+
+        [TestMethod]
+        public void test_value_override() {
+            ItemCategory cat = new ItemCategory("Magic", 1);
+            ItemSpec wand = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
+            SingleItem itm = new SingleItem(wand, 50);
+
+            Assert.AreEqual(itm.item, wand);
+            Assert.IsNull(itm.containers);
+            Assert.AreEqual(itm.contents_weight, 0);
+            Assert.AreEqual(itm.contents_value, 0);
+            Assert.AreEqual(itm.name, "Wand of Kaplowie");
+            Assert.AreEqual(itm.weight, 1);
+            Assert.AreEqual(itm.value, 50);
         }
 
         [TestMethod]

@@ -53,7 +53,7 @@ namespace CampLog {
         [DataMember] public ItemCategory category;
         [DataMember] public decimal cost;
         [DataMember] public decimal? sale_value;
-        public decimal value { get => this.sale_value ?? this.cost * this.category.sale_value; }
+        public decimal value { get => this.sale_value ?? (this.cost * this.category.sale_value); }
         [DataMember] public decimal weight;
         [DataMember] public ContainerSpec[] containers;
         [DataMember] public Dictionary<string, string> properties;
@@ -181,6 +181,7 @@ namespace CampLog {
 
     [DataContract(IsReference = true)]
     public class SingleItem : InventoryEntry {
+        [DataMember] public decimal? value_override;
         [DataMember] public Inventory[] containers;
         public decimal contents_weight {
             get {
@@ -203,14 +204,15 @@ namespace CampLog {
             }
         }
         public Dictionary<string, string> properties;
-        public override string name { get => item.name; }
-        public override decimal weight { get => item.weight + this.contents_weight; }
-        public override decimal value { get => item.value + this.contents_value; }
+        public override string name { get => this.item.name; }
+        public override decimal weight { get => this.item.weight + this.contents_weight; }
+        public override decimal value { get => (this.value_override ?? this.item.value) + this.contents_value; }
 
-        public SingleItem(ItemSpec item) {
+        public SingleItem(ItemSpec item, decimal? value_override = null) {
             if (item is null) { throw new ArgumentNullException(nameof(item)); }
 
             this.item = item;
+            this.value_override = value_override;
             if (item.containers is not null) {
                 this.containers = new Inventory[item.containers.Length];
                 for (int i = 0; i < this.containers.Length; i++) { this.containers[i] = new Inventory(item.containers[i].name); }
