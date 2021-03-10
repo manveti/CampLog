@@ -258,7 +258,7 @@ namespace CampLogTest {
             ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .5m);
             ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), gp = new ItemSpec("GP", c1, 1, 0), sword = new ItemSpec("Longsword", c2, 30, 3);
             ItemStack gem_stack = new ItemStack(gem, 3), gp_stack = new ItemStack(gp, 150), sword_stack = new ItemStack(sword, 2);
-            Inventory foo = new Inventory(), bar;
+            Inventory foo = new Inventory("Test Inventory"), bar;
 
             foo.add(gem_stack);
             foo.add(gp_stack);
@@ -271,6 +271,7 @@ namespace CampLogTest {
                 System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
                 bar = (Inventory)(fmt.ReadObject(xr, true));
             }
+            Assert.AreEqual(foo.name, bar.name);
             Assert.AreEqual(foo.contents.Count, bar.contents.Count);
             foreach (Guid guid in foo.contents.Keys) {
                 Assert.IsTrue(bar.contents.ContainsKey(guid));
@@ -486,6 +487,9 @@ namespace CampLogTest {
             Assert.AreEqual(itm.item, sack);
             Assert.IsNotNull(itm.containers);
             Assert.AreEqual(itm.containers.Length, 3);
+            Assert.AreEqual(itm.containers[0].name, reducer.name);
+            Assert.AreEqual(itm.containers[1].name, pouch.name);
+            Assert.AreEqual(itm.containers[2].name, pouch.name);
             Assert.AreEqual(itm.contents_weight, 0);
             Assert.AreEqual(itm.contents_value, 0);
             Assert.AreEqual(itm.name, "Handy Haversack");
@@ -545,6 +549,9 @@ namespace CampLogTest {
             }
             Assert.AreEqual(foo.item, bar.item);
             Assert.AreEqual(foo.containers.Length, bar.containers.Length);
+            for (int i = 0; i < foo.containers.Length; i++) {
+                Assert.AreEqual(foo.containers[i].name, bar.containers[i].name);
+            }
             Assert.AreEqual(foo.contents_weight, bar.contents_weight);
             Assert.AreEqual(foo.contents_value, bar.contents_value);
             Assert.AreEqual(foo.name, bar.name);

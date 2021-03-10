@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace CampLog {
-    [DataContract(IsReference=true)]
+    [DataContract(IsReference = true)]
     public class ItemCategory {
         [DataMember] public string name;
         [DataMember] public decimal sale_value;
@@ -98,9 +98,9 @@ namespace CampLog {
 
     [KnownType(typeof(ItemStack))]
     [KnownType(typeof(SingleItem))]
-    [Serializable]
+    [DataContract(IsReference = true)]
     public abstract class InventoryEntry {
-        public ItemSpec item;
+        [DataMember] public ItemSpec item;
         public abstract string name { get; }
         public abstract decimal weight { get; }
         public abstract decimal value { get; }
@@ -109,6 +109,7 @@ namespace CampLog {
 
     [Serializable]
     public class Inventory {
+        public string name;
         public Dictionary<Guid, InventoryEntry> contents;
         public decimal weight {
             get {
@@ -129,7 +130,8 @@ namespace CampLog {
             }
         }
 
-        public Inventory() {
+        public Inventory(string name = null) {
+            this.name = name;
             this.contents = new Dictionary<Guid, InventoryEntry>();
         }
 
@@ -148,10 +150,10 @@ namespace CampLog {
     }
 
 
-    [Serializable]
+    [DataContract(IsReference = true)]
     public class ItemStack : InventoryEntry {
-        public ulong count;
-        public ulong unidentified;
+        [DataMember] public ulong count;
+        [DataMember] public ulong unidentified;
 
         public override string name {
             get {
@@ -177,9 +179,9 @@ namespace CampLog {
     }
 
 
-    [Serializable]
+    [DataContract(IsReference = true)]
     public class SingleItem : InventoryEntry {
-        public Inventory[] containers;
+        [DataMember] public Inventory[] containers;
         public decimal contents_weight {
             get {
                 if (containers is null) { return 0; }
@@ -211,7 +213,7 @@ namespace CampLog {
             this.item = item;
             if (item.containers is not null) {
                 this.containers = new Inventory[item.containers.Length];
-                for (int i = 0; i < this.containers.Length; i++) { this.containers[i] = new Inventory(); }
+                for (int i = 0; i < this.containers.Length; i++) { this.containers[i] = new Inventory(item.containers[i].name); }
             }
             this.properties = new Dictionary<string, string>();
         }
