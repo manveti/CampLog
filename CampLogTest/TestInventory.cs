@@ -71,8 +71,8 @@ namespace CampLogTest {
     public class TestContainerSpec {
         [TestMethod]
         public void test_equals() {
-            ContainerSpec foo = new ContainerSpec("blah", 42, 1), bar = new ContainerSpec("blah", 42, 1), baz = new ContainerSpec("bloh", 42, 1),
-                qux = new ContainerSpec("blah", 18, 1), zap = new ContainerSpec("blah", 42, 0);
+            ContainerSpec foo = new ContainerSpec("blah", 1, 42), bar = new ContainerSpec("blah", 1, 42), baz = new ContainerSpec("bloh", 1, 42),
+                qux = new ContainerSpec("blah", 1, 18), zap = new ContainerSpec("blah", 0, 42);
 
             Assert.IsTrue(foo.Equals(foo), "same object");
 #pragma warning disable CS1718 // Comparison made to same variable
@@ -128,7 +128,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_serialization() {
-            ContainerSpec foo = new ContainerSpec("blah", 42, .5m), bar;
+            ContainerSpec foo = new ContainerSpec("blah", .5m, 42), bar;
             DataContractSerializer fmt = new DataContractSerializer(typeof(ContainerSpec));
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
                 fmt.WriteObject(ms, foo);
@@ -151,10 +151,10 @@ namespace CampLogTest {
         [TestMethod]
         public void test_equals() {
             ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .5m), c3 = new ItemCategory("Magic", 1);
-            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 30, 0), reducer = new ContainerSpec("Weight Reducer", 100, .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
             ItemSpec foo = new ItemSpec("Gem", c1, 100, 0), bar = new ItemSpec("Gem", c1, 100, 0), baz = new ItemSpec("Longsword", c2, 30, 3),
                 qux = new ItemSpec("Handy Haversack", c3, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }),
-                zap = new ItemSpec("Handy Haversack", c3, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, new ContainerSpec("Magic Pouch", 30, 0) }),
+                zap = new ItemSpec("Handy Haversack", c3, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, new ContainerSpec("Magic Pouch", 0, 30) }),
                 tap = new ItemSpec("Handy Haversack", c3, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch });
 
             Assert.IsTrue(foo.Equals(foo), "same object");
@@ -212,7 +212,7 @@ namespace CampLogTest {
         [TestMethod]
         public void test_serialization() {
             ItemCategory cat = new ItemCategory("Magic", 1);
-            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 30, 0), reducer = new ContainerSpec("Weight Reducer", 100, .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
             ItemSpec foo = new ItemSpec("Handy Haversack", cat, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }), bar;
             DataContractSerializer fmt = new DataContractSerializer(typeof(ItemSpec));
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
@@ -288,6 +288,31 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_contains_inventory() {
+            ItemCategory cat = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", cat, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }),
+                belt = new ItemSpec("Belt of Pockets", cat, 1000, 5, null, new ContainerSpec[] { pouch, pouch, pouch, pouch });
+            SingleItem sack_itm = new SingleItem(sack), belt_itm = new SingleItem(belt);
+            Inventory inv = new Inventory();
+
+            inv.add(sack_itm);
+            for (int i = 0; i < 3; i++) {
+                Assert.IsTrue(inv.contains_inventory(sack_itm.containers[i]));
+            }
+            for (int i = 0; i < 4; i++) {
+                Assert.IsFalse(inv.contains_inventory(belt_itm.containers[i]));
+            }
+            Assert.IsFalse(inv.contains_inventory(inv));
+
+            sack_itm.add(0, belt_itm);
+            for (int i = 0; i < 4; i++) {
+                Assert.IsTrue(inv.contains_inventory(belt_itm.containers[i]));
+            }
+            Assert.IsFalse(inv.contains_inventory(inv));
+        }
+
+        [TestMethod]
         [ExpectedException(typeof(ArgumentNullException))]
         public void test_add_null() {
             Inventory inv = new Inventory();
@@ -332,6 +357,19 @@ namespace CampLogTest {
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_add_cycle() {
+            ItemCategory cat = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", cat, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            SingleItem itm = new SingleItem(sack);
+            Inventory inv = new Inventory();
+
+            itm.containers[1] = inv;
+            inv.add(itm);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_add_duplicate_guid() {
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1), gp = new ItemSpec("GP", cat, 1, 0);
@@ -343,6 +381,13 @@ namespace CampLogTest {
             Assert.AreEqual(gem_guid, test_guid);
 
             _ = inv.add(gp_stack, test_guid);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_remove_no_such_guid() {
+            Inventory inv = new Inventory();
+            inv.remove(Guid.NewGuid());
         }
 
         [TestMethod]
@@ -498,7 +543,7 @@ namespace CampLogTest {
         [TestMethod]
         public void test_container_item() {
             ItemCategory cat = new ItemCategory("Magic", 1);
-            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 30, 0), reducer = new ContainerSpec("Weight Reducer", 100, .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
             ItemSpec sack = new ItemSpec("Handy Haversack", cat, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
             SingleItem itm = new SingleItem(sack);
 
@@ -518,7 +563,7 @@ namespace CampLogTest {
         [TestMethod]
         public void test_container_contents() {
             ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .6m), c3 = new ItemCategory("Magic", 1);
-            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 30, 0), reducer = new ContainerSpec("Weight Reducer", 100, .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
             ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), sword = new ItemSpec("Longsword", c2, 30, 3),
                 sack = new ItemSpec("Handy Haversack", c3, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
             ItemStack gems = new ItemStack(gem, 5), swords = new ItemStack(sword, 2);
@@ -549,7 +594,7 @@ namespace CampLogTest {
         [TestMethod]
         public void test_serialization() {
             ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .6m), c3 = new ItemCategory("Magic", 1);
-            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 30, 0), reducer = new ContainerSpec("Weight Reducer", 100, .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
             ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), sword = new ItemSpec("Longsword", c2, 30, 3),
                 sack = new ItemSpec("Handy Haversack", c3, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
             ItemStack gems = new ItemStack(gem, 5), swords = new ItemStack(sword, 2);
@@ -575,6 +620,182 @@ namespace CampLogTest {
             Assert.AreEqual(foo.name, bar.name);
             Assert.AreEqual(foo.weight, bar.weight);
             Assert.AreEqual(foo.value, bar.value);
+        }
+
+        [TestMethod]
+        public void test_contains_inventory() {
+            ItemCategory cat = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", cat, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }),
+                belt = new ItemSpec("Belt of Pockets", cat, 1000, 5, null, new ContainerSpec[] { pouch, pouch, pouch, pouch });
+            SingleItem sack_itm = new SingleItem(sack), belt_itm = new SingleItem(belt);
+
+            foreach (Inventory inv in sack_itm.containers) {
+                Assert.IsTrue(sack_itm.contains_inventory(inv));
+            }
+            foreach (Inventory inv in belt_itm.containers) {
+                Assert.IsFalse(sack_itm.contains_inventory(inv));
+            }
+
+            sack_itm.add(0, belt_itm);
+            foreach (Inventory inv in sack_itm.containers) {
+                Assert.IsTrue(sack_itm.contains_inventory(inv));
+            }
+            foreach (Inventory inv in belt_itm.containers) {
+                Assert.IsTrue(sack_itm.contains_inventory(inv));
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void test_add_no_containers() {
+            ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
+            ItemSpec wand = new ItemSpec("Wand of Kaplowie", c1, 100, 1), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem itm = new SingleItem(wand, 50);
+
+            itm.add(0, sword_stack);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_add_negative_container_index() {
+            ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", c1, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem itm = new SingleItem(sack);
+
+            itm.add(-1, sword_stack);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_add_container_index_too_large() {
+            ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", c1, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem itm = new SingleItem(sack);
+
+            itm.add(5, sword_stack);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void test_add_null() {
+            ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", c1, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            SingleItem itm = new SingleItem(sack);
+
+            itm.add(0, null);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_add_cycle() {
+            ItemCategory cat = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", cat, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }),
+                belt = new ItemSpec("Belt of Pockets", cat, 1000, 5, null, new ContainerSpec[] { pouch, pouch, pouch, pouch });
+            SingleItem sack_itm = new SingleItem(sack), belt_itm = new SingleItem(belt);
+
+            sack_itm.add(0, belt_itm);
+            belt_itm.add(0, sack_itm);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_add_too_much_weight() {
+            ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 5), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", c1, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem itm = new SingleItem(sack);
+
+            itm.add(1, sword_stack);
+        }
+
+        [TestMethod]
+        public void test_add() {
+            ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", c1, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem itm = new SingleItem(sack);
+
+            itm.add(0, sword_stack);
+            Assert.AreEqual(itm.containers[0].contents.Count, 1);
+            Assert.AreEqual(itm.containers[0].weight, 6);
+        }
+
+        [TestMethod]
+        public void test_add_nest() {
+            ItemCategory cat = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", cat, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }),
+                belt = new ItemSpec("Belt of Pockets", cat, 1000, 5, null, new ContainerSpec[] { pouch, pouch, pouch, pouch });
+            SingleItem sack_itm = new SingleItem(sack), belt_itm = new SingleItem(belt);
+
+            sack_itm.add(0, belt_itm);
+            Assert.AreEqual(sack_itm.containers[0].contents.Count, 1);
+            Assert.AreEqual(sack_itm.containers[0].weight, 5);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_remove_negative_container_index() {
+            ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", c1, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem itm = new SingleItem(sack);
+
+            Guid guid = itm.add(0, sword_stack);
+            itm.remove(-1, guid);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_remove_container_index_too_large() {
+            ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", c1, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem itm = new SingleItem(sack);
+
+            Guid guid = itm.add(0, sword_stack);
+            itm.remove(5, guid);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_remove_no_such_guid() {
+            ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", c1, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem itm = new SingleItem(sack);
+
+            itm.add(0, sword_stack);
+            itm.remove(0, Guid.NewGuid());
+        }
+
+        [TestMethod]
+        public void test_remove() {
+            ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", c1, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch }), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem itm = new SingleItem(sack);
+
+            Guid guid = itm.add(0, sword_stack);
+            Assert.AreEqual(itm.containers[0].contents.Count, 1);
+            Assert.AreEqual(itm.containers[0].weight, 6);
+            itm.remove(0, guid);
+            Assert.AreEqual(itm.containers[0].contents.Count, 0);
+            Assert.AreEqual(itm.containers[0].weight, 0);
         }
     }
 }

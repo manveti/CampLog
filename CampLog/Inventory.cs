@@ -27,17 +27,17 @@ namespace CampLog {
     [DataContract(IsReference = true)]
     public class ContainerSpec {
         [DataMember] public string name;
-        [DataMember] public decimal weight_capacity;
         [DataMember] public decimal weight_factor;
+        [DataMember] public decimal? weight_capacity;
 
-        public ContainerSpec(string name, decimal weight_capacity, decimal weight_factor) {
+        public ContainerSpec(string name, decimal weight_factor, decimal? weight_capacity = null) {
             this.name = name;
             this.weight_capacity = weight_capacity;
             this.weight_factor = weight_factor;
         }
 
-        public override bool Equals(object obj) => obj is ContainerSpec spec && this.name == spec.name && this.weight_capacity == spec.weight_capacity && this.weight_factor == spec.weight_factor;
-        public override int GetHashCode() => HashCode.Combine(this.name, this.weight_capacity, this.weight_factor);
+        public override bool Equals(object obj) => obj is ContainerSpec spec && this.name == spec.name && this.weight_factor == spec.weight_factor && this.weight_capacity == spec.weight_capacity;
+        public override int GetHashCode() => HashCode.Combine(this.name, this.weight_factor, this.weight_capacity);
         public static bool operator ==(ContainerSpec c1, ContainerSpec c2) {
             if (c1 is not null) { return c1.Equals(c2); }
             if (c2 is not null) { return c2.Equals(c1); }
@@ -71,7 +71,7 @@ namespace CampLog {
 
         public override bool Equals(object obj) {
             ItemSpec spec = (ItemSpec)obj;
-            if (spec is null || this.name != spec.name || this.category != spec.category || this.cost != spec.cost || this .sale_value != spec.sale_value || this.weight != spec.weight) { return false; }
+            if (spec is null || this.name != spec.name || this.category != spec.category || this.cost != spec.cost || this.sale_value != spec.sale_value || this.weight != spec.weight) { return false; }
             if (!ReferenceEquals(this.containers, spec.containers)) {
                 if (this.containers is null || spec.containers is null || this.containers.Length != spec.containers.Length) { return false; }
                 for (int i = 0; i < this.containers.Length; i++) {
@@ -104,6 +104,8 @@ namespace CampLog {
         public abstract string name { get; }
         public abstract decimal weight { get; }
         public abstract decimal value { get; }
+
+        public virtual bool contains_inventory(Inventory inv) { return false; }
     }
 
 
@@ -135,8 +137,16 @@ namespace CampLog {
             this.contents = new Dictionary<Guid, InventoryEntry>();
         }
 
+        public bool contains_inventory(Inventory inv) {
+            foreach (InventoryEntry ent in this.contents.Values) {
+                if (ent.contains_inventory(inv)) { return true; }
+            }
+            return false;
+        }
+
         public Guid add(InventoryEntry ent, Guid? guid = null) {
             if (ent is null) { throw new ArgumentNullException(nameof(ent)); }
+            if (ent.contains_inventory(this)) { throw new ArgumentOutOfRangeException(nameof(ent)); }
             Guid ent_guid = guid ?? Guid.NewGuid();
             if (this.contents.ContainsKey(ent_guid)) { throw new ArgumentOutOfRangeException(nameof(guid)); }
             this.contents[ent_guid] = ent;
@@ -218,6 +228,32 @@ namespace CampLog {
                 for (int i = 0; i < this.containers.Length; i++) { this.containers[i] = new Inventory(item.containers[i].name); }
             }
             this.properties = new Dictionary<string, string>();
+        }
+
+        public override bool contains_inventory(Inventory inv) {
+            if (this.containers is null) { return false; }
+            foreach (Inventory container in this.containers) {
+                if ((container == inv) || (container.contains_inventory(inv))) { return true; }
+            }
+            return false;
+        }
+
+        public Guid add(int idx, InventoryEntry ent, Guid? guid = null) {
+            if (this.containers is null) { throw new InvalidOperationException(); }
+            if ((idx < 0) || (idx >= this.containers.Length)) { throw new ArgumentOutOfRangeException(nameof(idx)); }
+            if (this.item.containers[idx].weight_capacity is not null) {
+                if (ent is null) { throw new ArgumentNullException(nameof(ent)); }
+                if (ent.weight > this.item.containers[idx].weight_capacity - this.containers[idx].weight) {
+                    throw new ArgumentOutOfRangeException(nameof(ent));
+                }
+            }
+            return this.containers[idx].add(ent, guid);
+        }
+
+        public void remove(int idx, Guid guid) {
+            if (this.containers is null) { throw new InvalidOperationException(); }
+            if ((idx < 0) || (idx >= this.containers.Length)) { throw new ArgumentOutOfRangeException(nameof(idx)); }
+            this.containers[idx].remove(guid);
         }
     }
 }
