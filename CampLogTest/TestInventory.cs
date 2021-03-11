@@ -798,4 +798,479 @@ namespace CampLogTest {
             Assert.AreEqual(itm.containers[0].weight, 0);
         }
     }
+
+
+    [TestClass]
+    public class TestInventoryDomain {
+        [TestMethod]
+        public void test_serialization() {
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .5m);
+            ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), gp = new ItemSpec("GP", c1, 1, 0), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack gem_stack = new ItemStack(gem, 3), gp_stack = new ItemStack(gp, 150), sword_stack = new ItemStack(sword, 2);
+            InventoryDomain foo = new InventoryDomain(), bar;
+
+            Guid test_inv = foo.new_inventory("Test Inventory");
+            Guid gem_ent = foo.add_entry(test_inv, gem_stack);
+            foo.add_entry(test_inv, gp_stack);
+            Guid sword_ent = foo.add_entry(test_inv, sword_stack);
+
+            DataContractSerializer fmt = new DataContractSerializer(typeof(InventoryDomain));
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
+                fmt.WriteObject(ms, foo);
+                ms.Seek(0, System.IO.SeekOrigin.Begin);
+                System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
+                bar = (InventoryDomain)(fmt.ReadObject(xr, true));
+            }
+            Assert.AreEqual(foo.items.Count, bar.items.Count);
+            foreach (ItemCategory cat in foo.items.Keys) {
+                Assert.IsTrue(bar.items.ContainsKey(cat));
+                Assert.AreEqual(foo.items[cat].Count, bar.items[cat].Count);
+                for (int i = 0; i < foo.items[cat].Count; i++) {
+                    Assert.AreEqual(foo.items[cat][i], bar.items[cat][i]);
+                }
+            }
+            Assert.AreEqual(foo.entries.Count, bar.entries.Count);
+            foreach (Guid ent in foo.entries.Keys) {
+                Assert.IsTrue(bar.entries.ContainsKey(ent));
+                Assert.AreEqual(foo.entries[ent].name, bar.entries[ent].name);
+            }
+            Assert.AreEqual(foo.active_entries.Count, bar.active_entries.Count);
+            foreach (Guid ent in foo.active_entries) {
+                Assert.IsTrue(bar.active_entries.Contains(ent));
+            }
+            Assert.AreEqual(foo.inventories.Count, bar.inventories.Count);
+            foreach (Guid inv in foo.inventories.Keys) {
+                Assert.IsTrue(bar.inventories.ContainsKey(inv));
+                Assert.AreEqual(foo.inventories[inv].name, bar.inventories[inv].name);
+                Assert.AreEqual(foo.inventories[inv].contents.Count, bar.inventories[inv].contents.Count);
+            }
+            // make sure the things which are supposed to be references are such after deserialization
+            Assert.IsTrue(ReferenceEquals(bar.items[c2][0], bar.entries[sword_ent].item));
+            Assert.IsTrue(ReferenceEquals(bar.entries[gem_ent], bar.inventories[test_inv].contents[gem_ent]));
+        }
+
+        [TestMethod]
+        public void test_new_inventory() {
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Assert.AreEqual(domain.inventories.Count, 1);
+            Assert.IsTrue(domain.inventories.ContainsKey(inv));
+            Assert.AreEqual(domain.inventories[inv].name, "Test Inventory");
+            Assert.AreEqual(domain.inventories[inv].contents.Count, 0);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_new_inventory_duplicate() {
+            InventoryDomain domain = new InventoryDomain();
+
+            Guid inv = domain.new_inventory("Test Inventory");
+            domain.new_inventory("Another Inventory", inv);
+        }
+
+        [TestMethod]
+        public void test_remove_inventory() {
+            InventoryDomain domain = new InventoryDomain();
+
+            Guid inv1 = domain.new_inventory("Test Inventory");
+            Guid inv2 = domain.new_inventory("Another Inventory");
+            Assert.AreEqual(domain.inventories.Count, 2);
+            Assert.IsTrue(domain.inventories.ContainsKey(inv1));
+            Assert.IsTrue(domain.inventories.ContainsKey(inv2));
+
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .5m);
+            ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), gp = new ItemSpec("GP", c1, 1, 0), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack gem_stack = new ItemStack(gem, 3), gp_stack = new ItemStack(gp, 150), sword_stack = new ItemStack(sword, 2);
+
+            domain.add_entry(inv1, gem_stack);
+            domain.add_entry(inv1, gp_stack);
+            domain.add_entry(inv1, sword_stack);
+            Assert.AreEqual(domain.entries.Count, 3);
+            Assert.AreEqual(domain.active_entries.Count, 3);
+
+            domain.remove_inventory(inv1);
+            Assert.AreEqual(domain.inventories.Count, 1);
+            Assert.IsFalse(domain.inventories.ContainsKey(inv1));
+            Assert.IsTrue(domain.inventories.ContainsKey(inv2));
+            Assert.AreEqual(domain.entries.Count, 3);
+            Assert.AreEqual(domain.active_entries.Count, 0);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_remove_inventory_no_such_guid() {
+            InventoryDomain domain = new InventoryDomain();
+            domain.remove_inventory(Guid.NewGuid());
+        }
+
+        [TestMethod]
+        public void test_move_entry() {
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .5m);
+            ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), gp = new ItemSpec("GP", c1, 1, 0), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack gem_stack = new ItemStack(gem, 3), gp_stack = new ItemStack(gp, 150), sword_stack = new ItemStack(sword, 2);
+            InventoryDomain domain = new InventoryDomain();
+
+            Guid inv1 = domain.new_inventory("Test Inventory"), inv2 = domain.new_inventory("Another Inventory");
+
+            domain.add_entry(inv1, gem_stack);
+            Guid gp_ent = domain.add_entry(inv1, gp_stack);
+            domain.add_entry(inv1, sword_stack);
+            Assert.AreEqual(domain.inventories[inv1].contents.Count, 3);
+            Assert.AreEqual(domain.inventories[inv2].contents.Count, 0);
+
+            domain.move_entry(gp_ent, inv1, inv2);
+            Assert.AreEqual(domain.inventories[inv1].contents.Count, 2);
+            Assert.AreEqual(domain.inventories[inv2].contents.Count, 1);
+            Assert.IsTrue(domain.inventories[inv2].contents.ContainsKey(gp_ent));
+        }
+
+        [TestMethod]
+        public void test_move_entry_containers() {
+            ItemCategory c1 = new ItemCategory("Weapons", .5m), c2 = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sword = new ItemSpec("Longsword", c1, 30, 3), sack = new ItemSpec("Handy Haversack", c2, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem sack_itm = new SingleItem(sack);
+            InventoryDomain domain = new InventoryDomain();
+
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid sack_ent = domain.add_entry(inv, sack_itm);
+            Guid sword_ent = domain.add_entry(sack_ent, 0, sword_stack);
+            Assert.AreEqual(domain.inventories[inv].contents.Count, 1);
+            Assert.AreEqual(sack_itm.containers[0].contents.Count, 1);
+            Assert.AreEqual(sack_itm.containers[1].contents.Count, 0);
+            Assert.AreEqual(sack_itm.containers[2].contents.Count, 0);
+            Assert.AreEqual(domain.inventories[inv].weight, 23);
+
+            domain.move_entry(sword_ent, sack_ent, 0, sack_ent, 1);
+            Assert.AreEqual(domain.inventories[inv].contents.Count, 1);
+            Assert.AreEqual(sack_itm.containers[0].contents.Count, 0);
+            Assert.AreEqual(sack_itm.containers[1].contents.Count, 1);
+            Assert.AreEqual(sack_itm.containers[2].contents.Count, 0);
+            Assert.AreEqual(domain.inventories[inv].weight, 20);
+
+            domain.move_entry(sword_ent, sack_ent, 1, inv);
+            Assert.AreEqual(domain.inventories[inv].contents.Count, 2);
+            Assert.AreEqual(sack_itm.containers[0].contents.Count, 0);
+            Assert.AreEqual(sack_itm.containers[1].contents.Count, 0);
+            Assert.AreEqual(sack_itm.containers[2].contents.Count, 0);
+            Assert.AreEqual(domain.inventories[inv].weight, 26);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_move_entry_no_such_entry() {
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv1 = domain.new_inventory("Test Inventory"), inv2 = domain.new_inventory("Another Inventory");
+
+            domain.move_entry(Guid.NewGuid(), inv1, inv2);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_move_entry_from_no_such_inventory() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent = domain.add_entry(inv, gem_stack);
+            domain.move_entry(gem_ent, Guid.NewGuid(), inv);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_move_entry_to_no_such_inventory() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent = domain.add_entry(inv, gem_stack);
+            domain.move_entry(gem_ent, inv, Guid.NewGuid());
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_move_entry_from_no_such_container() {
+            ItemCategory c1 = new ItemCategory("Weapons", .5m), c2 = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sword = new ItemSpec("Longsword", c1, 30, 3), sack = new ItemSpec("Handy Haversack", c2, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem sack_itm = new SingleItem(sack);
+            InventoryDomain domain = new InventoryDomain();
+
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid sack_ent = domain.add_entry(inv, sack_itm);
+            Guid sword_ent = domain.add_entry(sack_ent, 0, sword_stack);
+
+            domain.move_entry(sword_ent, Guid.NewGuid(), 0, sack_ent, 1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_move_entry_to_no_such_container() {
+            ItemCategory c1 = new ItemCategory("Weapons", .5m), c2 = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sword = new ItemSpec("Longsword", c1, 30, 3), sack = new ItemSpec("Handy Haversack", c2, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem sack_itm = new SingleItem(sack);
+            InventoryDomain domain = new InventoryDomain();
+
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid sack_ent = domain.add_entry(inv, sack_itm);
+            Guid sword_ent = domain.add_entry(sack_ent, 0, sword_stack);
+
+            domain.move_entry(sword_ent, sack_ent, 0, Guid.NewGuid(), 1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_move_entry_item_not_in_container() {
+            ItemCategory c1 = new ItemCategory("Weapons", .5m), c2 = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sword = new ItemSpec("Longsword", c1, 30, 3), sack = new ItemSpec("Handy Haversack", c2, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem sack_itm = new SingleItem(sack);
+            InventoryDomain domain = new InventoryDomain();
+
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid sack_ent = domain.add_entry(inv, sack_itm);
+            Guid sword_ent = domain.add_entry(sack_ent, 0, sword_stack);
+
+            domain.move_entry(sword_ent, sack_ent, 1, sack_ent, 2);
+        }
+
+        [TestMethod]
+        public void test_restore_entry() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent = domain.add_entry(inv, gem_stack);
+            domain.remove_entry(gem_ent, inv);
+
+            domain.restore_entry(gem_ent, inv);
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent));
+            Assert.IsTrue(domain.inventories[inv].contents.ContainsKey(gem_ent));
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_restore_entry_no_such_entry() {
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            domain.restore_entry(Guid.NewGuid(), inv);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_restore_entry_active_entry() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent = domain.add_entry(inv, gem_stack);
+            domain.restore_entry(gem_ent, inv);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_restore_entry_no_such_inventory() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent = domain.add_entry(inv, gem_stack);
+            domain.remove_entry(gem_ent, inv);
+
+            domain.restore_entry(gem_ent, Guid.NewGuid());
+        }
+
+        [TestMethod]
+        public void test_add_entry() {
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .5m);
+            ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), gp = new ItemSpec("GP", c1, 1, 0), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack gem_stack = new ItemStack(gem, 3), gp_stack = new ItemStack(gp, 150), sword_stack = new ItemStack(sword, 2);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv1 = domain.new_inventory("Test Inventory"), inv2 = domain.new_inventory("Another Inventory");
+
+            Guid gem_ent = domain.add_entry(inv1, gem_stack);
+            Assert.AreEqual(domain.items.Count, 1);
+            Assert.IsTrue(domain.items.ContainsKey(c1));
+            Assert.AreEqual(domain.items[c1].Count, 1);
+            Assert.AreEqual(domain.entries.Count, 1);
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent));
+            Assert.AreEqual(domain.entries[gem_ent], gem_stack);
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent));
+            Assert.AreEqual(domain.inventories[inv1].contents.Count, 1);
+            Assert.AreEqual(domain.inventories[inv2].contents.Count, 0);
+            Assert.IsTrue(domain.inventories[inv1].contents.ContainsKey(gem_ent));
+
+            Guid gp_ent = domain.add_entry(inv1, gp_stack);
+            Assert.AreEqual(domain.items.Count, 1);
+            Assert.IsTrue(domain.items.ContainsKey(c1));
+            Assert.AreEqual(domain.items[c1].Count, 2);
+            Assert.AreEqual(domain.entries.Count, 2);
+            Assert.IsTrue(domain.entries.ContainsKey(gp_ent));
+            Assert.AreEqual(domain.entries[gp_ent], gp_stack);
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent));
+            Assert.IsTrue(domain.active_entries.Contains(gp_ent));
+            Assert.AreEqual(domain.inventories[inv1].contents.Count, 2);
+            Assert.AreEqual(domain.inventories[inv2].contents.Count, 0);
+            Assert.IsTrue(domain.inventories[inv1].contents.ContainsKey(gem_ent));
+            Assert.IsTrue(domain.inventories[inv1].contents.ContainsKey(gp_ent));
+
+            Guid sword_ent = domain.add_entry(inv2, sword_stack);
+            Assert.AreEqual(domain.items.Count, 2);
+            Assert.IsTrue(domain.items.ContainsKey(c1));
+            Assert.IsTrue(domain.items.ContainsKey(c2));
+            Assert.AreEqual(domain.items[c1].Count, 2);
+            Assert.AreEqual(domain.items[c2].Count, 1);
+            Assert.AreEqual(domain.entries.Count, 3);
+            Assert.IsTrue(domain.entries.ContainsKey(sword_ent));
+            Assert.AreEqual(domain.entries[sword_ent], sword_stack);
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent));
+            Assert.IsTrue(domain.active_entries.Contains(gp_ent));
+            Assert.IsTrue(domain.active_entries.Contains(sword_ent));
+            Assert.AreEqual(domain.inventories[inv1].contents.Count, 2);
+            Assert.AreEqual(domain.inventories[inv2].contents.Count, 1);
+            Assert.IsTrue(domain.inventories[inv1].contents.ContainsKey(gem_ent));
+            Assert.IsTrue(domain.inventories[inv1].contents.ContainsKey(gp_ent));
+            Assert.IsTrue(domain.inventories[inv2].contents.ContainsKey(sword_ent));
+        }
+
+        [TestMethod]
+        public void test_add_entry_containers() {
+            ItemCategory c1 = new ItemCategory("Weapons", .5m), c2 = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sword = new ItemSpec("Longsword", c1, 30, 3), sack = new ItemSpec("Handy Haversack", c2, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            ItemStack sword_stack = new ItemStack(sword, 2);
+            SingleItem sack_itm = new SingleItem(sack);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid sack_ent = domain.add_entry(inv, sack_itm);
+            Assert.AreEqual(domain.items.Count, 1);
+            Assert.IsTrue(domain.items.ContainsKey(c2));
+            Assert.AreEqual(domain.items[c2].Count, 1);
+            Assert.AreEqual(domain.entries.Count, 1);
+            Assert.IsTrue(domain.entries.ContainsKey(sack_ent));
+            Assert.AreEqual(domain.entries[sack_ent], sack_itm);
+            Assert.AreEqual(domain.inventories[inv].contents.Count, 1);
+            Assert.IsTrue(domain.inventories[inv].contents.ContainsKey(sack_ent));
+
+            Guid sword_ent = domain.add_entry(sack_ent, 0, sword_stack);
+            Assert.AreEqual(domain.items.Count, 2);
+            Assert.IsTrue(domain.items.ContainsKey(c1));
+            Assert.IsTrue(domain.items.ContainsKey(c2));
+            Assert.AreEqual(domain.items[c1].Count, 1);
+            Assert.AreEqual(domain.items[c2].Count, 1);
+            Assert.AreEqual(domain.entries.Count, 2);
+            Assert.IsTrue(domain.entries.ContainsKey(sack_ent));
+            Assert.IsTrue(domain.entries.ContainsKey(sword_ent));
+            Assert.AreEqual(domain.entries[sword_ent], sword_stack);
+            Assert.AreEqual(domain.inventories[inv].contents.Count, 1);
+            Assert.IsTrue(domain.inventories[inv].contents.ContainsKey(sack_ent));
+            Assert.AreEqual(sack_itm.containers[0].contents.Count, 1);
+            Assert.AreEqual(sack_itm.containers[1].contents.Count, 0);
+            Assert.AreEqual(sack_itm.containers[2].contents.Count, 0);
+            Assert.AreEqual(domain.inventories[inv].weight, 23);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_add_entry_active() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            domain.add_entry(inv, gem_stack);
+            domain.add_entry(inv, gem_stack);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_add_entry_removed() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent = domain.add_entry(inv, gem_stack);
+            domain.remove_entry(inv, gem_ent);
+            domain.add_entry(inv, gem_stack, gem_ent);
+        }
+
+        [TestMethod]
+        public void test_remove_entry() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent = domain.add_entry(inv, gem_stack);
+            Assert.AreEqual(domain.items.Count, 1);
+            Assert.IsTrue(domain.items.ContainsKey(cat));
+            Assert.AreEqual(domain.items[cat].Count, 1);
+            Assert.AreEqual(domain.entries.Count, 1);
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent));
+            Assert.AreEqual(domain.entries[gem_ent], gem_stack);
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent));
+            Assert.AreEqual(domain.inventories[inv].contents.Count, 1);
+            Assert.IsTrue(domain.inventories[inv].contents.ContainsKey(gem_ent));
+
+            domain.remove_entry(gem_ent, inv);
+            Assert.AreEqual(domain.items.Count, 1);
+            Assert.IsTrue(domain.items.ContainsKey(cat));
+            Assert.AreEqual(domain.items[cat].Count, 1);
+            Assert.AreEqual(domain.entries.Count, 1);
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent));
+            Assert.AreEqual(domain.entries[gem_ent], gem_stack);
+            Assert.IsFalse(domain.active_entries.Contains(gem_ent));
+            Assert.AreEqual(domain.inventories[inv].contents.Count, 0);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_remove_entry_no_such_item() {
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            domain.remove_entry(inv, Guid.NewGuid());
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_remove_entry_removed() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent = domain.add_entry(inv, gem_stack);
+            domain.remove_entry(inv, gem_ent);
+
+            domain.remove_entry(inv, gem_ent);
+        }
+    }
 }

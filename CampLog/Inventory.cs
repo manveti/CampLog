@@ -256,4 +256,145 @@ namespace CampLog {
             this.containers[idx].remove(guid);
         }
     }
+
+
+    [Serializable]
+    public class InventoryDomain {
+        public Dictionary<ItemCategory, List<ItemSpec>> items;
+        public Dictionary<Guid, InventoryEntry> entries;
+        public HashSet<Guid> active_entries;
+        public Dictionary<Guid, Inventory> inventories;
+
+        public InventoryDomain() {
+            this.items = new Dictionary<ItemCategory, List<ItemSpec>>();
+            this.entries = new Dictionary<Guid, InventoryEntry>();
+            this.active_entries = new HashSet<Guid>();
+            this.inventories = new Dictionary<Guid, Inventory>();
+        }
+
+        public Guid new_inventory(string name = null, Guid? guid = null) {
+            Guid inv_guid = guid ?? Guid.NewGuid();
+            if (this.inventories.ContainsKey(inv_guid)) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+            this.inventories[inv_guid] = new Inventory(name);
+            return inv_guid;
+        }
+
+        private void purge_inventory_entry(InventoryEntry entry) {
+            if (entry is SingleItem entry_itm) {
+                foreach (Inventory inv in entry_itm.containers) {
+                    this.purge_inventory(inv);
+                }
+            }
+        }
+
+        private void purge_inventory(Inventory inv) {
+            foreach (Guid ent in inv.contents.Keys) {
+                this.purge_inventory_entry(inv.contents[ent]);
+                this.active_entries.Remove(ent);
+            }
+        }
+
+        public void remove_inventory(Guid guid) {
+            if (!this.inventories.ContainsKey(guid)) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+            this.purge_inventory(this.inventories[guid]);
+            this.inventories.Remove(guid);
+        }
+
+        public void move_entry(Guid entry, Guid from_guid, int? from_idx, Guid to_guid, int? to_idx = null) {
+            if ((!this.entries.ContainsKey(entry)) || (!this.active_entries.Contains(entry))) { throw new ArgumentOutOfRangeException(nameof(entry)); }
+
+            // do error-checking for removal first so operation is atomic
+            if (from_idx is null) {
+                if (!this.inventories.ContainsKey(from_guid)) { throw new ArgumentOutOfRangeException(nameof(from_guid)); }
+            }
+            else {
+                if (!this.entries.ContainsKey(from_guid)) { throw new ArgumentOutOfRangeException(nameof(from_guid)); }
+                if (this.entries[from_guid] is not SingleItem from_itm) { throw new ArgumentOutOfRangeException(nameof(from_guid)); }
+                int rem_idx = from_idx ?? 0;
+                if ((rem_idx < 0) || (rem_idx >= from_itm.containers.Length)) { throw new ArgumentOutOfRangeException(nameof(from_idx)); }
+            }
+
+            // if we got here we know removal will succeed so attempt add
+            if (to_idx is null) {
+                if (!this.inventories.ContainsKey(to_guid)) { throw new ArgumentOutOfRangeException(nameof(to_guid)); }
+                this.inventories[to_guid].add(this.entries[entry], entry);
+            }
+            else {
+                if (!this.entries.ContainsKey(to_guid)) { throw new ArgumentOutOfRangeException(nameof(to_guid)); }
+                if (this.entries[to_guid] is not SingleItem to_itm) { throw new ArgumentOutOfRangeException(nameof(to_guid)); }
+                to_itm.add(to_idx.Value, this.entries[entry], entry);
+            }
+
+            // we've already done error-checking, so just remove
+            if (from_idx is null) {
+                this.inventories[from_guid].remove(entry);
+            }
+            else {
+                SingleItem from_itm = this.entries[from_guid] as SingleItem;
+                from_itm.remove(from_idx.Value, entry);
+            }
+        }
+        public void move_entry(Guid entry, Guid from_guid, Guid to_guid, int? to_idx = null) {
+            this.move_entry(entry, from_guid, null, to_guid, to_idx);
+        }
+
+        public void restore_entry(Guid entry, Guid to_guid, int? to_idx = null) {
+            if (!this.entries.ContainsKey(entry)) { throw new ArgumentOutOfRangeException(nameof(entry)); }
+            if (this.active_entries.Contains(entry)) { throw new ArgumentOutOfRangeException(nameof(entry)); }
+
+            if (to_idx is null) {
+                if (!this.inventories.ContainsKey(to_guid)) { throw new ArgumentOutOfRangeException(nameof(to_guid)); }
+                this.inventories[to_guid].add(this.entries[entry], entry);
+            }
+            else {
+                if (!this.entries.ContainsKey(to_guid)) { throw new ArgumentOutOfRangeException(nameof(to_guid)); }
+                if (this.entries[to_guid] is not SingleItem to_itm) { throw new ArgumentOutOfRangeException(nameof(to_guid)); }
+                to_itm.add(to_idx.Value, this.entries[entry], entry);
+            }
+            this.active_entries.Add(entry);
+        }
+
+        private void add_item(ItemSpec item) {
+            if (item is null) { throw new ArgumentNullException(nameof(item)); }
+            if (item.category is null) { throw new ArgumentOutOfRangeException(nameof(item)); }
+            if (!this.items.ContainsKey(item.category)) {
+                this.items[item.category] = new List<ItemSpec>();
+            }
+            if (this.items[item.category].Contains(item)) { return; }
+            this.items[item.category].Add(item);
+            this.items[item.category].Sort((x, y) => x.name.CompareTo(y.name));
+        }
+
+        public Guid add_entry(Guid to_guid, int? to_idx, InventoryEntry entry, Guid? guid = null) {
+            if (entry is null) { throw new ArgumentNullException(nameof(entry)); }
+            if ((guid is not null) && (this.active_entries.Contains(guid.Value))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+            if (this.entries.ContainsValue(entry)) { throw new ArgumentOutOfRangeException(nameof(entry)); }
+
+            this.add_item(entry.item);
+            Guid ent_guid = guid ?? Guid.NewGuid();
+            this.entries[ent_guid] = entry;
+            this.restore_entry(ent_guid, to_guid, to_idx);
+            return ent_guid;
+        }
+        public Guid add_entry(Guid to_guid, InventoryEntry entry, Guid? guid = null) {
+            return this.add_entry(to_guid, null, entry, guid);
+        }
+
+        public void remove_entry(Guid entry, Guid from_guid, int? from_idx = null) {
+            if (!this.entries.ContainsKey(entry)) { throw new ArgumentOutOfRangeException(nameof(entry)); }
+            if (!this.active_entries.Contains(entry)) { throw new ArgumentOutOfRangeException(nameof(entry)); }
+
+            if (from_idx is null) {
+                if (!this.inventories.ContainsKey(from_guid)) { throw new ArgumentOutOfRangeException(nameof(from_guid)); }
+                this.inventories[from_guid].remove(entry);
+            }
+            else {
+                if (!this.entries.ContainsKey(from_guid)) { throw new ArgumentOutOfRangeException(nameof(from_guid)); }
+                if (this.entries[from_guid] is not SingleItem from_itm) { throw new ArgumentOutOfRangeException(nameof(from_guid)); }
+                from_itm.remove(from_idx.Value, entry);
+            }
+            this.purge_inventory_entry(this.entries[entry]);
+            this.active_entries.Remove(entry);
+        }
+    }
 }
