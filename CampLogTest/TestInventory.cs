@@ -445,7 +445,23 @@ namespace CampLogTest {
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
-        public void test_unidentified_bounds_checking() {
+        public void test_count_too_small() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec itm = new ItemSpec("Gem", cat, 100, 0);
+            ItemStack _ = new ItemStack(itm, -1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_unidentified_too_small() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec itm = new ItemSpec("Gem", cat, 100, 0);
+            ItemStack _ = new ItemStack(itm, 4, -1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_unidentified_too_large() {
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec itm = new ItemSpec("Gem", cat, 100, 0);
             ItemStack _ = new ItemStack(itm, 4, 5);

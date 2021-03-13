@@ -162,8 +162,8 @@ namespace CampLog {
 
     [DataContract(IsReference = true)]
     public class ItemStack : InventoryEntry {
-        [DataMember] public ulong count;
-        [DataMember] public ulong unidentified;
+        [DataMember] public long count;
+        [DataMember] public long unidentified;
 
         public override string name {
             get {
@@ -178,9 +178,10 @@ namespace CampLog {
         public override decimal weight { get => this.count * this.item.weight; }
         public override decimal value { get => this.count * this.item.value; }
 
-        public ItemStack(ItemSpec item, ulong count = 1, ulong unidentified = 0) {
+        public ItemStack(ItemSpec item, long count = 1, long unidentified = 0) {
             if (item is null) { throw new ArgumentNullException(nameof(item)); }
-            if (unidentified > count) { throw new ArgumentOutOfRangeException(nameof(unidentified)); }
+            if (count <= 0) { throw new ArgumentOutOfRangeException(nameof(count)); }
+            if ((unidentified < 0) || (unidentified > count)) { throw new ArgumentOutOfRangeException(nameof(unidentified)); }
 
             this.item = item;
             this.count = count;
