@@ -157,6 +157,63 @@ namespace CampLog {
             if (!this.contents.ContainsKey(guid)) { throw new ArgumentOutOfRangeException(nameof(guid)); }
             this.contents.Remove(guid);
         }
+
+        public Guid merge(Guid ent1, Guid ent2, Guid? guid = null) {
+            if (!this.contents.ContainsKey(ent1)) { throw new ArgumentOutOfRangeException(nameof(ent1)); }
+            if (!this.contents.ContainsKey(ent2)) { throw new ArgumentOutOfRangeException(nameof(ent2)); }
+            if (this.contents[ent1].item != this.contents[ent2].item) { throw new InvalidOperationException(); }
+
+            ItemStack stack1 = this.contents[ent1] as ItemStack, stack2 = this.contents[ent2] as ItemStack;
+            SingleItem si1 = this.contents[ent1] as SingleItem, si2 = this.contents[ent2] as SingleItem;
+
+            if (stack1 is not null) {
+                // ent1 is a stack; merge ent2 into it
+                if ((guid is not null) && (guid.Value != ent1)) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+                if (stack2 is not null) {
+                    // ent2 is a stack too; just combine their counts
+                    stack1.count += stack2.count;
+                    stack1.unidentified += stack2.unidentified;
+                }
+                else {
+                    // ent2 is a single item; make sure it doesn't have anything unique then add it in
+                    if ((si2 is null) || (si2.value_override is not null) || (si2.containers is not null) || (si2.properties.Count > 0)) {
+                        throw new ArgumentOutOfRangeException(nameof(ent2));
+                    }
+                    stack1.count += 1;
+                    if (si2.unidentified) {
+                        stack1.unidentified += 1;
+                    }
+                }
+                this.remove(ent2);
+                return ent1;
+            }
+            if (stack2 is not null) {
+                // ent1 isn't a stack but ent2 is; make sure ent1 doesn't have anything unique then add it into ent2
+                if ((guid is not null) && (guid.Value != ent2)) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+                if ((si1 is null) || (si1.value_override is not null) || (si1.containers is not null) || (si1.properties.Count > 0)) {
+                    throw new ArgumentOutOfRangeException(nameof(ent1));
+                }
+                stack2.count += 1;
+                if (si1.unidentified) {
+                    stack2.unidentified += 1;
+                }
+                this.remove(ent1);
+                return ent2;
+            }
+            // neither ent1 nor ent2 is a stack; make sure neither has anything unique then merge into a new stack
+            if ((si1 is null) || (si1.value_override is not null) || (si1.containers is not null) || (si1.properties.Count > 0)) {
+                throw new ArgumentOutOfRangeException(nameof(ent1));
+            }
+            if ((si2 is null) || (si2.value_override is not null) || (si2.containers is not null) || (si2.properties.Count > 0)) {
+                throw new ArgumentOutOfRangeException(nameof(ent2));
+            }
+            long unidentified = (si1.unidentified ? 1 : 0) + (si2.unidentified ? 1 : 0);
+            ItemStack merged_stack = new ItemStack(si1.item, 2, unidentified);
+            Guid result = this.add(merged_stack, guid);
+            this.remove(ent1);
+            this.remove(ent2);
+            return result;
+        }
     }
 
 
@@ -192,6 +249,7 @@ namespace CampLog {
 
     [DataContract(IsReference = true)]
     public class SingleItem : InventoryEntry {
+        [DataMember] public bool unidentified;
         [DataMember] public decimal? value_override;
         [DataMember] public Inventory[] containers;
         public decimal contents_weight {
@@ -219,10 +277,11 @@ namespace CampLog {
         public override decimal weight { get => this.item.weight + this.contents_weight; }
         public override decimal value { get => (this.value_override ?? this.item.value) + this.contents_value; }
 
-        public SingleItem(ItemSpec item, decimal? value_override = null) {
+        public SingleItem(ItemSpec item, bool unidentified = false, decimal? value_override = null) {
             if (item is null) { throw new ArgumentNullException(nameof(item)); }
 
             this.item = item;
+            this.unidentified = unidentified;
             this.value_override = value_override;
             if (item.containers is not null) {
                 this.containers = new Inventory[item.containers.Length];

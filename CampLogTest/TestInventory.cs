@@ -432,6 +432,160 @@ namespace CampLogTest {
             Assert.AreEqual(inv.weight, 7);
             Assert.AreEqual(inv.value, 700);
         }
+
+        [TestMethod]
+        public void test_merge() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 3, 1), gem_stack2 = new ItemStack(gem, 5, 2);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack1);
+            Guid gem_ent2 = inv.add(gem_stack2);
+            Assert.AreEqual(inv.contents.Count, 2);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent2));
+
+            Guid new_ent = inv.merge(gem_ent1, gem_ent2);
+            Assert.AreEqual(new_ent, gem_ent1);
+            Assert.AreEqual(inv.contents.Count, 1);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsFalse(inv.contents.ContainsKey(gem_ent2));
+            Assert.AreEqual(gem_stack1.count, 8);
+            Assert.AreEqual(gem_stack1.unidentified, 3);
+        }
+
+        [TestMethod]
+        public void test_merge_stack_single() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3, 1);
+            SingleItem gem_item = new SingleItem(gem, true);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack);
+            Guid gem_ent2 = inv.add(gem_item);
+            Assert.AreEqual(inv.contents.Count, 2);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent2));
+
+            Guid new_ent = inv.merge(gem_ent1, gem_ent2);
+            Assert.AreEqual(new_ent, gem_ent1);
+            Assert.AreEqual(inv.contents.Count, 1);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsFalse(inv.contents.ContainsKey(gem_ent2));
+            Assert.AreEqual(gem_stack.count, 4);
+            Assert.AreEqual(gem_stack.unidentified, 2);
+        }
+
+        [TestMethod]
+        public void test_merge_single_stack() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3, 1);
+            SingleItem gem_item = new SingleItem(gem, true);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack);
+            Guid gem_ent2 = inv.add(gem_item);
+            Assert.AreEqual(inv.contents.Count, 2);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent2));
+
+            Guid new_ent = inv.merge(gem_ent2, gem_ent1);
+            Assert.AreEqual(new_ent, gem_ent1);
+            Assert.AreEqual(inv.contents.Count, 1);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsFalse(inv.contents.ContainsKey(gem_ent2));
+            Assert.AreEqual(gem_stack.count, 4);
+            Assert.AreEqual(gem_stack.unidentified, 2);
+        }
+
+        [TestMethod]
+        public void test_merge_single_single() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            SingleItem gem_item1 = new SingleItem(gem, true), gem_item2 = new SingleItem(gem, false);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_item1);
+            Guid gem_ent2 = inv.add(gem_item2);
+            Assert.AreEqual(inv.contents.Count, 2);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent2));
+
+            Guid new_ent = inv.merge(gem_ent1, gem_ent2);
+            Assert.AreNotEqual(new_ent, gem_ent1);
+            Assert.AreNotEqual(new_ent, gem_ent2);
+            Assert.AreEqual(inv.contents.Count, 1);
+            Assert.IsTrue(inv.contents.ContainsKey(new_ent));
+            Assert.IsFalse(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsFalse(inv.contents.ContainsKey(gem_ent2));
+
+            ItemStack stack = inv.contents[new_ent] as ItemStack;
+            Assert.IsFalse(stack is null);
+            Assert.AreEqual(stack.count, 2);
+            Assert.AreEqual(stack.unidentified, 1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void test_merge_different_items() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1), gp = new ItemSpec("GP", cat, 1, 0);
+            ItemStack gem_stack = new ItemStack(gem, 3, 1), gp_stack = new ItemStack(gp, 50);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent = inv.add(gem_stack);
+            Guid gp_ent = inv.add(gp_stack);
+
+            inv.merge(gem_ent, gp_ent);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_merge_value_override() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            SingleItem gem_item1 = new SingleItem(gem, true, 150), gem_item2 = new SingleItem(gem, false);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_item1);
+            Guid gem_ent2 = inv.add(gem_item2);
+
+            inv.merge(gem_ent1, gem_ent2);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_merge_containers() {
+            ItemCategory cat = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec sack = new ItemSpec("Handy Haversack", cat, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            SingleItem sack_item1 = new SingleItem(sack), sack_item2 = new SingleItem(sack);
+            Inventory inv = new Inventory();
+
+            Guid sack_ent1 = inv.add(sack_item1);
+            Guid sack_ent2 = inv.add(sack_item2);
+
+            inv.merge(sack_ent1, sack_ent2);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_merge_properties() {
+            ItemCategory cat = new ItemCategory("Magic", 1);
+            ItemSpec wand = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
+            SingleItem wand_item1 = new SingleItem(wand), wand_item2 = new SingleItem(wand);
+            Inventory inv = new Inventory();
+
+            wand_item1.properties["charges"] = "42";
+
+            Guid wand_ent1 = inv.add(wand_item1);
+            Guid wand_ent2 = inv.add(wand_item2);
+
+            inv.merge(wand_ent1, wand_ent2);
+        }
     }
 
 
@@ -533,6 +687,23 @@ namespace CampLogTest {
             SingleItem itm = new SingleItem(wand);
 
             Assert.AreEqual(itm.item, wand);
+            Assert.IsFalse(itm.unidentified);
+            Assert.IsNull(itm.containers);
+            Assert.AreEqual(itm.contents_weight, 0);
+            Assert.AreEqual(itm.contents_value, 0);
+            Assert.AreEqual(itm.name, "Wand of Kaplowie");
+            Assert.AreEqual(itm.weight, 1);
+            Assert.AreEqual(itm.value, 100);
+        }
+
+        [TestMethod]
+        public void test_unidentified() {
+            ItemCategory cat = new ItemCategory("Magic", 1);
+            ItemSpec wand = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
+            SingleItem itm = new SingleItem(wand, true);
+
+            Assert.AreEqual(itm.item, wand);
+            Assert.IsTrue(itm.unidentified);
             Assert.IsNull(itm.containers);
             Assert.AreEqual(itm.contents_weight, 0);
             Assert.AreEqual(itm.contents_value, 0);
@@ -545,9 +716,10 @@ namespace CampLogTest {
         public void test_value_override() {
             ItemCategory cat = new ItemCategory("Magic", 1);
             ItemSpec wand = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
-            SingleItem itm = new SingleItem(wand, 50);
+            SingleItem itm = new SingleItem(wand, false, 50);
 
             Assert.AreEqual(itm.item, wand);
+            Assert.IsFalse(itm.unidentified);
             Assert.IsNull(itm.containers);
             Assert.AreEqual(itm.contents_weight, 0);
             Assert.AreEqual(itm.contents_value, 0);
@@ -614,7 +786,7 @@ namespace CampLogTest {
             ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), sword = new ItemSpec("Longsword", c2, 30, 3),
                 sack = new ItemSpec("Handy Haversack", c3, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
             ItemStack gems = new ItemStack(gem, 5), swords = new ItemStack(sword, 2);
-            SingleItem foo = new SingleItem(sack), bar;
+            SingleItem foo = new SingleItem(sack, true), bar;
 
             foo.containers[0].add(swords);
             foo.containers[1].add(gems);
@@ -627,6 +799,7 @@ namespace CampLogTest {
                 bar = (SingleItem)(fmt.ReadObject(xr, true));
             }
             Assert.AreEqual(foo.item, bar.item);
+            Assert.AreEqual(foo.unidentified, bar.unidentified);
             Assert.AreEqual(foo.containers.Length, bar.containers.Length);
             for (int i = 0; i < foo.containers.Length; i++) {
                 Assert.AreEqual(foo.containers[i].name, bar.containers[i].name);
@@ -668,7 +841,7 @@ namespace CampLogTest {
             ItemCategory c1 = new ItemCategory("Magic", 1), c2 = new ItemCategory("Weapons", .5m);
             ItemSpec wand = new ItemSpec("Wand of Kaplowie", c1, 100, 1), sword = new ItemSpec("Longsword", c2, 30, 3);
             ItemStack sword_stack = new ItemStack(sword, 2);
-            SingleItem itm = new SingleItem(wand, 50);
+            SingleItem itm = new SingleItem(wand, false, 50);
 
             itm.add(0, sword_stack);
         }
