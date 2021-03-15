@@ -214,6 +214,32 @@ namespace CampLog {
             this.remove(ent2);
             return result;
         }
+
+        public Guid unstack(Guid ent, Guid? guid = null) {
+            if (!this.contents.ContainsKey(ent)) { throw new ArgumentOutOfRangeException(nameof(ent)); }
+            ItemStack stack = this.contents[ent] as ItemStack;
+            if ((stack is null) || (stack.count != 1)) { throw new ArgumentOutOfRangeException(nameof(ent)); }
+
+            SingleItem new_item = new SingleItem(stack.item, stack.unidentified >= 1);
+            Guid result = this.add(new_item, guid);
+            this.remove(ent);
+            return result;
+        }
+
+        public Guid split(Guid ent, long count, long unidentified, Guid? guid = null) {
+            if (!this.contents.ContainsKey(ent)) { throw new ArgumentOutOfRangeException(nameof(ent)); }
+            ItemStack stack = this.contents[ent] as ItemStack;
+            if (stack is null) { throw new ArgumentOutOfRangeException(nameof(ent)); }
+            if ((count <= 0) || (count >= stack.count)) { throw new ArgumentOutOfRangeException(nameof(count)); }
+            if ((unidentified < 0) || (unidentified > stack.unidentified) || (unidentified > count)) { throw new ArgumentOutOfRangeException(nameof(unidentified)); }
+            if ((stack.count - count) < (stack.unidentified - unidentified)) { throw new ArgumentOutOfRangeException(nameof(unidentified)); }
+
+            ItemStack new_stack = new ItemStack(stack.item, count, unidentified);
+            Guid result = this.add(new_stack, guid);
+            stack.count -= count;
+            stack.unidentified -= unidentified;
+            return result;
+        }
     }
 
 

@@ -586,6 +586,191 @@ namespace CampLogTest {
 
             inv.merge(wand_ent1, wand_ent2);
         }
+
+        [TestMethod]
+        public void test_unstack() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 1);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack);
+            Assert.AreEqual(inv.contents.Count, 1);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+
+            Guid gem_ent2 = inv.unstack(gem_ent1);
+            Assert.AreEqual(inv.contents.Count, 1);
+            Assert.IsFalse(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent2));
+
+            SingleItem gem_item = inv.contents[gem_ent2] as SingleItem;
+            Assert.IsFalse(gem_item is null);
+            Assert.AreEqual(gem_item.item, gem);
+            Assert.IsFalse(gem_item.unidentified);
+        }
+
+        [TestMethod]
+        public void test_unstack_unidentified() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 1, 1);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack);
+            Assert.AreEqual(inv.contents.Count, 1);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+
+            Guid gem_ent2 = inv.unstack(gem_ent1);
+            Assert.AreEqual(inv.contents.Count, 1);
+            Assert.IsFalse(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent2));
+
+            SingleItem gem_item = inv.contents[gem_ent2] as SingleItem;
+            Assert.IsFalse(gem_item is null);
+            Assert.AreEqual(gem_item.item, gem);
+            Assert.IsTrue(gem_item.unidentified);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_unstack_non_stack() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            SingleItem gem_item = new SingleItem(gem);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent = inv.add(gem_item);
+
+            inv.unstack(gem_ent);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_unstack_more_than_one() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 2, 1);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent = inv.add(gem_stack);
+
+            inv.unstack(gem_ent);
+        }
+
+        [TestMethod]
+        public void test_split() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 8, 3);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack1);
+            Assert.AreEqual(inv.contents.Count, 1);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+
+            Guid gem_ent2 = inv.split(gem_ent1, 2, 1);
+            Assert.AreEqual(inv.contents.Count, 2);
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent1));
+            Assert.IsTrue(inv.contents.ContainsKey(gem_ent2));
+
+            ItemStack gem_stack2 = inv.contents[gem_ent2] as ItemStack;
+            Assert.IsFalse(gem_stack2 is null);
+            Assert.AreEqual(gem_stack1.count, 6);
+            Assert.AreEqual(gem_stack1.unidentified, 2);
+            Assert.AreEqual(gem_stack2.count, 2);
+            Assert.AreEqual(gem_stack2.unidentified, 1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_split_non_stack() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            SingleItem gem_item = new SingleItem(gem);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent = inv.add(gem_item);
+
+            inv.split(gem_ent, 1, 0);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_split_count_too_low() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 8, 3);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack1);
+
+            inv.split(gem_ent1, -1, 0);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_split_count_too_high() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 8, 3);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack1);
+
+            inv.split(gem_ent1, 10, 0);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_split_unidentified_too_low() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 8, 3);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack1);
+
+            inv.split(gem_ent1, 2, -1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_split_unidentified_too_high() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 8, 3);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack1);
+
+            inv.split(gem_ent1, 2, 4);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_split_unidentified_higher_than_split_count() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 8, 3);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack1);
+
+            inv.split(gem_ent1, 1, 2);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_split_remaining_unidentified_too_high() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 8, 3);
+            Inventory inv = new Inventory();
+
+            Guid gem_ent1 = inv.add(gem_stack1);
+
+            inv.split(gem_ent1, 6, 0);
+        }
     }
 
 
