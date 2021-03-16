@@ -1646,5 +1646,188 @@ namespace CampLogTest {
 
             domain.remove_entry(inv, gem_ent);
         }
+
+        [TestMethod]
+        public void test_merge_entries() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            SingleItem gem_item1 = new SingleItem(gem, true), gem_item2 = new SingleItem(gem, false);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent1 = domain.add_entry(inv, gem_item1);
+            Guid gem_ent2 = domain.add_entry(inv, gem_item2);
+
+            Guid new_ent = domain.merge_entries(inv, gem_ent1, gem_ent2);
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent1));
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent2));
+            Assert.IsTrue(domain.entries.ContainsKey(new_ent));
+            Assert.IsFalse(domain.active_entries.Contains(gem_ent1));
+            Assert.IsFalse(domain.active_entries.Contains(gem_ent2));
+            Assert.IsTrue(domain.active_entries.Contains(new_ent));
+        }
+
+        [TestMethod]
+        public void test_merge_entries_container() {
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), sack = new ItemSpec("Handy Haversack", c2, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            SingleItem sack_itm = new SingleItem(sack), gem_item1 = new SingleItem(gem, true), gem_item2 = new SingleItem(gem, false);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+            Guid sack_ent = domain.add_entry(inv, sack_itm);
+
+            Guid gem_ent1 = domain.add_entry(sack_ent, 0, gem_item1);
+            Guid gem_ent2 = domain.add_entry(sack_ent, 0, gem_item2);
+
+            Guid new_ent = domain.merge_entries(sack_ent, 0, gem_ent1, gem_ent2);
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent1));
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent2));
+            Assert.IsTrue(domain.entries.ContainsKey(new_ent));
+            Assert.IsFalse(domain.active_entries.Contains(gem_ent1));
+            Assert.IsFalse(domain.active_entries.Contains(gem_ent2));
+            Assert.IsTrue(domain.active_entries.Contains(new_ent));
+            Assert.IsFalse(sack_itm.containers[0].contents.ContainsKey(gem_ent1));
+            Assert.IsFalse(sack_itm.containers[0].contents.ContainsKey(gem_ent2));
+            Assert.IsTrue(sack_itm.containers[0].contents.ContainsKey(new_ent));
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_merge_entries_removed() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            SingleItem gem_item1 = new SingleItem(gem, true), gem_item2 = new SingleItem(gem, false);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent1 = domain.add_entry(inv, gem_item1);
+            Guid gem_ent2 = domain.add_entry(inv, gem_item2);
+            domain.remove_entry(inv, gem_ent1);
+
+            domain.merge_entries(inv, gem_ent1, gem_ent2);
+        }
+
+        [TestMethod]
+        public void test_unstack_entry() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 1);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent1 = domain.add_entry(inv, gem_stack);
+
+            Guid gem_ent2 = domain.unstack_entry(inv, gem_ent1);
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent1));
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent2));
+            Assert.IsFalse(domain.active_entries.Contains(gem_ent1));
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent2));
+        }
+
+        [TestMethod]
+        public void test_unstack_entry_container() {
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), sack = new ItemSpec("Handy Haversack", c2, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            SingleItem sack_itm = new SingleItem(sack);
+            ItemStack gem_stack = new ItemStack(gem, 1);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+            Guid sack_ent = domain.add_entry(inv, sack_itm);
+
+            Guid gem_ent1 = domain.add_entry(sack_ent, 0, gem_stack);
+
+            Guid gem_ent2 = domain.unstack_entry(sack_ent, 0, gem_ent1);
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent1));
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent2));
+            Assert.IsFalse(domain.active_entries.Contains(gem_ent1));
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent2));
+            Assert.IsFalse(sack_itm.containers[0].contents.ContainsKey(gem_ent1));
+            Assert.IsTrue(sack_itm.containers[0].contents.ContainsKey(gem_ent2));
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_unstack_entry_removed() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 1);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent1 = domain.add_entry(inv, gem_stack);
+            domain.remove_entry(inv, gem_ent1);
+
+            domain.unstack_entry(inv, gem_ent1);
+        }
+
+        [TestMethod]
+        public void test_split_entry() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 8, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent1 = domain.add_entry(inv, gem_stack1);
+
+            Guid gem_ent2 = domain.split_entry(inv, gem_ent1, 2, 1);
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent1));
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent2));
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent1));
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent2));
+
+            ItemStack gem_stack2 = domain.entries[gem_ent2] as ItemStack;
+            Assert.IsFalse(gem_stack2 is null);
+            Assert.AreEqual(gem_stack1.count, 6);
+            Assert.AreEqual(gem_stack1.unidentified, 2);
+            Assert.AreEqual(gem_stack2.count, 2);
+            Assert.AreEqual(gem_stack2.unidentified, 1);
+        }
+
+        [TestMethod]
+        public void test_split_entry_container() {
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), sack = new ItemSpec("Handy Haversack", c2, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            SingleItem sack_itm = new SingleItem(sack);
+            ItemStack gem_stack1 = new ItemStack(gem, 8, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+            Guid sack_ent = domain.add_entry(inv, sack_itm);
+
+            Guid gem_ent1 = domain.add_entry(sack_ent, 0, gem_stack1);
+
+            Guid gem_ent2 = domain.split_entry(sack_ent, 0, gem_ent1, 2, 1);
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent1));
+            Assert.IsTrue(domain.entries.ContainsKey(gem_ent2));
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent1));
+            Assert.IsTrue(domain.active_entries.Contains(gem_ent2));
+            Assert.IsTrue(sack_itm.containers[0].contents.ContainsKey(gem_ent1));
+            Assert.IsTrue(sack_itm.containers[0].contents.ContainsKey(gem_ent2));
+
+            ItemStack gem_stack2 = domain.entries[gem_ent2] as ItemStack;
+            Assert.IsFalse(gem_stack2 is null);
+            Assert.AreEqual(gem_stack1.count, 6);
+            Assert.AreEqual(gem_stack1.unidentified, 2);
+            Assert.AreEqual(gem_stack2.count, 2);
+            Assert.AreEqual(gem_stack2.unidentified, 1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_split_entry_removed() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 8, 3);
+            InventoryDomain domain = new InventoryDomain();
+            Guid inv = domain.new_inventory("Test Inventory");
+
+            Guid gem_ent1 = domain.add_entry(inv, gem_stack1);
+            domain.remove_entry(inv, gem_ent1);
+
+            domain.split_entry(inv, gem_ent1, 2, 1);
+        }
     }
 }

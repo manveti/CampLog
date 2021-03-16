@@ -386,6 +386,16 @@ namespace CampLog {
             this.inventories.Remove(guid);
         }
 
+        private Inventory get_inventory(Guid guid, int? idx) {
+            if (idx is null) {
+                if (!this.inventories.ContainsKey(guid)) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+                return this.inventories[guid];
+            }
+            if ((!this.entries.ContainsKey(guid)) || (!this.active_entries.Contains(guid))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+            if (this.entries[guid] is not SingleItem to_itm) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+            return to_itm.containers[idx.Value];
+        }
+
         public void move_entry(Guid entry, Guid from_guid, int? from_idx, Guid to_guid, int? to_idx = null) {
             if ((!this.entries.ContainsKey(entry)) || (!this.active_entries.Contains(entry))) { throw new ArgumentOutOfRangeException(nameof(entry)); }
 
@@ -481,6 +491,62 @@ namespace CampLog {
             }
             this.purge_inventory_entry(this.entries[entry]);
             this.active_entries.Remove(entry);
+        }
+
+        public Guid merge_entries(Guid in_guid, int? in_idx, Guid ent1, Guid ent2, Guid? guid = null) {
+            if ((!this.entries.ContainsKey(ent1)) || (!this.active_entries.Contains(ent1))) { throw new ArgumentOutOfRangeException(nameof(ent1)); }
+            if ((!this.entries.ContainsKey(ent2)) || (!this.active_entries.Contains(ent2))) { throw new ArgumentOutOfRangeException(nameof(ent2)); }
+            if ((guid is not null) && (guid != ent1) && (guid != ent2) && (this.entries.ContainsKey(guid.Value))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+
+            Inventory inv = this.get_inventory(in_guid, in_idx);
+            Guid result = inv.merge(ent1, ent2, guid);
+            if (!inv.contents.ContainsKey(ent1)) {
+                this.active_entries.Remove(ent1);
+            }
+            if (!inv.contents.ContainsKey(ent2)) {
+                this.active_entries.Remove(ent2);
+            }
+            if (!this.entries.ContainsKey(result)) {
+                this.entries[result] = inv.contents[result];
+            }
+            this.active_entries.Add(result);
+            return result;
+        }
+        public Guid merge_entries(Guid in_guid, Guid ent1, Guid ent2, Guid? guid = null) {
+            return this.merge_entries(in_guid, null, ent1, ent2, guid);
+        }
+
+        public Guid unstack_entry(Guid in_guid, int? in_idx, Guid ent, Guid? guid = null) {
+            if ((!this.entries.ContainsKey(ent)) || (!this.active_entries.Contains(ent))) { throw new ArgumentOutOfRangeException(nameof(ent)); }
+            if ((guid is not null) && (this.active_entries.Contains(guid.Value))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+
+            Inventory inv = this.get_inventory(in_guid, in_idx);
+            Guid result = inv.unstack(ent, guid);
+            this.active_entries.Remove(ent);
+            if (!this.entries.ContainsKey(result)) {
+                this.entries[result] = inv.contents[result];
+            }
+            this.active_entries.Add(result);
+            return result;
+        }
+        public Guid unstack_entry(Guid in_guid, Guid ent, Guid? guid = null) {
+            return this.unstack_entry(in_guid, null, ent, guid);
+        }
+
+        public Guid split_entry(Guid in_guid, int? in_idx, Guid ent, long count, long unidentified, Guid? guid = null) {
+            if ((!this.entries.ContainsKey(ent)) || (!this.active_entries.Contains(ent))) { throw new ArgumentOutOfRangeException(nameof(ent)); }
+            if ((guid is not null) && (this.active_entries.Contains(guid.Value))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+
+            Inventory inv = this.get_inventory(in_guid, in_idx);
+            Guid result = inv.split(ent, count, unidentified, guid);
+            if (!this.entries.ContainsKey(result)) {
+                this.entries[result] = inv.contents[result];
+            }
+            this.active_entries.Add(result);
+            return result;
+        }
+        public Guid split_entry(Guid in_guid, Guid ent, long count, long unidentified, Guid? guid = null) {
+            return this.split_entry(in_guid, null, ent, count, unidentified, guid);
         }
     }
 }
