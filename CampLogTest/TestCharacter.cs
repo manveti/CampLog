@@ -20,6 +20,13 @@ namespace CampLogTest {
             }
             Assert.AreEqual(foo.value, bar.value);
         }
+
+        [TestMethod]
+        public void test_copy() {
+            CharTextProperty foo = new CharTextProperty("blah"), bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.AreEqual(foo.value, bar.value);
+        }
     }
 
 
@@ -35,6 +42,13 @@ namespace CampLogTest {
                 System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
                 bar = (CharNumProperty)(fmt.ReadObject(xr, true));
             }
+            Assert.AreEqual(foo.value, bar.value);
+        }
+
+        [TestMethod]
+        public void test_copy() {
+            CharNumProperty foo = new CharNumProperty(1.3m), bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
             Assert.AreEqual(foo.value, bar.value);
         }
     }
@@ -54,6 +68,21 @@ namespace CampLogTest {
                 System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
                 bar = (CharSetProperty)(fmt.ReadObject(xr, true));
             }
+            Assert.AreEqual(foo.value.Count, bar.value.Count);
+            foreach (string s in foo.value) {
+                Assert.IsTrue(bar.value.Contains(s));
+            }
+        }
+
+        [TestMethod]
+        public void test_copy() {
+            CharSetProperty foo = new CharSetProperty(), bar;
+            foo.value.Add("blah");
+            foo.value.Add("bloh");
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.IsFalse(ReferenceEquals(foo.value, bar.value));
             Assert.AreEqual(foo.value.Count, bar.value.Count);
             foreach (string s in foo.value) {
                 Assert.IsTrue(bar.value.Contains(s));
@@ -98,6 +127,39 @@ namespace CampLogTest {
             Assert.IsTrue(sp.value.Contains("bloh"));
             Assert.IsTrue(sp.value.Contains("bleh"));
         }
+
+        [TestMethod]
+        public void test_copy() {
+            CharDictProperty foo = new CharDictProperty(), bar;
+            CharTextProperty tprop = new CharTextProperty("blah");
+            CharNumProperty nprop = new CharNumProperty(1.23m);
+            CharSetProperty sprop = new CharSetProperty();
+            sprop.value.Add("bloh");
+            sprop.value.Add("bleh");
+            foo.value["Some Text"] = tprop;
+            foo.value["Some Number"] = nprop;
+            foo.value["Some Collection"] = sprop;
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.IsFalse(ReferenceEquals(foo.value, bar.value));
+            Assert.AreEqual(foo.value.Count, bar.value.Count);
+            foreach (string s in foo.value.Keys) {
+                Assert.IsTrue(bar.value.ContainsKey(s));
+                Assert.IsFalse(ReferenceEquals(foo.value[s], bar.value[s]));
+            }
+            CharTextProperty tp = bar.value["Some Text"] as CharTextProperty;
+            Assert.IsFalse(tp is null);
+            Assert.AreEqual(tp.value, "blah");
+            CharNumProperty np = bar.value["Some Number"] as CharNumProperty;
+            Assert.IsFalse(np is null);
+            Assert.AreEqual(np.value, 1.23m);
+            CharSetProperty sp = bar.value["Some Collection"] as CharSetProperty;
+            Assert.IsFalse(sp is null);
+            Assert.AreEqual(sp.value.Count, 2);
+            Assert.IsTrue(sp.value.Contains("bloh"));
+            Assert.IsTrue(sp.value.Contains("bleh"));
+        }
     }
 
 
@@ -125,6 +187,40 @@ namespace CampLogTest {
             Assert.AreEqual(foo.properties.value.Count, bar.properties.value.Count);
             foreach (string s in foo.properties.value.Keys) {
                 Assert.IsTrue(bar.properties.value.ContainsKey(s));
+            }
+            CharTextProperty tp = bar.properties.value["Some Text"] as CharTextProperty;
+            Assert.IsFalse(tp is null);
+            Assert.AreEqual(tp.value, "blah");
+            CharNumProperty np = bar.properties.value["Some Number"] as CharNumProperty;
+            Assert.IsFalse(np is null);
+            Assert.AreEqual(np.value, 1.23m);
+            CharSetProperty sp = bar.properties.value["Some Collection"] as CharSetProperty;
+            Assert.IsFalse(sp is null);
+            Assert.AreEqual(sp.value.Count, 2);
+            Assert.IsTrue(sp.value.Contains("bloh"));
+            Assert.IsTrue(sp.value.Contains("bleh"));
+        }
+
+        [TestMethod]
+        public void test_copy() {
+            Character foo = new Character("Somebody"), bar;
+            CharTextProperty tprop = new CharTextProperty("blah");
+            CharNumProperty nprop = new CharNumProperty(1.23m);
+            CharSetProperty sprop = new CharSetProperty();
+            sprop.value.Add("bloh");
+            sprop.value.Add("bleh");
+            foo.properties.value["Some Text"] = tprop;
+            foo.properties.value["Some Number"] = nprop;
+            foo.properties.value["Some Collection"] = sprop;
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.IsFalse(ReferenceEquals(foo.properties, bar.properties));
+            Assert.AreEqual(foo.name, bar.name);
+            Assert.AreEqual(foo.properties.value.Count, bar.properties.value.Count);
+            foreach (string s in foo.properties.value.Keys) {
+                Assert.IsTrue(bar.properties.value.ContainsKey(s));
+                Assert.IsFalse(ReferenceEquals(foo.properties.value[s], bar.properties.value[s]));
             }
             CharTextProperty tp = bar.properties.value["Some Text"] as CharTextProperty;
             Assert.IsFalse(tp is null);

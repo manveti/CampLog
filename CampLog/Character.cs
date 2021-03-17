@@ -8,7 +8,9 @@ namespace CampLog {
     [KnownType(typeof(CharSetProperty))]
     [KnownType(typeof(CharDictProperty))]
     [Serializable]
-    public abstract class CharProperty { }
+    public abstract class CharProperty {
+        public abstract CharProperty copy();
+    }
 
 
     [Serializable]
@@ -17,6 +19,10 @@ namespace CampLog {
 
         public CharTextProperty(string value) {
             this.value = value;
+        }
+
+        public override CharTextProperty copy() {
+            return new CharTextProperty(this.value);
         }
     }
 
@@ -28,6 +34,10 @@ namespace CampLog {
         public CharNumProperty(decimal value) {
             this.value = value;
         }
+
+        public override CharNumProperty copy() {
+            return new CharNumProperty(this.value);
+        }
     }
 
 
@@ -38,6 +48,12 @@ namespace CampLog {
         public CharSetProperty() {
             this.value = new HashSet<string>();
         }
+
+        public override CharSetProperty copy() {
+            CharSetProperty result = new CharSetProperty();
+            result.value.UnionWith(this.value);
+            return result;
+        }
     }
 
 
@@ -47,6 +63,14 @@ namespace CampLog {
 
         public CharDictProperty() {
             this.value = new Dictionary<string, CharProperty>();
+        }
+
+        public override CharDictProperty copy() {
+            CharDictProperty result = new CharDictProperty();
+            foreach (string s in this.value.Keys) {
+                result.value[s] = this.value[s].copy();
+            }
+            return result;
         }
     }
 
@@ -59,6 +83,12 @@ namespace CampLog {
         public Character(string name) {
             this.name = name;
             this.properties = new CharDictProperty();
+        }
+
+        public Character copy() {
+            return new Character(this.name) {
+                properties = this.properties.copy()
+            };
         }
 
         public CharProperty get_property(List<string> path) {
