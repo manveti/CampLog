@@ -110,4 +110,37 @@ namespace CampLog {
             return result;
         }
     }
+
+
+    [Serializable]
+    public class CharacterDomain {
+        public Dictionary<Guid, Character> characters;
+        public HashSet<Guid> active_characters;
+
+        public CharacterDomain() {
+            this.characters = new Dictionary<Guid, Character>();
+            this.active_characters = new HashSet<Guid>();
+        }
+
+        public Guid add_character(Character chr, Guid? guid = null) {
+            if (chr is null) { throw new ArgumentNullException(nameof(chr)); }
+            if ((guid is not null) && (this.characters.ContainsKey(guid.Value))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+            if (this.characters.ContainsValue(chr)) { throw new ArgumentOutOfRangeException(nameof(chr)); }
+
+            Guid chr_guid = guid ?? Guid.NewGuid();
+            this.characters[chr_guid] = chr;
+            this.active_characters.Add(chr_guid);
+            return chr_guid;
+        }
+
+        public void remove_character(Guid guid) {
+            if ((!this.characters.ContainsKey(guid)) || (!this.active_characters.Contains(guid))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+            this.active_characters.Remove(guid);
+        }
+
+        public void restore_character(Guid guid) {
+            if ((!this.characters.ContainsKey(guid)) || (this.active_characters.Contains(guid))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
+            this.active_characters.Add(guid);
+        }
+    }
 }

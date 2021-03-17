@@ -250,4 +250,139 @@ namespace CampLogTest {
             c.remove_property(new List<string>() { "Spells" });
         }
     }
+
+
+    [TestClass]
+    public class TestCharacterDomain {
+        [TestMethod]
+        public void test_serialization() {
+            Character c1 = new Character("Somebody"), c2 = new Character("Mr. Boddy");
+            CharacterDomain foo = new CharacterDomain(), bar;
+
+            foo.add_character(c1);
+            Guid mr_boddy = foo.add_character(c2);
+            foo.remove_character(mr_boddy);
+
+            DataContractSerializer fmt = new DataContractSerializer(typeof(CharacterDomain));
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
+                fmt.WriteObject(ms, foo);
+                ms.Seek(0, System.IO.SeekOrigin.Begin);
+                System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
+                bar = (CharacterDomain)(fmt.ReadObject(xr, true));
+            }
+            Assert.AreEqual(foo.characters.Count, bar.characters.Count);
+            foreach (Guid chr in foo.characters.Keys) {
+                Assert.IsTrue(bar.characters.ContainsKey(chr));
+                Assert.AreEqual(foo.characters[chr].name, bar.characters[chr].name);
+            }
+            Assert.AreEqual(foo.active_characters.Count, bar.active_characters.Count);
+            foreach (Guid chr in foo.active_characters) {
+                Assert.IsTrue(bar.active_characters.Contains(chr));
+            }
+        }
+
+        [TestMethod]
+        public void test_add_character() {
+            CharacterDomain domain = new CharacterDomain();
+            Character chr = new Character("Somebody");
+
+            Guid chr_guid = domain.add_character(chr);
+            Assert.AreEqual(domain.characters.Count, 1);
+            Assert.IsTrue(domain.characters.ContainsKey(chr_guid));
+            Assert.AreEqual(domain.characters[chr_guid], chr);
+            Assert.AreEqual(domain.active_characters.Count, 1);
+            Assert.IsTrue(domain.active_characters.Contains(chr_guid));
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void test_add_character_null() {
+            CharacterDomain domain = new CharacterDomain();
+
+            domain.add_character(null);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_add_character_duplicate_character() {
+            CharacterDomain domain = new CharacterDomain();
+            Character chr = new Character("Somebody");
+
+            domain.add_character(chr);
+            domain.add_character(chr);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_add_character_duplicate_guid() {
+            CharacterDomain domain = new CharacterDomain();
+            Character chr1 = new Character("Somebody"), chr2 = new Character("Someone Else");
+
+            Guid chr_guid = domain.add_character(chr1);
+            domain.add_character(chr2, chr_guid);
+        }
+
+        [TestMethod]
+        public void test_remove_character() {
+            CharacterDomain domain = new CharacterDomain();
+            Character chr = new Character("Somebody");
+            Guid chr_guid = domain.add_character(chr);
+
+            domain.remove_character(chr_guid);
+            Assert.AreEqual(domain.characters.Count, 1);
+            Assert.IsTrue(domain.characters.ContainsKey(chr_guid));
+            Assert.AreEqual(domain.characters[chr_guid], chr);
+            Assert.AreEqual(domain.active_characters.Count, 0);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_remove_character_inactive() {
+            CharacterDomain domain = new CharacterDomain();
+            Character chr = new Character("Somebody");
+            Guid chr_guid = domain.add_character(chr);
+
+            domain.remove_character(chr_guid);
+            domain.remove_character(chr_guid);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_remove_character_no_such_guid() {
+            CharacterDomain domain = new CharacterDomain();
+            domain.remove_character(Guid.NewGuid());
+        }
+
+        [TestMethod]
+        public void test_restore_character() {
+            CharacterDomain domain = new CharacterDomain();
+            Character chr = new Character("Somebody");
+            Guid chr_guid = domain.add_character(chr);
+
+            domain.remove_character(chr_guid);
+            domain.restore_character(chr_guid);
+            Assert.AreEqual(domain.characters.Count, 1);
+            Assert.IsTrue(domain.characters.ContainsKey(chr_guid));
+            Assert.AreEqual(domain.characters[chr_guid], chr);
+            Assert.AreEqual(domain.active_characters.Count, 1);
+            Assert.IsTrue(domain.active_characters.Contains(chr_guid));
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_restore_character_active() {
+            CharacterDomain domain = new CharacterDomain();
+            Character chr = new Character("Somebody");
+            Guid chr_guid = domain.add_character(chr);
+
+            domain.restore_character(chr_guid);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_restore_character_no_such_guid() {
+            CharacterDomain domain = new CharacterDomain();
+            domain.restore_character(Guid.NewGuid());
+        }
+    }
 }
