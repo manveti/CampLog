@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace CampLog {
+    [KnownType(typeof(ActionCharacterSet))]
     [Serializable]
     public abstract class Action {
         public abstract string description { get; }
@@ -11,5 +13,47 @@ namespace CampLog {
     }
 
 
-    //TODO: Event (collection of Actions, plus description, timestamps, etc.)
+    [Serializable]
+    public class Event : IComparable<Event> {
+        public decimal timestamp;
+        public DateTime created;
+        public string description;
+        public List<Action> actions;
+
+        public Event(decimal timestamp, DateTime created, string description, List<Action> actions = null) {
+            this.timestamp = timestamp;
+            this.created = created;
+            this.description = description;
+            if (actions is null) {
+                this.actions = new List<Action>();
+            }
+            else {
+                this.actions = actions;
+            }
+        }
+
+        public int CompareTo(Event other) {
+            int result;
+
+            if (other is null) { return 1; }
+
+            result = this.timestamp.CompareTo(other.timestamp);
+            if (result == 0) {
+                result = this.created.CompareTo(other.created);
+            }
+            return result;
+        }
+
+        public void apply(CampaignState state) {
+            foreach (Action action in this.actions) {
+                action.apply(state);
+            }
+        }
+
+        public void revert(CampaignState state) {
+            for (int i = this.actions.Count - 1; i >= 0; i--) {
+                this.actions[i].revert(state);
+            }
+        }
+    }
 }
