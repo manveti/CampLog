@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CampLog {
     [Serializable]
-    public class ActionCharacterSet : Action {
+    public class ActionCharacterSet : EventAction {
         public Guid guid;
         public Character from;
         public Character to;

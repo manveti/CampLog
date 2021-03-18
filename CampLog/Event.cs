@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace CampLog {
     [KnownType(typeof(ActionCharacterSet))]
     [Serializable]
-    public abstract class Action {
+    public abstract class EventAction {
         public abstract string description { get; }
 
         public abstract void apply(CampaignState state);
@@ -18,14 +18,14 @@ namespace CampLog {
         public decimal timestamp;
         public DateTime created;
         public string description;
-        public List<Action> actions;
+        public List<EventAction> actions;
 
-        public Event(decimal timestamp, DateTime created, string description, List<Action> actions = null) {
+        public Event(decimal timestamp, DateTime created, string description, List<EventAction> actions = null) {
             this.timestamp = timestamp;
             this.created = created;
             this.description = description;
             if (actions is null) {
-                this.actions = new List<Action>();
+                this.actions = new List<EventAction>();
             }
             else {
                 this.actions = actions;
@@ -45,7 +45,7 @@ namespace CampLog {
         }
 
         public void apply(CampaignState state) {
-            foreach (Action action in this.actions) {
+            foreach (EventAction action in this.actions) {
                 action.apply(state);
             }
         }
