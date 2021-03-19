@@ -10,6 +10,8 @@ namespace CampLog {
     [Serializable]
     public abstract class CharProperty {
         public abstract CharProperty copy();
+        public abstract void add(CharProperty prop);
+        public abstract void subtract(CharProperty prop);
     }
 
 
@@ -24,6 +26,18 @@ namespace CampLog {
         public override CharTextProperty copy() {
             return new CharTextProperty(this.value);
         }
+
+        public override void add(CharProperty prop) {
+            CharTextProperty p = prop as CharTextProperty;
+            if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
+            this.value += p.value;
+        }
+
+        public override void subtract(CharProperty prop) {
+            CharTextProperty p = prop as CharTextProperty;
+            if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
+            this.value = this.value.Replace(p.value, "");
+        }
     }
 
 
@@ -37,6 +51,18 @@ namespace CampLog {
 
         public override CharNumProperty copy() {
             return new CharNumProperty(this.value);
+        }
+
+        public override void add(CharProperty prop) {
+            CharNumProperty p = prop as CharNumProperty;
+            if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
+            this.value += p.value;
+        }
+
+        public override void subtract(CharProperty prop) {
+            CharNumProperty p = prop as CharNumProperty;
+            if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
+            this.value -= p.value;
         }
     }
 
@@ -53,6 +79,18 @@ namespace CampLog {
             CharSetProperty result = new CharSetProperty();
             result.value.UnionWith(this.value);
             return result;
+        }
+
+        public override void add(CharProperty prop) {
+            CharSetProperty p = prop as CharSetProperty;
+            if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
+            this.value.UnionWith(p.value);
+        }
+
+        public override void subtract(CharProperty prop) {
+            CharSetProperty p = prop as CharSetProperty;
+            if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
+            this.value.ExceptWith(p.value);
         }
     }
 
@@ -71,6 +109,22 @@ namespace CampLog {
                 result.value[s] = this.value[s].copy();
             }
             return result;
+        }
+
+        public override void add(CharProperty prop) {
+            CharDictProperty p = prop as CharDictProperty;
+            if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
+            foreach (string k in p.value.Keys) {
+                this.value[k] = p.value[k].copy();
+            }
+        }
+
+        public override void subtract(CharProperty prop) {
+            CharDictProperty p = prop as CharDictProperty;
+            if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
+            foreach (string k in p.value.Keys) {
+                this.value.Remove(k);
+            }
         }
     }
 

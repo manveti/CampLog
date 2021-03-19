@@ -27,6 +27,20 @@ namespace CampLogTest {
             Assert.IsFalse(ReferenceEquals(foo, bar));
             Assert.AreEqual(foo.value, bar.value);
         }
+
+        [TestMethod]
+        public void test_add() {
+            CharTextProperty foo = new CharTextProperty("blah"), bar = new CharTextProperty(" bloh");
+            foo.add(bar);
+            Assert.AreEqual(foo.value, "blah bloh");
+        }
+
+        [TestMethod]
+        public void test_subtract() {
+            CharTextProperty foo = new CharTextProperty("blah bloh bleh"), bar = new CharTextProperty(" bloh");
+            foo.subtract(bar);
+            Assert.AreEqual(foo.value, "blah bleh");
+        }
     }
 
 
@@ -50,6 +64,20 @@ namespace CampLogTest {
             CharNumProperty foo = new CharNumProperty(1.3m), bar = foo.copy();
             Assert.IsFalse(ReferenceEquals(foo, bar));
             Assert.AreEqual(foo.value, bar.value);
+        }
+
+        [TestMethod]
+        public void test_add() {
+            CharNumProperty foo = new CharNumProperty(3.5m), bar = new CharNumProperty(1.3m);
+            foo.add(bar);
+            Assert.AreEqual(foo.value, 4.8m);
+        }
+
+        [TestMethod]
+        public void test_subtract() {
+            CharNumProperty foo = new CharNumProperty(3.5m), bar = new CharNumProperty(1.3m);
+            foo.subtract(bar);
+            Assert.AreEqual(foo.value, 2.2m);
         }
     }
 
@@ -87,6 +115,32 @@ namespace CampLogTest {
             foreach (string s in foo.value) {
                 Assert.IsTrue(bar.value.Contains(s));
             }
+        }
+
+        [TestMethod]
+        public void test_add() {
+            CharSetProperty foo = new CharSetProperty(), bar = new CharSetProperty();
+            foo.value.Add("blah");
+            bar.value.Add("bloh");
+
+            foo.add(bar);
+            Assert.AreEqual(foo.value.Count, 2);
+            Assert.IsTrue(foo.value.Contains("blah"));
+            Assert.IsTrue(foo.value.Contains("bloh"));
+        }
+
+        [TestMethod]
+        public void test_subtract() {
+            CharSetProperty foo = new CharSetProperty(), bar = new CharSetProperty();
+            foo.value.Add("blah");
+            foo.value.Add("bloh");
+            foo.value.Add("bleh");
+            bar.value.Add("bloh");
+
+            foo.subtract(bar);
+            Assert.AreEqual(foo.value.Count, 2);
+            Assert.IsTrue(foo.value.Contains("blah"));
+            Assert.IsTrue(foo.value.Contains("bleh"));
         }
     }
 
@@ -159,6 +213,36 @@ namespace CampLogTest {
             Assert.AreEqual(sp.value.Count, 2);
             Assert.IsTrue(sp.value.Contains("bloh"));
             Assert.IsTrue(sp.value.Contains("bleh"));
+        }
+
+        [TestMethod]
+        public void test_add() {
+            CharDictProperty foo = new CharDictProperty(), bar = new CharDictProperty();
+            CharTextProperty tprop = new CharTextProperty("blah");
+            CharNumProperty nprop = new CharNumProperty(1.23m);
+            foo.value["Some Text"] = tprop;
+            bar.value["Some Number"] = nprop;
+
+            foo.add(bar);
+            Assert.AreEqual(foo.value.Count, 2);
+            Assert.IsTrue(foo.value.ContainsKey("Some Text"));
+            Assert.IsTrue(foo.value.ContainsKey("Some Number"));
+            Assert.IsFalse(ReferenceEquals(foo.value["Some Number"], bar.value["Some Number"]));
+            Assert.AreEqual((foo.value["Some Number"] as CharNumProperty).value, (bar.value["Some Number"] as CharNumProperty).value);
+        }
+
+        [TestMethod]
+        public void test_subtract() {
+            CharDictProperty foo = new CharDictProperty(), bar = new CharDictProperty();
+            CharTextProperty tprop = new CharTextProperty("blah");
+            CharNumProperty nprop = new CharNumProperty(1.23m);
+            foo.value["Some Text"] = tprop;
+            foo.value["Some Number"] = nprop;
+            bar.value["Some Number"] = nprop;
+
+            foo.subtract(bar);
+            Assert.AreEqual(foo.value.Count, 1);
+            Assert.IsTrue(foo.value.ContainsKey("Some Text"));
         }
     }
 
