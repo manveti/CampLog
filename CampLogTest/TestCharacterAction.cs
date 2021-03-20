@@ -562,4 +562,99 @@ namespace CampLogTest {
             action.revert(state);
         }
     }
+
+
+    [TestClass]
+    public class TestActionCharacterSetInventory {
+        [TestMethod]
+        public void test_serialization() {
+            ActionCharacterSetInventory foo = new ActionCharacterSetInventory(Guid.NewGuid(), null, Guid.NewGuid()), bar;
+            DataContractSerializer fmt = new DataContractSerializer(typeof(ActionCharacterSetInventory));
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
+                fmt.WriteObject(ms, foo);
+                ms.Seek(0, System.IO.SeekOrigin.Begin);
+                System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
+                bar = (ActionCharacterSetInventory)(fmt.ReadObject(xr, true));
+            }
+            Assert.AreEqual(foo.guid, bar.guid);
+            Assert.IsNull(bar.from);
+            Assert.IsNotNull(bar.to);
+            Assert.AreEqual(foo.to, bar.to);
+        }
+
+        [TestMethod]
+        public void test_apply_add() {
+            Guid chr_guid = Guid.NewGuid(), inv_guid = Guid.NewGuid();
+            ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, null, inv_guid);
+            CampaignState state = new CampaignState();
+
+            action.apply(state);
+            Assert.AreEqual(state.character_inventory.Count, 1);
+            Assert.IsTrue(state.character_inventory.ContainsKey(chr_guid));
+            Assert.AreEqual(state.character_inventory[chr_guid], inv_guid);
+        }
+
+        [TestMethod]
+        public void test_apply_remove() {
+            Guid chr_guid = Guid.NewGuid(), inv_guid = Guid.NewGuid();
+            ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, inv_guid, null);
+            CampaignState state = new CampaignState();
+            state.character_inventory[chr_guid] = inv_guid;
+
+            action.apply(state);
+            Assert.AreEqual(state.character_inventory.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_apply_update() {
+            Guid chr_guid = Guid.NewGuid(), inv_guid1 = Guid.NewGuid(), inv_guid2 = Guid.NewGuid();
+            ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, inv_guid1, inv_guid2);
+            CampaignState state = new CampaignState();
+            state.character_inventory[chr_guid] = inv_guid1;
+
+            action.apply(state);
+            Assert.AreEqual(state.character_inventory.Count, 1);
+            Assert.IsTrue(state.character_inventory.ContainsKey(chr_guid));
+            Assert.AreEqual(state.character_inventory[chr_guid], inv_guid2);
+        }
+
+        [TestMethod]
+        public void test_revert_add() {
+            Guid chr_guid = Guid.NewGuid(), inv_guid = Guid.NewGuid();
+            ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, null, inv_guid);
+            CampaignState state = new CampaignState();
+
+            action.apply(state);
+            action.revert(state);
+            Assert.AreEqual(state.character_inventory.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_revert_remove() {
+            Guid chr_guid = Guid.NewGuid(), inv_guid = Guid.NewGuid();
+            ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, inv_guid, null);
+            CampaignState state = new CampaignState();
+            state.character_inventory[chr_guid] = inv_guid;
+
+            action.apply(state);
+            action.revert(state);
+            Assert.AreEqual(state.character_inventory.Count, 1);
+            Assert.IsTrue(state.character_inventory.ContainsKey(chr_guid));
+            Assert.AreEqual(state.character_inventory[chr_guid], inv_guid);
+        }
+
+        [TestMethod]
+        public void test_revert_update() {
+            Guid chr_guid = Guid.NewGuid(), inv_guid1 = Guid.NewGuid(), inv_guid2 = Guid.NewGuid();
+            ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, inv_guid1, inv_guid2);
+            CampaignState state = new CampaignState();
+            state.character_inventory[chr_guid] = inv_guid1;
+
+            action.apply(state);
+            action.revert(state);
+            Assert.AreEqual(state.character_inventory.Count, 1);
+            Assert.IsTrue(state.character_inventory.ContainsKey(chr_guid));
+            Assert.AreEqual(state.character_inventory[chr_guid], inv_guid1);
+        }
+    }
 }

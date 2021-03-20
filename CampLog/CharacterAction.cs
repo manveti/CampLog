@@ -172,4 +172,49 @@ namespace CampLog {
             if (this.subtract is not null) { prop.add(this.subtract); }
         }
     }
+
+
+    [Serializable]
+    public class ActionCharacterSetInventory : EventAction {
+        public readonly Guid guid;
+        public readonly Guid? from;
+        public readonly Guid? to;
+
+        public override string description {
+            get {
+                if (this.from is null) {
+                    return "Set character inventory association";
+                }
+                if (this.to is null) {
+                    return "Clear character inventory association";
+                }
+                return "Update character inventory association";
+            }
+        }
+
+        public ActionCharacterSetInventory(Guid guid, Guid? from, Guid? to) {
+            if ((from is null) && (to is null)) { throw new ArgumentNullException(nameof(to)); }
+            this.guid = guid;
+            this.from = from;
+            this.to = to;
+        }
+
+        public override void apply(CampaignState state) {
+            if (this.to is null) {
+                state.character_inventory.Remove(this.guid);
+            }
+            else {
+                state.character_inventory[this.guid] = this.to.Value;
+            }
+        }
+
+        public override void revert(CampaignState state) {
+            if (this.from is null) {
+                state.character_inventory.Remove(this.guid);
+            }
+            else {
+                state.character_inventory[this.guid] = this.from.Value;
+            }
+        }
+    }
 }
