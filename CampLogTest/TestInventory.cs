@@ -288,6 +288,34 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_copy() {
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .5m);
+            ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), gp = new ItemSpec("GP", c1, 1, 0), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack gem_stack = new ItemStack(gem, 3), gp_stack = new ItemStack(gp, 150), sword_stack = new ItemStack(sword, 2);
+            Inventory foo = new Inventory("Test Inventory"), bar;
+
+            foo.add(gem_stack);
+            foo.add(gp_stack);
+            foo.add(sword_stack);
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.AreEqual(foo.name, bar.name);
+            Assert.IsFalse(ReferenceEquals(foo.contents, bar.contents));
+            Assert.AreEqual(foo.contents.Count, bar.contents.Count);
+            foreach (Guid guid in foo.contents.Keys) {
+                Assert.IsTrue(bar.contents.ContainsKey(guid));
+                Assert.IsFalse(ReferenceEquals(foo.contents[guid], bar.contents[guid]));
+                Assert.AreEqual(foo.contents[guid].item, bar.contents[guid].item);
+                Assert.AreEqual(foo.contents[guid].name, bar.contents[guid].name);
+                Assert.AreEqual(foo.contents[guid].weight, bar.contents[guid].weight);
+                Assert.AreEqual(foo.contents[guid].value, bar.contents[guid].value);
+            }
+            Assert.AreEqual(foo.weight, bar.weight);
+            Assert.AreEqual(foo.value, bar.value);
+        }
+
+        [TestMethod]
         public void test_contains_inventory() {
             ItemCategory cat = new ItemCategory("Magic", 1);
             ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
@@ -825,6 +853,19 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_copy() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec itm = new ItemSpec("Gem", cat, 100, 0);
+            ItemStack foo = new ItemStack(itm, 3, 1), bar = foo.copy();
+
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.AreEqual(foo.item, bar.item);
+            Assert.AreEqual(foo.count, bar.count);
+            Assert.AreEqual(foo.unidentified, bar.unidentified);
+            Assert.AreEqual(foo.name, bar.name);
+        }
+
+        [TestMethod]
         public void test_properties() {
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec itm = new ItemSpec("Gem", cat, 100, 1);
@@ -987,6 +1028,35 @@ namespace CampLogTest {
             Assert.AreEqual(foo.unidentified, bar.unidentified);
             Assert.AreEqual(foo.containers.Length, bar.containers.Length);
             for (int i = 0; i < foo.containers.Length; i++) {
+                Assert.AreEqual(foo.containers[i].name, bar.containers[i].name);
+            }
+            Assert.AreEqual(foo.contents_weight, bar.contents_weight);
+            Assert.AreEqual(foo.contents_value, bar.contents_value);
+            Assert.AreEqual(foo.name, bar.name);
+            Assert.AreEqual(foo.weight, bar.weight);
+            Assert.AreEqual(foo.value, bar.value);
+        }
+
+        [TestMethod]
+        public void test_copy() {
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .6m), c3 = new ItemCategory("Magic", 1);
+            ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
+            ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), sword = new ItemSpec("Longsword", c2, 30, 3),
+                sack = new ItemSpec("Handy Haversack", c3, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
+            ItemStack gems = new ItemStack(gem, 5), swords = new ItemStack(sword, 2);
+            SingleItem foo = new SingleItem(sack, true), bar;
+
+            foo.containers[0].add(swords);
+            foo.containers[1].add(gems);
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.AreEqual(foo.item, bar.item);
+            Assert.AreEqual(foo.unidentified, bar.unidentified);
+            Assert.IsFalse(ReferenceEquals(foo.containers, bar.containers));
+            Assert.AreEqual(foo.containers.Length, bar.containers.Length);
+            for (int i = 0; i < foo.containers.Length; i++) {
+                Assert.IsFalse(ReferenceEquals(foo.containers[i], bar.containers[i]));
                 Assert.AreEqual(foo.containers[i].name, bar.containers[i].name);
             }
             Assert.AreEqual(foo.contents_weight, bar.contents_weight);

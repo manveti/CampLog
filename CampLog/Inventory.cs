@@ -105,6 +105,8 @@ namespace CampLog {
         public abstract decimal weight { get; }
         public abstract decimal value { get; }
 
+        public abstract InventoryEntry copy();
+
         public virtual bool contains_inventory(Inventory inv) { return false; }
     }
 
@@ -135,6 +137,14 @@ namespace CampLog {
         public Inventory(string name = null) {
             this.name = name;
             this.contents = new Dictionary<Guid, InventoryEntry>();
+        }
+
+        public Inventory copy() {
+            Inventory result = new Inventory(this.name);
+            foreach (Guid key in this.contents.Keys) {
+                result.contents[key] = this.contents[key].copy();
+            }
+            return result;
         }
 
         public bool contains_inventory(Inventory inv) {
@@ -270,6 +280,10 @@ namespace CampLog {
             this.count = count;
             this.unidentified = unidentified;
         }
+
+        public override ItemStack copy() {
+            return new ItemStack(this.item, this.count, this.unidentified);
+        }
     }
 
 
@@ -314,6 +328,19 @@ namespace CampLog {
                 for (int i = 0; i < this.containers.Length; i++) { this.containers[i] = new Inventory(item.containers[i].name); }
             }
             this.properties = new Dictionary<string, string>();
+        }
+
+        public override SingleItem copy() {
+            SingleItem result = new SingleItem(this.item, this.unidentified, this.value_override);
+            if (this.containers is not null) {
+                for (int i = 0; i < this.containers.Length; i++) {
+                    result.containers[i] = this.containers[i].copy();
+                }
+            }
+            foreach (string key in this.properties.Keys) {
+                result.properties[key] = this.properties[key];
+            }
+            return result;
         }
 
         public override bool contains_inventory(Inventory inv) {
