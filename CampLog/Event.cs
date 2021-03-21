@@ -4,6 +4,12 @@ using System.Runtime.Serialization;
 
 namespace CampLog {
     [KnownType(typeof(ActionCharacterSet))]
+    [KnownType(typeof(ActionCharacterPropertySet))]
+    [KnownType(typeof(ActionCharacterPropertyAdjust))]
+    [KnownType(typeof(ActionCharacterSetInventory))]
+    [KnownType(typeof(ActionInventoryCreate))]
+    [KnownType(typeof(ActionInventoryRemove))]
+    [KnownType(typeof(ActionInventoryRename))]
     [Serializable]
     public abstract class EventAction {
         public abstract string description { get; }
