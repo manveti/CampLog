@@ -989,5 +989,142 @@ namespace CampLogTest {
     }
 
 
-    // TODO: ActionInventoryEntryUnstack, ActionInventoryEntrySplit
+    [TestClass]
+    public class TestActionInventoryEntryUnstack {
+        [TestMethod]
+        public void test_serialization() {
+            ActionInventoryEntryUnstack foo = new ActionInventoryEntryUnstack(Guid.NewGuid(), 1, Guid.NewGuid(), Guid.NewGuid()), bar;
+            DataContractSerializer fmt = new DataContractSerializer(typeof(ActionInventoryEntryUnstack));
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
+                fmt.WriteObject(ms, foo);
+                ms.Seek(0, System.IO.SeekOrigin.Begin);
+                System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
+                bar = (ActionInventoryEntryUnstack)(fmt.ReadObject(xr, true));
+            }
+            Assert.AreEqual(foo.inv_guid, bar.inv_guid);
+            Assert.AreEqual(foo.inv_idx, bar.inv_idx);
+            Assert.AreEqual(foo.ent, bar.ent);
+            Assert.AreEqual(foo.guid, bar.guid);
+        }
+
+        [TestMethod]
+        public void test_apply() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 1, 1);
+            Guid inv_guid, stack_guid, item_guid = Guid.NewGuid();
+            CampaignState state = new CampaignState();
+            inv_guid = state.inventories.new_inventory("Test Inventory");
+            stack_guid = state.inventories.add_entry(inv_guid, gem_stack);
+            ActionInventoryEntryUnstack action = new ActionInventoryEntryUnstack(inv_guid, null, stack_guid, item_guid);
+
+            action.apply(state);
+            Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
+            Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(item_guid));
+            Assert.AreEqual(state.inventories.active_entries.Count, 1);
+            Assert.IsTrue(state.inventories.active_entries.Contains(item_guid));
+            Assert.AreEqual(state.inventories.entries.Count, 2);
+            Assert.IsTrue(state.inventories.entries.ContainsKey(stack_guid));
+            Assert.IsTrue(state.inventories.entries.ContainsKey(item_guid));
+            SingleItem gem_item = state.inventories.entries[item_guid] as SingleItem;
+            Assert.IsNotNull(gem_item);
+            Assert.AreEqual(gem_item.item, gem);
+            Assert.IsTrue(gem_item.unidentified);
+        }
+
+        [TestMethod]
+        public void test_revert() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 1, 1);
+            Guid inv_guid, stack_guid, item_guid = Guid.NewGuid();
+            CampaignState state = new CampaignState();
+            inv_guid = state.inventories.new_inventory("Test Inventory");
+            stack_guid = state.inventories.add_entry(inv_guid, gem_stack);
+            ActionInventoryEntryUnstack action = new ActionInventoryEntryUnstack(inv_guid, null, stack_guid, item_guid);
+
+            action.apply(state);
+            action.revert(state);
+            Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
+            Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack_guid));
+            Assert.AreEqual(state.inventories.active_entries.Count, 1);
+            Assert.IsTrue(state.inventories.active_entries.Contains(stack_guid));
+            Assert.AreEqual(state.inventories.entries.Count, 1);
+            Assert.IsTrue(state.inventories.entries.ContainsKey(stack_guid));
+        }
+    }
+
+
+    [TestClass]
+    public class TestActionInventoryEntrySplit {
+        [TestMethod]
+        public void test_serialization() {
+            ActionInventoryEntrySplit foo = new ActionInventoryEntrySplit(Guid.NewGuid(), 1, Guid.NewGuid(), 3, 1, Guid.NewGuid()), bar;
+            DataContractSerializer fmt = new DataContractSerializer(typeof(ActionInventoryEntrySplit));
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
+                fmt.WriteObject(ms, foo);
+                ms.Seek(0, System.IO.SeekOrigin.Begin);
+                System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
+                bar = (ActionInventoryEntrySplit)(fmt.ReadObject(xr, true));
+            }
+            Assert.AreEqual(foo.inv_guid, bar.inv_guid);
+            Assert.AreEqual(foo.inv_idx, bar.inv_idx);
+            Assert.AreEqual(foo.ent, bar.ent);
+            Assert.AreEqual(foo.count, bar.count);
+            Assert.AreEqual(foo.unidentified, bar.unidentified);
+            Assert.AreEqual(foo.guid, bar.guid);
+        }
+
+        [TestMethod]
+        public void test_apply() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 5, 3), gem_stack2;
+            Guid inv_guid, stack1_guid, stack2_guid = Guid.NewGuid();
+            CampaignState state = new CampaignState();
+            inv_guid = state.inventories.new_inventory("Test Inventory");
+            stack1_guid = state.inventories.add_entry(inv_guid, gem_stack1);
+            ActionInventoryEntrySplit action = new ActionInventoryEntrySplit(inv_guid, null, stack1_guid, 2, 1, stack2_guid);
+
+            action.apply(state);
+            Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 2);
+            Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack1_guid));
+            Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack2_guid));
+            Assert.AreEqual(state.inventories.active_entries.Count, 2);
+            Assert.IsTrue(state.inventories.active_entries.Contains(stack1_guid));
+            Assert.IsTrue(state.inventories.active_entries.Contains(stack2_guid));
+            Assert.AreEqual(state.inventories.entries.Count, 2);
+            Assert.IsTrue(state.inventories.entries.ContainsKey(stack1_guid));
+            Assert.IsTrue(state.inventories.entries.ContainsKey(stack2_guid));
+            Assert.AreEqual(gem_stack1.count, 3);
+            Assert.AreEqual(gem_stack1.unidentified, 2);
+            gem_stack2 = state.inventories.entries[stack2_guid] as ItemStack;
+            Assert.IsNotNull(gem_stack2);
+            Assert.AreEqual(gem_stack2.count, 2);
+            Assert.AreEqual(gem_stack2.unidentified, 1);
+        }
+
+        [TestMethod]
+        public void test_revert() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack1 = new ItemStack(gem, 5, 3);
+            Guid inv_guid, stack1_guid, stack2_guid = Guid.NewGuid();
+            CampaignState state = new CampaignState();
+            inv_guid = state.inventories.new_inventory("Test Inventory");
+            stack1_guid = state.inventories.add_entry(inv_guid, gem_stack1);
+            ActionInventoryEntrySplit action = new ActionInventoryEntrySplit(inv_guid, null, stack1_guid, 2, 1, stack2_guid);
+
+            action.apply(state);
+            action.revert(state);
+            Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
+            Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack1_guid));
+            Assert.AreEqual(state.inventories.active_entries.Count, 1);
+            Assert.IsTrue(state.inventories.active_entries.Contains(stack1_guid));
+            Assert.AreEqual(state.inventories.entries.Count, 1);
+            Assert.IsTrue(state.inventories.entries.ContainsKey(stack1_guid));
+            Assert.AreEqual(gem_stack1.count, 5);
+            Assert.AreEqual(gem_stack1.unidentified, 3);
+        }
+    }
 }

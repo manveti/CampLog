@@ -450,5 +450,65 @@ namespace CampLog {
     }
 
 
-    //TODO: ActionInventoryEntryUnstack, ActionInventoryEntrySplit
+    [Serializable]
+    public class ActionInventoryEntryUnstack : EventAction {
+        public readonly Guid inv_guid;
+        public readonly int? inv_idx;
+        public readonly Guid ent;
+        public readonly Guid guid;
+
+        public ActionInventoryEntryUnstack(Guid inv_guid, int? inv_idx, Guid ent, Guid guid) {
+            if (ent == guid) { throw new ArgumentOutOfRangeException(nameof(ent)); }
+            this.inv_guid = inv_guid;
+            this.inv_idx = inv_idx;
+            this.ent = ent;
+            this.guid = guid;
+        }
+
+        public override string description { get => "Unstack inventory stack"; }
+
+        public override void apply(CampaignState state) {
+            state.inventories.unstack_entry(this.inv_guid, this.inv_idx, this.ent, this.guid);
+        }
+
+        public override void revert(CampaignState state) {
+            state.inventories.remove_entry(this.guid, this.inv_guid, this.inv_idx);
+            state.inventories.entries.Remove(this.guid);
+            state.inventories.restore_entry(this.ent, this.inv_guid, this.inv_idx);
+        }
+    }
+
+
+    [Serializable]
+    public class ActionInventoryEntrySplit : EventAction {
+        public readonly Guid inv_guid;
+        public readonly int? inv_idx;
+        public readonly Guid ent;
+        public readonly long count;
+        public readonly long unidentified;
+        public readonly Guid guid;
+
+        public ActionInventoryEntrySplit(Guid inv_guid, int? inv_idx, Guid ent, long count, long unidentified, Guid guid) {
+            if (ent == guid) { throw new ArgumentOutOfRangeException(nameof(ent)); }
+            if (count <= 0) { throw new ArgumentOutOfRangeException(nameof(count)); }
+            if ((unidentified < 0) || (unidentified > count)) { throw new ArgumentOutOfRangeException(nameof(unidentified)); }
+            this.inv_guid = inv_guid;
+            this.inv_idx = inv_idx;
+            this.ent = ent;
+            this.count = count;
+            this.unidentified = unidentified;
+            this.guid = guid;
+        }
+
+        public override string description { get => "Split inventory stack"; }
+
+        public override void apply(CampaignState state) {
+            state.inventories.split_entry(this.inv_guid, this.inv_idx, this.ent, this.count, this.unidentified, this.guid);
+        }
+
+        public override void revert(CampaignState state) {
+            state.inventories.merge_entries(this.inv_guid, this.inv_idx, this.ent, this.guid, this.ent);
+            state.inventories.entries.Remove(this.guid);
+        }
+    }
 }

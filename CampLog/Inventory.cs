@@ -393,7 +393,7 @@ namespace CampLog {
         }
 
         private void purge_inventory_entry(InventoryEntry entry) {
-            if (entry is SingleItem entry_itm) {
+            if ((entry is SingleItem entry_itm) && (entry_itm.containers is not null)) {
                 foreach (Inventory inv in entry_itm.containers) {
                     this.purge_inventory(inv);
                 }
