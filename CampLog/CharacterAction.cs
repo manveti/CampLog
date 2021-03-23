@@ -37,7 +37,7 @@ namespace CampLog {
             this.restore = restore;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             if (this.from is null) {
                 // add new character
                 if (this.restore) {
@@ -57,7 +57,7 @@ namespace CampLog {
             }
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             if (this.from is null) {
                 // revert addition of new character
                 state.characters.remove_character(this.guid);
@@ -110,7 +110,7 @@ namespace CampLog {
             this.to = to;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             if (this.to is null) {
                 // remove existing property
                 state.characters.characters[this.guid].remove_property(path);
@@ -121,7 +121,7 @@ namespace CampLog {
             }
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             if (this.from is null) {
                 // revert addition of new property
                 state.characters.characters[this.guid].remove_property(path);
@@ -160,13 +160,13 @@ namespace CampLog {
             this.add = add;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             CharProperty prop = state.characters.characters[this.guid].get_property(this.path);
             if (this.subtract is not null) { prop.subtract(this.subtract); }
             if (this.add is not null) { prop.add(this.add); }
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             CharProperty prop = state.characters.characters[this.guid].get_property(this.path);
             if (this.add is not null) { prop.subtract(this.add); }
             if (this.subtract is not null) { prop.add(this.subtract); }
@@ -199,7 +199,7 @@ namespace CampLog {
             this.to = to;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             if (this.to is null) {
                 state.character_inventory.Remove(this.guid);
             }
@@ -208,7 +208,7 @@ namespace CampLog {
             }
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             if (this.from is null) {
                 state.character_inventory.Remove(this.guid);
             }

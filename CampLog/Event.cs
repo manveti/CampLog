@@ -14,8 +14,8 @@ namespace CampLog {
     public abstract class EventAction {
         public abstract string description { get; }
 
-        public abstract void apply(CampaignState state);
-        public abstract void revert(CampaignState state);
+        public abstract void apply(CampaignState state, Event evt);
+        public abstract void revert(CampaignState state, Event evt);
     }
 
 
@@ -63,13 +63,13 @@ namespace CampLog {
 
         public void apply(CampaignState state) {
             foreach (EventAction action in this.actions) {
-                action.apply(state);
+                action.apply(state, this);
             }
         }
 
         public void revert(CampaignState state) {
             for (int i = this.actions.Count - 1; i >= 0; i--) {
-                this.actions[i].revert(state);
+                this.actions[i].revert(state, this);
             }
         }
     }

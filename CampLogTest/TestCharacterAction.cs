@@ -28,12 +28,13 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_add() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, null, somebody);
             CampaignState state = new CampaignState();
 
-            action.apply(state);
+            action.apply(state, evt);
             Assert.AreEqual(state.characters.characters.Count, 1);
             Assert.IsTrue(state.characters.characters.ContainsKey(chr_guid));
             Assert.AreEqual(state.characters.characters[chr_guid].name, "Somebody");
@@ -45,6 +46,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_add_removed() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, null, somebody);
@@ -53,11 +55,12 @@ namespace CampLogTest {
             state.characters.add_character(somebody, chr_guid);
             state.characters.remove_character(chr_guid);
 
-            action.apply(state);
+            action.apply(state, evt);
         }
 
         [TestMethod]
         public void test_apply_restore() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, null, somebody, true);
@@ -66,7 +69,7 @@ namespace CampLogTest {
             state.characters.add_character(somebody, chr_guid);
             state.characters.remove_character(chr_guid);
 
-            action.apply(state);
+            action.apply(state, evt);
             Assert.AreEqual(state.characters.characters.Count, 1);
             Assert.IsTrue(state.characters.characters.ContainsKey(chr_guid));
             Assert.AreEqual(state.characters.characters[chr_guid].name, "Somebody");
@@ -77,16 +80,18 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_restore_active() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, null, somebody, true);
             CampaignState state = new CampaignState();
 
-            action.apply(state);
+            action.apply(state, evt);
         }
 
         [TestMethod]
         public void test_apply_remove() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, somebody, null, true);
@@ -94,7 +99,7 @@ namespace CampLogTest {
 
             state.characters.add_character(somebody, chr_guid);
 
-            action.apply(state);
+            action.apply(state, evt);
             Assert.AreEqual(state.characters.characters.Count, 1);
             Assert.IsTrue(state.characters.characters.ContainsKey(chr_guid));
             Assert.AreEqual(state.characters.characters[chr_guid].name, "Somebody");
@@ -104,6 +109,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_remove_removed() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, somebody, null, true);
@@ -112,11 +118,12 @@ namespace CampLogTest {
             state.characters.add_character(somebody, chr_guid);
             state.characters.remove_character(chr_guid);
 
-            action.apply(state);
+            action.apply(state, evt);
         }
 
         [TestMethod]
         public void test_apply_update() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody"), someone_else = new Character("Someone Else");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, somebody, someone_else);
@@ -124,7 +131,7 @@ namespace CampLogTest {
 
             state.characters.add_character(somebody, chr_guid);
 
-            action.apply(state);
+            action.apply(state, evt);
             Assert.AreEqual(state.characters.characters.Count, 1);
             Assert.IsTrue(state.characters.characters.ContainsKey(chr_guid));
             Assert.AreEqual(state.characters.characters[chr_guid].name, "Someone Else");
@@ -132,13 +139,14 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_add() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, null, somebody);
             CampaignState state = new CampaignState();
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             Assert.AreEqual(state.characters.characters.Count, 0);
             Assert.AreEqual(state.characters.active_characters.Count, 0);
         }
@@ -146,18 +154,20 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_add_removed() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, null, somebody);
             CampaignState state = new CampaignState();
 
-            action.apply(state);
+            action.apply(state, evt);
             state.characters.remove_character(chr_guid);
-            action.revert(state);
+            action.revert(state, evt);
         }
 
         [TestMethod]
         public void test_revert_restore() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, null, somebody, true);
@@ -166,8 +176,8 @@ namespace CampLogTest {
             state.characters.add_character(somebody, chr_guid);
             state.characters.remove_character(chr_guid);
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             Assert.AreEqual(state.characters.characters.Count, 1);
             Assert.IsTrue(state.characters.characters.ContainsKey(chr_guid));
             Assert.AreEqual(state.characters.characters[chr_guid].name, "Somebody");
@@ -177,6 +187,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_restore_active() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, null, somebody, true);
@@ -184,13 +195,14 @@ namespace CampLogTest {
 
             state.characters.add_character(somebody, chr_guid);
 
-            action.apply(state);
+            action.apply(state, evt);
             state.characters.remove_character(chr_guid);
-            action.revert(state);
+            action.revert(state, evt);
         }
 
         [TestMethod]
         public void test_revert_remove() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, somebody, null, true);
@@ -198,8 +210,8 @@ namespace CampLogTest {
 
             state.characters.add_character(somebody, chr_guid);
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             Assert.AreEqual(state.characters.characters.Count, 1);
             Assert.IsTrue(state.characters.characters.ContainsKey(chr_guid));
             Assert.AreEqual(state.characters.characters[chr_guid].name, "Somebody");
@@ -210,6 +222,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_remove_active() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, somebody, null, true);
@@ -217,13 +230,14 @@ namespace CampLogTest {
 
             state.characters.add_character(somebody, chr_guid);
 
-            action.apply(state);
+            action.apply(state, evt);
             state.characters.restore_character(chr_guid);
-            action.revert(state);
+            action.revert(state, evt);
         }
 
         [TestMethod]
         public void test_revert_update() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody"), someone_else = new Character("Someone Else");
             Guid chr_guid = Guid.NewGuid();
             ActionCharacterSet action = new ActionCharacterSet(chr_guid, somebody, someone_else);
@@ -231,8 +245,8 @@ namespace CampLogTest {
 
             state.characters.add_character(somebody, chr_guid);
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             Assert.AreEqual(state.characters.characters.Count, 1);
             Assert.IsTrue(state.characters.characters.ContainsKey(chr_guid));
             Assert.AreEqual(state.characters.characters[chr_guid].name, "Somebody");
@@ -265,13 +279,14 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_add() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "XP" };
             CampaignState state = new CampaignState();
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, path, null, new CharNumProperty(123));
 
-            action.apply(state);
+            action.apply(state, evt);
             Assert.IsTrue(somebody.properties.value.ContainsKey("XP"));
             CharNumProperty prop = somebody.get_property(path) as CharNumProperty;
             Assert.IsNotNull(prop);
@@ -281,16 +296,18 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_add_no_such_parent() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             CampaignState state = new CampaignState();
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, new List<string>() { "Skills", "Jump" }, null, new CharNumProperty(123));
 
-            action.apply(state);
+            action.apply(state, evt);
         }
 
         [TestMethod]
         public void test_apply_remove() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "Skills" };
             somebody.set_property(path, new CharDictProperty());
@@ -301,7 +318,7 @@ namespace CampLogTest {
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, path, jump, null);
 
-            action.apply(state);
+            action.apply(state, evt);
             CharDictProperty skills = somebody.properties.value["Skills"] as CharDictProperty;
             Assert.AreEqual(skills.value.Count, 0);
         }
@@ -309,16 +326,18 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_remove_no_such_property() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             CampaignState state = new CampaignState();
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, new List<string>() { "Skills", "Jump" }, new CharNumProperty(123), null);
 
-            action.apply(state);
+            action.apply(state, evt);
         }
 
         [TestMethod]
         public void test_apply_update() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "XP" };
             CharNumProperty xp = new CharNumProperty(42);
@@ -327,7 +346,7 @@ namespace CampLogTest {
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, path, xp, new CharNumProperty(123));
 
-            action.apply(state);
+            action.apply(state, evt);
             Assert.IsTrue(somebody.properties.value.ContainsKey("XP"));
             CharNumProperty prop = somebody.get_property(path) as CharNumProperty;
             Assert.IsNotNull(prop);
@@ -336,32 +355,35 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_add() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             CampaignState state = new CampaignState();
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, new List<string>() { "XP" }, null, new CharNumProperty(123));
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             Assert.AreEqual(somebody.properties.value.Count, 0);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_add_no_such_property() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<string> path = new List<string>() { "XP" };
             CampaignState state = new CampaignState();
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, path, null, new CharNumProperty(123));
 
-            action.apply(state);
+            action.apply(state, evt);
             state.characters.characters[chr_guid].remove_property(path);
-            action.revert(state);
+            action.revert(state, evt);
         }
 
         [TestMethod]
         public void test_revert_remove() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "Skills" };
             somebody.set_property(path, new CharDictProperty());
@@ -372,8 +394,8 @@ namespace CampLogTest {
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, path, jump, null);
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             CharDictProperty skills = somebody.properties.value["Skills"] as CharDictProperty;
             Assert.IsTrue(skills.value.ContainsKey("Jump"));
             CharNumProperty prop = somebody.get_property(path) as CharNumProperty;
@@ -383,6 +405,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_update() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "XP" };
             CharNumProperty xp = new CharNumProperty(42);
@@ -391,8 +414,8 @@ namespace CampLogTest {
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, path, xp, new CharNumProperty(123));
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             Assert.IsTrue(somebody.properties.value.ContainsKey("XP"));
             CharNumProperty prop = somebody.get_property(path) as CharNumProperty;
             Assert.IsNotNull(prop);
@@ -426,6 +449,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_subtract() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "XP" };
             somebody.set_property(path, new CharNumProperty(100));
@@ -433,7 +457,7 @@ namespace CampLogTest {
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, path, new CharNumProperty(15), null);
 
-            action.apply(state);
+            action.apply(state, evt);
             CharNumProperty prop = somebody.get_property(path) as CharNumProperty;
             Assert.IsNotNull(prop);
             Assert.AreEqual(prop.value, 85);
@@ -441,6 +465,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_add() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "Feats" };
             CharSetProperty feats = new CharSetProperty(), add_feats = new CharSetProperty();
@@ -451,7 +476,7 @@ namespace CampLogTest {
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, path, null, add_feats);
 
-            action.apply(state);
+            action.apply(state, evt);
             CharSetProperty prop = somebody.get_property(path) as CharSetProperty;
             Assert.IsNotNull(prop);
             Assert.AreEqual(prop.value.Count, 2);
@@ -461,6 +486,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_both() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "Skills" };
             somebody.set_property(path, new CharDictProperty());
@@ -474,7 +500,7 @@ namespace CampLogTest {
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, new List<string>() { "Skills" }, subtract_skills, add_skills);
 
-            action.apply(state);
+            action.apply(state, evt);
             CharNumProperty prop = somebody.get_property(path) as CharNumProperty;
             Assert.IsNotNull(prop);
             Assert.AreEqual(prop.value, 10);
@@ -483,17 +509,19 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_no_such_property() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "XP" };
             CampaignState state = new CampaignState();
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, path, new CharNumProperty(15), null);
 
-            action.apply(state);
+            action.apply(state, evt);
         }
 
         [TestMethod]
         public void test_revert_subtract() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "XP" };
             somebody.set_property(path, new CharNumProperty(100));
@@ -501,8 +529,8 @@ namespace CampLogTest {
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, path, new CharNumProperty(15), null);
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             CharNumProperty prop = somebody.get_property(path) as CharNumProperty;
             Assert.IsNotNull(prop);
             Assert.AreEqual(prop.value, 100);
@@ -510,6 +538,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_add() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "Feats" };
             CharSetProperty feats = new CharSetProperty(), add_feats = new CharSetProperty();
@@ -520,8 +549,8 @@ namespace CampLogTest {
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, path, null, add_feats);
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             CharSetProperty prop = somebody.get_property(path) as CharSetProperty;
             Assert.IsNotNull(prop);
             Assert.AreEqual(prop.value.Count, 1);
@@ -530,6 +559,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_both() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "Skills" };
             somebody.set_property(path, new CharDictProperty());
@@ -543,8 +573,8 @@ namespace CampLogTest {
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, new List<string>() { "Skills" }, subtract_skills, add_skills);
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             CharNumProperty prop = somebody.get_property(path) as CharNumProperty;
             Assert.IsNotNull(prop);
             Assert.AreEqual(prop.value, 7);
@@ -553,13 +583,14 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_no_such_property() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Character somebody = new Character("Somebody");
             List<String> path = new List<string>() { "XP" };
             CampaignState state = new CampaignState();
             Guid chr_guid = state.characters.add_character(somebody);
             ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, path, new CharNumProperty(15), null);
 
-            action.revert(state);
+            action.revert(state, evt);
         }
     }
 
@@ -584,11 +615,12 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_add() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Guid chr_guid = Guid.NewGuid(), inv_guid = Guid.NewGuid();
             ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, null, inv_guid);
             CampaignState state = new CampaignState();
 
-            action.apply(state);
+            action.apply(state, evt);
             Assert.AreEqual(state.character_inventory.Count, 1);
             Assert.IsTrue(state.character_inventory.ContainsKey(chr_guid));
             Assert.AreEqual(state.character_inventory[chr_guid], inv_guid);
@@ -596,23 +628,25 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_remove() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Guid chr_guid = Guid.NewGuid(), inv_guid = Guid.NewGuid();
             ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, inv_guid, null);
             CampaignState state = new CampaignState();
             state.character_inventory[chr_guid] = inv_guid;
 
-            action.apply(state);
+            action.apply(state, evt);
             Assert.AreEqual(state.character_inventory.Count, 0);
         }
 
         [TestMethod]
         public void test_apply_update() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Guid chr_guid = Guid.NewGuid(), inv_guid1 = Guid.NewGuid(), inv_guid2 = Guid.NewGuid();
             ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, inv_guid1, inv_guid2);
             CampaignState state = new CampaignState();
             state.character_inventory[chr_guid] = inv_guid1;
 
-            action.apply(state);
+            action.apply(state, evt);
             Assert.AreEqual(state.character_inventory.Count, 1);
             Assert.IsTrue(state.character_inventory.ContainsKey(chr_guid));
             Assert.AreEqual(state.character_inventory[chr_guid], inv_guid2);
@@ -620,24 +654,26 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_add() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Guid chr_guid = Guid.NewGuid(), inv_guid = Guid.NewGuid();
             ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, null, inv_guid);
             CampaignState state = new CampaignState();
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             Assert.AreEqual(state.character_inventory.Count, 0);
         }
 
         [TestMethod]
         public void test_revert_remove() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Guid chr_guid = Guid.NewGuid(), inv_guid = Guid.NewGuid();
             ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, inv_guid, null);
             CampaignState state = new CampaignState();
             state.character_inventory[chr_guid] = inv_guid;
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             Assert.AreEqual(state.character_inventory.Count, 1);
             Assert.IsTrue(state.character_inventory.ContainsKey(chr_guid));
             Assert.AreEqual(state.character_inventory[chr_guid], inv_guid);
@@ -645,13 +681,14 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_update() {
+            Event evt = new Event(42, DateTime.Now, "Some Event");
             Guid chr_guid = Guid.NewGuid(), inv_guid1 = Guid.NewGuid(), inv_guid2 = Guid.NewGuid();
             ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, inv_guid1, inv_guid2);
             CampaignState state = new CampaignState();
             state.character_inventory[chr_guid] = inv_guid1;
 
-            action.apply(state);
-            action.revert(state);
+            action.apply(state, evt);
+            action.revert(state, evt);
             Assert.AreEqual(state.character_inventory.Count, 1);
             Assert.IsTrue(state.character_inventory.ContainsKey(chr_guid));
             Assert.AreEqual(state.character_inventory[chr_guid], inv_guid1);

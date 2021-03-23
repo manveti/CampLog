@@ -16,11 +16,11 @@ namespace CampLog {
             this.name = name;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             state.inventories.new_inventory(this.name, this.guid);
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             state.inventories.remove_inventory(this.guid);
         }
     }
@@ -40,11 +40,11 @@ namespace CampLog {
             this.name = name;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             state.inventories.remove_inventory(this.guid);
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             state.inventories.new_inventory(this.name, this.guid);
         }
     }
@@ -71,12 +71,12 @@ namespace CampLog {
             this.to = to;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             if (!state.inventories.inventories.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             state.inventories.inventories[this.guid].name = this.to;
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             if (!state.inventories.inventories.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             state.inventories.inventories[this.guid].name = this.from;
         }
@@ -107,11 +107,11 @@ namespace CampLog {
             this.entry = entry.copy();
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             state.inventories.add_entry(this.inv_guid, this.inv_idx, this.entry, this.guid);
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             state.inventories.remove_entry(this.guid, this.inv_guid, this.inv_idx);
             state.inventories.entries.Remove(this.guid);
         }
@@ -132,11 +132,11 @@ namespace CampLog {
             this.guid = guid;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             state.inventories.remove_entry(this.guid, this.inv_guid, this.inv_idx);
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             state.inventories.restore_entry(this.guid, this.inv_guid, this.inv_idx);
         }
     }
@@ -164,7 +164,7 @@ namespace CampLog {
             this.unidentified_to = unidentified_to;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             if (!state.inventories.entries.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             ItemStack stack = state.inventories.entries[guid] as ItemStack;
             if (stack is null) { throw new ArgumentOutOfRangeException(); }
@@ -172,7 +172,7 @@ namespace CampLog {
             stack.unidentified = this.unidentified_to;
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             if (!state.inventories.entries.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             ItemStack stack = state.inventories.entries[guid] as ItemStack;
             if (stack is null) { throw new ArgumentOutOfRangeException(); }
@@ -196,7 +196,7 @@ namespace CampLog {
             this.unidentified = unidentified;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             if (!state.inventories.entries.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             ItemStack stack = state.inventories.entries[guid] as ItemStack;
             if (stack is null) { throw new ArgumentOutOfRangeException(); }
@@ -206,7 +206,7 @@ namespace CampLog {
             stack.unidentified = unidentified;
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             if (!state.inventories.entries.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             ItemStack stack = state.inventories.entries[guid] as ItemStack;
             if (stack is null) { throw new ArgumentOutOfRangeException(); }
@@ -265,7 +265,7 @@ namespace CampLog {
             this.set_value_override = set_value_override;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             if (!state.inventories.entries.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             SingleItem itm = state.inventories.entries[guid] as SingleItem;
             if (itm is null) { throw new ArgumentOutOfRangeException(); }
@@ -277,7 +277,7 @@ namespace CampLog {
             }
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             if (!state.inventories.entries.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             SingleItem itm = state.inventories.entries[guid] as SingleItem;
             if (itm is null) { throw new ArgumentOutOfRangeException(); }
@@ -319,7 +319,7 @@ namespace CampLog {
             }
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             if (!state.inventories.entries.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             SingleItem itm = state.inventories.entries[guid] as SingleItem;
             if (itm is null) { throw new ArgumentOutOfRangeException(); }
@@ -335,7 +335,7 @@ namespace CampLog {
             }
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             if (!state.inventories.entries.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             SingleItem itm = state.inventories.entries[guid] as SingleItem;
             if (itm is null) { throw new ArgumentOutOfRangeException(); }
@@ -371,11 +371,11 @@ namespace CampLog {
             this.to_idx = to_idx;
         }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             state.inventories.move_entry(this.guid, this.from_guid, this.from_idx, this.to_guid, this.to_idx);
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             state.inventories.move_entry(this.guid, this.to_guid, this.to_idx, this.from_guid, this.from_idx);
         }
     }
@@ -400,11 +400,11 @@ namespace CampLog {
 
         public override string description { get => "Merge inventory entries"; }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             state.inventories.merge_entries(this.inv_guid, this.inv_idx, this.ent1, this.ent2, this.guid);
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             if ((!state.inventories.entries.ContainsKey(this.ent1)) || (!state.inventories.entries.ContainsKey(this.ent2))) {
                 throw new ArgumentOutOfRangeException();
             }
@@ -467,11 +467,11 @@ namespace CampLog {
 
         public override string description { get => "Unstack inventory stack"; }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             state.inventories.unstack_entry(this.inv_guid, this.inv_idx, this.ent, this.guid);
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             state.inventories.remove_entry(this.guid, this.inv_guid, this.inv_idx);
             state.inventories.entries.Remove(this.guid);
             state.inventories.restore_entry(this.ent, this.inv_guid, this.inv_idx);
@@ -502,11 +502,11 @@ namespace CampLog {
 
         public override string description { get => "Split inventory stack"; }
 
-        public override void apply(CampaignState state) {
+        public override void apply(CampaignState state, Event evt) {
             state.inventories.split_entry(this.inv_guid, this.inv_idx, this.ent, this.count, this.unidentified, this.guid);
         }
 
-        public override void revert(CampaignState state) {
+        public override void revert(CampaignState state, Event evt) {
             state.inventories.merge_entries(this.inv_guid, this.inv_idx, this.ent, this.guid, this.ent);
             state.inventories.entries.Remove(this.guid);
         }
