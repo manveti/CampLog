@@ -12,7 +12,7 @@ namespace CampLogTest {
         public void test_serialization() {
             Character somebody = new Character("Somebody");
             ActionCharacterSet action = new ActionCharacterSet(Guid.NewGuid(), null, somebody);
-            Event foo = new Event(42, DateTime.Now, "Somebody joined the party"), bar;
+            Event foo = new Event(42, DateTime.Now, "Somebody joined the party", 3, guid: Guid.NewGuid()), bar;
 
             foo.actions.Add(action);
 
@@ -26,10 +26,12 @@ namespace CampLogTest {
             Assert.AreEqual(foo.timestamp, bar.timestamp);
             Assert.AreEqual(foo.created, bar.created);
             Assert.AreEqual(foo.description, bar.description);
+            Assert.AreEqual(foo.session, bar.session);
             Assert.AreEqual(foo.actions.Count, bar.actions.Count);
             for (int i = 0; i < foo.actions.Count; i++) {
                 Assert.AreEqual(foo.actions[i].description, bar.actions[i].description);
             }
+            Assert.AreEqual(foo.guid, bar.guid);
         }
 
         [TestMethod]

@@ -24,18 +24,22 @@ namespace CampLog {
         public decimal timestamp;
         public DateTime created;
         public string description;
+        public int? session;
         public List<EventAction> actions;
+        public Guid guid;
 
-        public Event(decimal timestamp, DateTime created, string description, List<EventAction> actions = null) {
+        public Event(decimal timestamp, DateTime created, string description, int? session = null, List<EventAction> actions = null, Guid? guid = null) {
             this.timestamp = timestamp;
             this.created = created;
             this.description = description;
+            this.session = session;
             if (actions is null) {
                 this.actions = new List<EventAction>();
             }
             else {
                 this.actions = actions;
             }
+            this.guid = guid ?? Guid.NewGuid();
         }
 
         public int CompareTo(Event other) {
@@ -46,6 +50,13 @@ namespace CampLog {
             result = this.timestamp.CompareTo(other.timestamp);
             if (result == 0) {
                 result = this.created.CompareTo(other.created);
+            }
+            if (result == 0) {
+                if (this.session is null) { result = -1; }
+                else { result = this.session.Value.CompareTo(other.session); }
+            }
+            if (result == 0) {
+                result = this.guid.CompareTo(other.guid);
             }
             return result;
         }
