@@ -14,6 +14,10 @@ namespace CampLog {
             if (topics is null) { this.topics = new HashSet<Guid>(); }
             else { this.topics = new HashSet<Guid>(topics); }
         }
+
+        public Note copy() {
+            return new Note(this.contents, this.event_guid, this.topics);
+        }
     }
 
 

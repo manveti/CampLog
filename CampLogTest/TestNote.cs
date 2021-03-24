@@ -28,6 +28,23 @@ namespace CampLogTest {
                 Assert.IsTrue(bar.topics.Contains(guid));
             }
         }
+
+        [TestMethod]
+        public void test_copy() {
+            Note foo = new Note("Some note", Guid.NewGuid()), bar;
+
+            foo.topics.Add(Guid.NewGuid());
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.AreEqual(foo.contents, bar.contents);
+            Assert.AreEqual(foo.event_guid, bar.event_guid);
+            Assert.IsFalse(ReferenceEquals(foo.topics, bar.topics));
+            Assert.AreEqual(foo.topics.Count, bar.topics.Count);
+            foreach (Guid guid in foo.topics) {
+                Assert.IsTrue(bar.topics.Contains(guid));
+            }
+        }
     }
 
 
