@@ -10,11 +10,13 @@ namespace CampLogTest {
         [TestMethod]
         public void test_serialization() {
             Character chr = new Character("Somebody");
+            Note note = new Note("Some note", Guid.NewGuid());
             CampaignState foo = new CampaignState(), bar;
 
             Guid chr_guid = foo.characters.add_character(chr);
             Guid inv_guid = foo.inventories.new_inventory("Somebody's Inventory");
             foo.character_inventory[chr_guid] = inv_guid;
+            Guid note_guid = foo.notes.add_note(note);
 
             DataContractSerializer fmt = new DataContractSerializer(typeof(CampaignState));
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
@@ -32,6 +34,9 @@ namespace CampLogTest {
             Assert.AreEqual(foo.character_inventory.Count, bar.character_inventory.Count);
             Assert.IsTrue(bar.character_inventory.ContainsKey(chr_guid));
             Assert.AreEqual(bar.character_inventory[chr_guid], inv_guid);
+            Assert.AreEqual(foo.notes.notes.Count, bar.notes.notes.Count);
+            Assert.IsTrue(bar.notes.notes.ContainsKey(note_guid));
+            Assert.AreEqual(foo.notes.notes[note_guid].contents, "Some note");
         }
     }
 }
