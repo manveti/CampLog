@@ -197,34 +197,20 @@ namespace CampLog {
 
 
     [Serializable]
-    public class CharacterDomain {
-        public Dictionary<Guid, Character> characters;
-        public HashSet<Guid> active_characters;
-
-        public CharacterDomain() {
-            this.characters = new Dictionary<Guid, Character>();
-            this.active_characters = new HashSet<Guid>();
+    public class CharacterDomain : BaseDomain<Character> {
+        public Dictionary<Guid, Character> characters {
+            get => this.items;
+            set => this.items = value;
+        }
+        public HashSet<Guid> active_characters {
+            get => this.active_items;
+            set => this.active_items = value;
         }
 
-        public Guid add_character(Character chr, Guid? guid = null) {
-            if (chr is null) { throw new ArgumentNullException(nameof(chr)); }
-            if ((guid is not null) && (this.characters.ContainsKey(guid.Value))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
-            if (this.characters.ContainsValue(chr)) { throw new ArgumentOutOfRangeException(nameof(chr)); }
+        public Guid add_character(Character chr, Guid? guid = null) => this.add_item(chr, guid);
 
-            Guid chr_guid = guid ?? Guid.NewGuid();
-            this.characters[chr_guid] = chr;
-            this.active_characters.Add(chr_guid);
-            return chr_guid;
-        }
+        public void remove_character(Guid guid) => this.remove_item(guid);
 
-        public void remove_character(Guid guid) {
-            if ((!this.characters.ContainsKey(guid)) || (!this.active_characters.Contains(guid))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
-            this.active_characters.Remove(guid);
-        }
-
-        public void restore_character(Guid guid) {
-            if ((!this.characters.ContainsKey(guid)) || (this.active_characters.Contains(guid))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
-            this.active_characters.Add(guid);
-        }
+        public void restore_character(Guid guid) => this.restore_item(guid);
     }
 }

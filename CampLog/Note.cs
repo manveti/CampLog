@@ -22,34 +22,20 @@ namespace CampLog {
 
 
     [Serializable]
-    public class NoteDomain {
-        public Dictionary<Guid, Note> notes;
-        public HashSet<Guid> active_notes;
-
-        public NoteDomain() {
-            this.notes = new Dictionary<Guid, Note>();
-            this.active_notes = new HashSet<Guid>();
+    public class NoteDomain : BaseDomain<Note> {
+        public Dictionary<Guid, Note> notes {
+            get => this.items;
+            set => this.items = value;
+        }
+        public HashSet<Guid> active_notes {
+            get => this.active_items;
+            set => this.active_items = value;
         }
 
-        public Guid add_note(Note note, Guid? guid = null) {
-            if (note is null) { throw new ArgumentNullException(nameof(note)); }
-            if ((guid is not null) && (this.notes.ContainsKey(guid.Value))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
-            if (this.notes.ContainsValue(note)) { throw new ArgumentOutOfRangeException(nameof(note)); }
+        public Guid add_note(Note note, Guid? guid = null) => this.add_item(note, guid);
 
-            Guid note_guid = guid ?? Guid.NewGuid();
-            this.notes[note_guid] = note;
-            this.active_notes.Add(note_guid);
-            return note_guid;
-        }
+        public void remove_note(Guid guid) => this.remove_item(guid);
 
-        public void remove_note(Guid guid) {
-            if ((!this.notes.ContainsKey(guid)) || (!this.active_notes.Contains(guid))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
-            this.active_notes.Remove(guid);
-        }
-
-        public void restore_note(Guid guid) {
-            if ((!this.notes.ContainsKey(guid)) || (this.active_notes.Contains(guid))) { throw new ArgumentOutOfRangeException(nameof(guid)); }
-            this.active_notes.Add(guid);
-        }
+        public void restore_note(Guid guid) => this.restore_item(guid);
     }
 }

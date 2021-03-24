@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 using CampLog;
@@ -100,7 +99,7 @@ namespace CampLogTest {
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
-        public void test_add_note_duplicate_character() {
+        public void test_add_note_duplicate_note() {
             NoteDomain domain = new NoteDomain();
             Note note = new Note("Some note", Guid.NewGuid());
 
