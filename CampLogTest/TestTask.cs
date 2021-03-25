@@ -142,7 +142,7 @@ namespace CampLogTest {
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
-        public void test_removetask_no_such_guid() {
+        public void test_remove_task_no_such_guid() {
             TaskDomain domain = new TaskDomain();
             domain.remove_task(Guid.NewGuid());
         }

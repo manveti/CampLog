@@ -9,6 +9,7 @@ namespace CampLog {
         public Dictionary<Guid, Guid> character_inventory;
         public NoteDomain notes;
         public TaskDomain tasks;
+        public CalendarEventDomain events;
 
         public CampaignState() {
             this.characters = new CharacterDomain();
@@ -16,6 +17,7 @@ namespace CampLog {
             this.character_inventory = new Dictionary<Guid, Guid>();
             this.notes = new NoteDomain();
             this.tasks = new TaskDomain();
+            this.events = new CalendarEventDomain();
         }
     }
 }

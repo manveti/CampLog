@@ -143,7 +143,7 @@ namespace CampLogTest {
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
-        public void test_removenote_no_such_guid() {
+        public void test_remove_note_no_such_guid() {
             NoteDomain domain = new NoteDomain();
             domain.remove_note(Guid.NewGuid());
         }
