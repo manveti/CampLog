@@ -24,6 +24,10 @@ namespace CampLog {
     [KnownType(typeof(ActionNoteRemove))]
     [KnownType(typeof(ActionNoteRestore))]
     [KnownType(typeof(ActionNoteUpdate))]
+    [KnownType(typeof(ActionTaskCreate))]
+    [KnownType(typeof(ActionTaskRemove))]
+    [KnownType(typeof(ActionTaskRestore))]
+    [KnownType(typeof(ActionTaskUpdate))]
     [Serializable]
     public abstract class EventAction {
         public abstract string description { get; }
