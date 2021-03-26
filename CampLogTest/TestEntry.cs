@@ -7,21 +7,21 @@ using CampLog;
 
 namespace CampLogTest {
     [TestClass]
-    public class TestEvent {
+    public class TestEntry {
         [TestMethod]
         public void test_serialization() {
             Character somebody = new Character("Somebody");
             ActionCharacterSet action = new ActionCharacterSet(Guid.NewGuid(), null, somebody);
-            Event foo = new Event(42, DateTime.Now, "Somebody joined the party", 3, guid: Guid.NewGuid()), bar;
+            Entry foo = new Entry(42, DateTime.Now, "Somebody joined the party", 3, guid: Guid.NewGuid()), bar;
 
             foo.actions.Add(action);
 
-            DataContractSerializer fmt = new DataContractSerializer(typeof(Event));
+            DataContractSerializer fmt = new DataContractSerializer(typeof(Entry));
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
                 fmt.WriteObject(ms, foo);
                 ms.Seek(0, System.IO.SeekOrigin.Begin);
                 System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
-                bar = (Event)(fmt.ReadObject(xr, true));
+                bar = (Entry)(fmt.ReadObject(xr, true));
             }
             Assert.AreEqual(foo.timestamp, bar.timestamp);
             Assert.AreEqual(foo.created, bar.created);
@@ -37,39 +37,39 @@ namespace CampLogTest {
         [TestMethod]
         public void test_sort() {
             DateTime d1 = new DateTime(1000), d2 = new DateTime(990), d3 = new DateTime(1500), d4 = new DateTime(1800);
-            Event e1 = new Event(42, d1, "First Event"), e2 = new Event(45, d2, "Second Event"), e3 = new Event(45, d3, "Third Event"), e4 = new Event(50, d4, "Fourth Event");
-            List<Event> events = new List<Event>() {
+            Entry e1 = new Entry(42, d1, "First Entry"), e2 = new Entry(45, d2, "Second Entry"), e3 = new Entry(45, d3, "Third Entry"), e4 = new Entry(50, d4, "Fourth Entry");
+            List<Entry> entries = new List<Entry>() {
                 e4,
                 e2,
                 e1,
                 e3,
             };
 
-            events.Sort();
-            Assert.AreEqual(events[0], e1);
-            Assert.AreEqual(events[1], e2);
-            Assert.AreEqual(events[2], e3);
-            Assert.AreEqual(events[3], e4);
+            entries.Sort();
+            Assert.AreEqual(entries[0], e1);
+            Assert.AreEqual(entries[1], e2);
+            Assert.AreEqual(entries[2], e3);
+            Assert.AreEqual(entries[3], e4);
         }
 
         [TestMethod]
         public void test_insert() {
             DateTime d1 = new DateTime(1000), d2 = new DateTime(990), d3 = new DateTime(1500), d4 = new DateTime(1800);
-            Event e1 = new Event(42, d1, "First Event"), e2 = new Event(45, d2, "Second Event"), e3 = new Event(45, d3, "Third Event"), e4 = new Event(43, d4, "Retcon Event");
-            List<Event> events = new List<Event>() {
+            Entry e1 = new Entry(42, d1, "First Entry"), e2 = new Entry(45, d2, "Second Entry"), e3 = new Entry(45, d3, "Third Entry"), e4 = new Entry(43, d4, "Retcon Entry");
+            List<Entry> entries = new List<Entry>() {
                 e1,
                 e2,
                 e3,
             };
 
-            int idx = events.BinarySearch(e4);
+            int idx = entries.BinarySearch(e4);
             Assert.AreEqual(~idx, 1);
 
-            events.Insert(~idx, e4);
-            Assert.AreEqual(events[0], e1);
-            Assert.AreEqual(events[1], e4);
-            Assert.AreEqual(events[2], e2);
-            Assert.AreEqual(events[3], e3);
+            entries.Insert(~idx, e4);
+            Assert.AreEqual(entries[0], e1);
+            Assert.AreEqual(entries[1], e4);
+            Assert.AreEqual(entries[2], e2);
+            Assert.AreEqual(entries[3], e3);
         }
 
         [TestMethod]
@@ -78,12 +78,12 @@ namespace CampLogTest {
             Guid c1_guid = Guid.NewGuid(), c2_guid = Guid.NewGuid();
             ActionCharacterSet a1 = new ActionCharacterSet(c1_guid, null, c1), a2 = new ActionCharacterSet(c2_guid, null, c2), a3 = new ActionCharacterSet(c1_guid, c1, null);
             CampaignState state = new CampaignState();
-            Event evt = new Event(42, DateTime.Now, "Do all the things");
-            evt.actions.Add(a1);
-            evt.actions.Add(a2);
-            evt.actions.Add(a3);
+            Entry ent = new Entry(42, DateTime.Now, "Do all the things");
+            ent.actions.Add(a1);
+            ent.actions.Add(a2);
+            ent.actions.Add(a3);
 
-            evt.apply(state);
+            ent.apply(state);
             Assert.AreEqual(state.characters.characters.Count, 2);
             Assert.IsTrue(state.characters.characters.ContainsKey(c1_guid));
             Assert.IsTrue(state.characters.characters.ContainsKey(c2_guid));
@@ -98,12 +98,12 @@ namespace CampLogTest {
             Guid c1_guid = Guid.NewGuid(), c2_guid = Guid.NewGuid();
             ActionCharacterSet a1 = new ActionCharacterSet(c1_guid, null, c1), a2 = new ActionCharacterSet(c2_guid, null, c2), a3 = new ActionCharacterSet(c1_guid, c1, null);
             CampaignState state = new CampaignState();
-            Event evt = new Event(42, DateTime.Now, "Do all the things");
-            evt.actions.Add(a3);
-            evt.actions.Add(a1);
-            evt.actions.Add(a2);
+            Entry ent = new Entry(42, DateTime.Now, "Do all the things");
+            ent.actions.Add(a3);
+            ent.actions.Add(a1);
+            ent.actions.Add(a2);
 
-            evt.apply(state);
+            ent.apply(state);
         }
 
         [TestMethod]
@@ -112,13 +112,13 @@ namespace CampLogTest {
             Guid c1_guid = Guid.NewGuid(), c2_guid = Guid.NewGuid();
             ActionCharacterSet a1 = new ActionCharacterSet(c1_guid, null, c1), a2 = new ActionCharacterSet(c2_guid, null, c2), a3 = new ActionCharacterSet(c1_guid, c1, null);
             CampaignState state = new CampaignState();
-            Event evt = new Event(42, DateTime.Now, "Do all the things");
-            evt.actions.Add(a1);
-            evt.actions.Add(a2);
-            evt.actions.Add(a3);
+            Entry ent = new Entry(42, DateTime.Now, "Do all the things");
+            ent.actions.Add(a1);
+            ent.actions.Add(a2);
+            ent.actions.Add(a3);
 
-            evt.apply(state);
-            evt.revert(state);
+            ent.apply(state);
+            ent.revert(state);
             Assert.AreEqual(state.characters.characters.Count, 0);
             Assert.AreEqual(state.characters.active_characters.Count, 0);
         }
@@ -130,16 +130,16 @@ namespace CampLogTest {
             Guid c1_guid = Guid.NewGuid(), c2_guid = Guid.NewGuid();
             ActionCharacterSet a1 = new ActionCharacterSet(c1_guid, null, c1), a2 = new ActionCharacterSet(c2_guid, null, c2), a3 = new ActionCharacterSet(c1_guid, c1, null);
             CampaignState state = new CampaignState();
-            Event evt = new Event(42, DateTime.Now, "Do all the things");
-            evt.actions.Add(a1);
-            evt.actions.Add(a2);
-            evt.actions.Add(a3);
+            Entry ent = new Entry(42, DateTime.Now, "Do all the things");
+            ent.actions.Add(a1);
+            ent.actions.Add(a2);
+            ent.actions.Add(a3);
 
-            evt.apply(state);
-            evt.actions[0] = a3;
-            evt.actions[1] = a1;
-            evt.actions[2] = a2;
-            evt.revert(state);
+            ent.apply(state);
+            ent.actions[0] = a3;
+            ent.actions[1] = a1;
+            ent.actions[2] = a2;
+            ent.revert(state);
         }
     }
 }

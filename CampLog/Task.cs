@@ -4,16 +4,16 @@ using System.Collections.Generic;
 namespace CampLog {
     [Serializable]
     public class Task {
-        public Guid event_guid;
+        public Guid entry_guid;
         public string name;
         public string description;
         public bool completed;
         public bool failed;
         public decimal? due;
 
-        public Task(Guid event_guid, string name, string description = null, decimal? due = null) {
+        public Task(Guid entry_guid, string name, string description = null, decimal? due = null) {
             if (name is null) { throw new ArgumentNullException(nameof(name)); }
-            this.event_guid = event_guid;
+            this.entry_guid = entry_guid;
             this.name = name;
             this.description = description;
             this.completed = false;
@@ -22,7 +22,7 @@ namespace CampLog {
         }
 
         public Task copy() {
-            return new Task(this.event_guid, this.name, this.description, this.due) {
+            return new Task(this.entry_guid, this.name, this.description, this.due) {
                 completed = this.completed,
                 failed = this.failed,
             };

@@ -21,7 +21,7 @@ namespace CampLogTest {
                 bar = (Note)(fmt.ReadObject(xr, true));
             }
             Assert.AreEqual(foo.contents, bar.contents);
-            Assert.AreEqual(foo.event_guid, bar.event_guid);
+            Assert.AreEqual(foo.entry_guid, bar.entry_guid);
             Assert.AreEqual(foo.topics.Count, bar.topics.Count);
             foreach (Guid guid in foo.topics) {
                 Assert.IsTrue(bar.topics.Contains(guid));
@@ -37,7 +37,7 @@ namespace CampLogTest {
             bar = foo.copy();
             Assert.IsFalse(ReferenceEquals(foo, bar));
             Assert.AreEqual(foo.contents, bar.contents);
-            Assert.AreEqual(foo.event_guid, bar.event_guid);
+            Assert.AreEqual(foo.entry_guid, bar.entry_guid);
             Assert.IsFalse(ReferenceEquals(foo.topics, bar.topics));
             Assert.AreEqual(foo.topics.Count, bar.topics.Count);
             foreach (Guid guid in foo.topics) {

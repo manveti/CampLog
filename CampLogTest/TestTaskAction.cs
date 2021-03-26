@@ -24,13 +24,13 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
-            Task task = new Task(evt.guid, "Some task");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Task task = new Task(ent.guid, "Some task");
             Guid task_guid = Guid.NewGuid();
             ActionTaskCreate action = new ActionTaskCreate(task_guid, task);
             CampaignState state = new CampaignState();
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.tasks.tasks.Count, 1);
             Assert.IsTrue(state.tasks.tasks.ContainsKey(task_guid));
             Assert.AreEqual(state.tasks.tasks[task_guid].name, "Some task");
@@ -41,14 +41,14 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
-            Task task = new Task(evt.guid, "Some task");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Task task = new Task(ent.guid, "Some task");
             Guid task_guid = Guid.NewGuid();
             ActionTaskCreate action = new ActionTaskCreate(task_guid, task);
             CampaignState state = new CampaignState();
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.tasks.tasks.Count, 0);
             Assert.AreEqual(state.tasks.active_tasks.Count, 0);
         }
@@ -72,13 +72,13 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
-            Task task = new Task(evt.guid, "Some task");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Task task = new Task(ent.guid, "Some task");
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskRemove action = new ActionTaskRemove(task_guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.tasks.tasks.Count, 1);
             Assert.IsTrue(state.tasks.tasks.ContainsKey(task_guid));
             Assert.AreEqual(state.tasks.tasks[task_guid].name, "Some task");
@@ -87,14 +87,14 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
-            Task task = new Task(evt.guid, "Some task");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Task task = new Task(ent.guid, "Some task");
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskRemove action = new ActionTaskRemove(task_guid);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.tasks.tasks.Count, 1);
             Assert.IsTrue(state.tasks.tasks.ContainsKey(task_guid));
             Assert.AreEqual(state.tasks.tasks[task_guid].name, "Some task");
@@ -121,15 +121,15 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
-            Task task = new Task(evt.guid, "Some task");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Task task = new Task(ent.guid, "Some task");
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskRestore action = new ActionTaskRestore(task_guid);
 
             state.tasks.remove_task(task_guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.tasks.tasks.Count, 1);
             Assert.IsTrue(state.tasks.tasks.ContainsKey(task_guid));
             Assert.AreEqual(state.tasks.tasks[task_guid].name, "Some task");
@@ -139,16 +139,16 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
-            Task task = new Task(evt.guid, "Some task");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Task task = new Task(ent.guid, "Some task");
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskRestore action = new ActionTaskRestore(task_guid);
 
             state.tasks.remove_task(task_guid);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.tasks.tasks.Count, 1);
             Assert.IsTrue(state.tasks.tasks.ContainsKey(task_guid));
             Assert.AreEqual(state.tasks.tasks[task_guid].name, "Some task");
@@ -161,7 +161,7 @@ namespace CampLogTest {
     public class TestActionTaskUpdate {
         [TestMethod]
         public void test_serialization() {
-            Task old_task = new Task(Guid.NewGuid(), "Some task"), new_task = new Task(old_task.event_guid, "", "Do something detailed");
+            Task old_task = new Task(Guid.NewGuid(), "Some task"), new_task = new Task(old_task.entry_guid, "", "Do something detailed");
             ActionTaskUpdate foo = new ActionTaskUpdate(Guid.NewGuid(), old_task, new_task, false, true, false, false, false), bar;
             DataContractSerializer fmt = new DataContractSerializer(typeof(ActionTaskUpdate));
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
@@ -182,15 +182,15 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
-            Task task = new Task(Guid.NewGuid(), "Some task", "Do a thing", 42), new_task = new Task(task.event_guid, "Some updated task", "Do an updated thing", 84);
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Task task = new Task(Guid.NewGuid(), "Some task", "Do a thing", 42), new_task = new Task(task.entry_guid, "Some updated task", "Do an updated thing", 84);
             task.failed = true;
             new_task.completed = true;
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskUpdate action = new ActionTaskUpdate(task_guid, task, new_task, true, true, true, true, true);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(task.name, "Some updated task");
             Assert.AreEqual(task.description, "Do an updated thing");
             Assert.IsTrue(task.completed);
@@ -200,29 +200,29 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_sparse() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
-            Task task = new Task(Guid.NewGuid(), "Some task"), new_task = new Task(task.event_guid, "Some updated task", "Do something detailed");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Task task = new Task(Guid.NewGuid(), "Some task"), new_task = new Task(task.entry_guid, "Some updated task", "Do something detailed");
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskUpdate action = new ActionTaskUpdate(task_guid, task, new_task, false, true, false, false, false);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(task.name, "Some task");
             Assert.AreEqual(task.description, "Do something detailed");
         }
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
-            Task task = new Task(Guid.NewGuid(), "Some task", "Do a thing", 42), new_task = new Task(task.event_guid, "Some updated task", "Do an updated thing", 84);
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Task task = new Task(Guid.NewGuid(), "Some task", "Do a thing", 42), new_task = new Task(task.entry_guid, "Some updated task", "Do an updated thing", 84);
             task.failed = true;
             new_task.completed = true;
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskUpdate action = new ActionTaskUpdate(task_guid, task, new_task, true, true, true, true, true);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(task.name, "Some task");
             Assert.AreEqual(task.description, "Do a thing");
             Assert.IsFalse(task.completed);
@@ -232,14 +232,14 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_sparse() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
-            Task task = new Task(Guid.NewGuid(), "Some task"), new_task = new Task(task.event_guid, "Some updated task", "Do something detailed");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Task task = new Task(Guid.NewGuid(), "Some task"), new_task = new Task(task.entry_guid, "Some updated task", "Do something detailed");
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskUpdate action = new ActionTaskUpdate(task_guid, task, new_task, false, true, false, false, false);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(task.name, "Some task");
             Assert.IsNull(task.description);
         }

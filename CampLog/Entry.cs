@@ -29,30 +29,30 @@ namespace CampLog {
     [KnownType(typeof(ActionTaskRestore))]
     [KnownType(typeof(ActionTaskUpdate))]
     [Serializable]
-    public abstract class EventAction {
+    public abstract class EntryAction {
         public abstract string description { get; }
 
-        public abstract void apply(CampaignState state, Event evt);
-        public abstract void revert(CampaignState state, Event evt);
+        public abstract void apply(CampaignState state, Entry ent);
+        public abstract void revert(CampaignState state, Entry ent);
     }
 
 
     [Serializable]
-    public class Event : IComparable<Event> {
+    public class Entry : IComparable<Entry> {
         public decimal timestamp;
         public DateTime created;
         public string description;
         public int? session;
-        public List<EventAction> actions;
+        public List<EntryAction> actions;
         public Guid guid;
 
-        public Event(decimal timestamp, DateTime created, string description, int? session = null, List<EventAction> actions = null, Guid? guid = null) {
+        public Entry(decimal timestamp, DateTime created, string description, int? session = null, List<EntryAction> actions = null, Guid? guid = null) {
             this.timestamp = timestamp;
             this.created = created;
             this.description = description;
             this.session = session;
             if (actions is null) {
-                this.actions = new List<EventAction>();
+                this.actions = new List<EntryAction>();
             }
             else {
                 this.actions = actions;
@@ -60,7 +60,7 @@ namespace CampLog {
             this.guid = guid ?? Guid.NewGuid();
         }
 
-        public int CompareTo(Event other) {
+        public int CompareTo(Entry other) {
             int result;
 
             if (other is null) { return 1; }
@@ -80,7 +80,7 @@ namespace CampLog {
         }
 
         public void apply(CampaignState state) {
-            foreach (EventAction action in this.actions) {
+            foreach (EntryAction action in this.actions) {
                 action.apply(state, this);
             }
         }

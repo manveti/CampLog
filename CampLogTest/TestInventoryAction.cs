@@ -24,12 +24,12 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryCreate action = new ActionInventoryCreate(inv_guid, "Some Inventory");
             CampaignState state = new CampaignState();
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.inventories.inventories.Count, 1);
             Assert.IsTrue(state.inventories.inventories.ContainsKey(inv_guid));
             Assert.AreEqual(state.inventories.inventories[inv_guid].name, "Some Inventory");
@@ -38,38 +38,38 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_already_exists() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryCreate action = new ActionInventoryCreate(inv_guid, "Some Inventory");
             CampaignState state = new CampaignState();
             state.inventories.new_inventory("Some Pre-existing Inventory", inv_guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryCreate action = new ActionInventoryCreate(inv_guid, "Some Inventory");
             CampaignState state = new CampaignState();
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.inventories.inventories.Count, 0);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_removed() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryCreate action = new ActionInventoryCreate(inv_guid, "Some Inventory");
             CampaignState state = new CampaignState();
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             state.inventories.remove_inventory(inv_guid);
-            action.revert(state, evt);
+            action.revert(state, ent);
         }
     }
 
@@ -92,37 +92,37 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryRemove action = new ActionInventoryRemove(inv_guid, "Some Inventory");
             CampaignState state = new CampaignState();
             state.inventories.new_inventory("Some Inventory", inv_guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.inventories.inventories.Count, 0);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_no_such_inventory() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryRemove action = new ActionInventoryRemove(inv_guid, "Some Inventory");
             CampaignState state = new CampaignState();
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryRemove action = new ActionInventoryRemove(inv_guid, "Some Inventory");
             CampaignState state = new CampaignState();
             state.inventories.new_inventory("Some Inventory", inv_guid);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.inventories.inventories.Count, 1);
             Assert.IsTrue(state.inventories.inventories.ContainsKey(inv_guid));
             Assert.AreEqual(state.inventories.inventories[inv_guid].name, "Some Inventory");
@@ -131,14 +131,14 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_restored() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryRemove action = new ActionInventoryRemove(inv_guid, "Some Inventory");
             CampaignState state = new CampaignState();
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             state.inventories.new_inventory("Some Inventory", inv_guid);
-            action.revert(state, evt);
+            action.revert(state, ent);
         }
     }
 
@@ -162,13 +162,13 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryRename action = new ActionInventoryRename(inv_guid, "Some Inventory", "The Inventory's New Groove");
             CampaignState state = new CampaignState();
             state.inventories.new_inventory("Some Inventory", inv_guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.inventories.inventories.Count, 1);
             Assert.IsTrue(state.inventories.inventories.ContainsKey(inv_guid));
             Assert.AreEqual(state.inventories.inventories[inv_guid].name, "The Inventory's New Groove");
@@ -177,24 +177,24 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_no_such_inventory() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryRename action = new ActionInventoryRename(inv_guid, "Some Inventory", "The Inventory's New Groove");
             CampaignState state = new CampaignState();
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryRename action = new ActionInventoryRename(inv_guid, "Some Inventory", "The Inventory's New Groove");
             CampaignState state = new CampaignState();
             state.inventories.new_inventory("Some Inventory", inv_guid);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.inventories.inventories.Count, 1);
             Assert.IsTrue(state.inventories.inventories.ContainsKey(inv_guid));
             Assert.AreEqual(state.inventories.inventories[inv_guid].name, "Some Inventory");
@@ -203,14 +203,14 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_removed() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
             ActionInventoryRename action = new ActionInventoryRename(inv_guid, "Some Inventory", "The Inventory's New Groove");
             CampaignState state = new CampaignState();
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             state.inventories.remove_inventory(inv_guid);
-            action.revert(state, evt);
+            action.revert(state, ent);
         }
     }
 
@@ -238,7 +238,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -247,7 +247,7 @@ namespace CampLogTest {
             inv_guid = state.inventories.new_inventory("Test Inventory");
             ActionInventoryEntryAdd action = new ActionInventoryEntryAdd(inv_guid, null, guid, gem_stack);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(guid));
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents[guid].item, gem);
@@ -256,7 +256,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_no_such_inventory() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -264,13 +264,13 @@ namespace CampLogTest {
             CampaignState state = new CampaignState();
             ActionInventoryEntryAdd action = new ActionInventoryEntryAdd(inv_guid, null, guid, gem_stack);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_already_exists() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -280,12 +280,12 @@ namespace CampLogTest {
             state.inventories.add_entry(inv_guid, gem_stack, guid);
             ActionInventoryEntryAdd action = new ActionInventoryEntryAdd(inv_guid, null, guid, gem_stack);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -294,8 +294,8 @@ namespace CampLogTest {
             inv_guid = state.inventories.new_inventory("Test Inventory");
             ActionInventoryEntryAdd action = new ActionInventoryEntryAdd(inv_guid, null, guid, gem_stack);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 0);
             Assert.AreEqual(state.inventories.active_entries.Count, 0);
             Assert.AreEqual(state.inventories.entries.Count, 0);
@@ -304,7 +304,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_removed() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -313,9 +313,9 @@ namespace CampLogTest {
             inv_guid = state.inventories.new_inventory("Test Inventory");
             ActionInventoryEntryAdd action = new ActionInventoryEntryAdd(inv_guid, null, guid, gem_stack);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             state.inventories.remove_entry(guid, inv_guid);
-            action.revert(state, evt);
+            action.revert(state, ent);
         }
     }
 
@@ -339,7 +339,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -349,7 +349,7 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionInventoryEntryRemove action = new ActionInventoryEntryRemove(inv_guid, null, guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 0);
             Assert.AreEqual(state.inventories.active_entries.Count, 0);
             Assert.AreEqual(state.inventories.entries.Count, 1);
@@ -360,7 +360,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_removed() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -371,12 +371,12 @@ namespace CampLogTest {
             ActionInventoryEntryRemove action = new ActionInventoryEntryRemove(inv_guid, null, guid);
             state.inventories.remove_entry(guid, inv_guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -386,8 +386,8 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionInventoryEntryRemove action = new ActionInventoryEntryRemove(inv_guid, null, guid);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(guid));
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents[guid].item, gem);
@@ -421,7 +421,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -431,7 +431,7 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionItemStackSet action = new ActionItemStackSet(guid, 3, 0, 5, 1);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(gem_stack.count, 5);
             Assert.AreEqual(gem_stack.unidentified, 1);
         }
@@ -439,7 +439,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_invalid() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -449,12 +449,12 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionItemStackSet action = new ActionItemStackSet(guid, 3, 0, 2, 3);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -464,8 +464,8 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionItemStackSet action = new ActionItemStackSet(guid, 3, 0, 5, 1);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(gem_stack.count, 3);
             Assert.AreEqual(gem_stack.unidentified, 0);
         }
@@ -491,7 +491,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -501,7 +501,7 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionItemStackAdjust action = new ActionItemStackAdjust(guid, 2, 1);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(gem_stack.count, 5);
             Assert.AreEqual(gem_stack.unidentified, 1);
         }
@@ -509,7 +509,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_invalid() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -519,12 +519,12 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionItemStackAdjust action = new ActionItemStackAdjust(guid, -1, 3);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -534,8 +534,8 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionItemStackAdjust action = new ActionItemStackAdjust(guid, 2, 1);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(gem_stack.count, 3);
             Assert.AreEqual(gem_stack.unidentified, 0);
         }
@@ -577,7 +577,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Magic", 1);
             ItemSpec wand_spec = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
             SingleItem wand = new SingleItem(wand_spec, true);
@@ -590,7 +590,7 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, wand);
             ActionSingleItemSet action = new ActionSingleItemSet(guid, true, null, wand.properties, false, 490, new_props, true);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.IsFalse(wand.unidentified);
             Assert.AreEqual(wand.value_override, 490);
             Assert.AreEqual(wand.properties.Count, 1);
@@ -600,7 +600,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_sparse() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Magic", 1);
             ItemSpec wand_spec = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
             SingleItem wand = new SingleItem(wand_spec, true, 500);
@@ -611,7 +611,7 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, wand);
             ActionSingleItemSet action = new ActionSingleItemSet(guid, true, null, null, false, null, null, false);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.IsFalse(wand.unidentified);
             Assert.AreEqual(wand.value_override, 500);
             Assert.AreEqual(wand.properties.Count, 1);
@@ -622,7 +622,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_invalid_entry_type() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -632,12 +632,12 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionSingleItemSet action = new ActionSingleItemSet(guid, true, null, null, false, null, null, false);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Magic", 1);
             ItemSpec wand_spec = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
             SingleItem wand = new SingleItem(wand_spec, true);
@@ -650,8 +650,8 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, wand);
             ActionSingleItemSet action = new ActionSingleItemSet(guid, true, null, wand.properties, false, 490, new_props, true);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.IsTrue(wand.unidentified);
             Assert.IsNull(wand.value_override);
             Assert.AreEqual(wand.properties.Count, 1);
@@ -661,7 +661,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_sparse() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Magic", 1);
             ItemSpec wand_spec = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
             SingleItem wand = new SingleItem(wand_spec, true, 500);
@@ -672,8 +672,8 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, wand);
             ActionSingleItemSet action = new ActionSingleItemSet(guid, true, null, null, false, null, null, false);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.IsTrue(wand.unidentified);
             Assert.AreEqual(wand.value_override, 500);
             Assert.AreEqual(wand.properties.Count, 1);
@@ -714,7 +714,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Magic", 1);
             ItemSpec wand_spec = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
             SingleItem wand = new SingleItem(wand_spec, false, 500);
@@ -728,7 +728,7 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, wand);
             ActionSingleItemAdjust action = new ActionSingleItemAdjust(guid, -10, sub_props, add_props);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(wand.value_override, 490);
             Assert.AreEqual(wand.properties.Count, 1);
             Assert.IsTrue(wand.properties.ContainsKey("Charges"));
@@ -737,7 +737,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_sparse() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Magic", 1);
             ItemSpec wand_spec = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
             SingleItem wand = new SingleItem(wand_spec, false, 500);
@@ -748,7 +748,7 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, wand);
             ActionSingleItemAdjust action = new ActionSingleItemAdjust(guid, -10, null, null);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(wand.value_override, 490);
             Assert.AreEqual(wand.properties.Count, 1);
             Assert.IsTrue(wand.properties.ContainsKey("Charges"));
@@ -758,7 +758,7 @@ namespace CampLogTest {
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_no_value_override() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Magic", 1);
             ItemSpec wand_spec = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
             SingleItem wand = new SingleItem(wand_spec, false);
@@ -769,13 +769,13 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, wand);
             ActionSingleItemAdjust action = new ActionSingleItemAdjust(guid, -10, null, null);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_invalid_entry_type() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -785,12 +785,12 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionSingleItemAdjust action = new ActionSingleItemAdjust(guid, -10, null, null);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
         }
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Magic", 1);
             ItemSpec wand_spec = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
             SingleItem wand = new SingleItem(wand_spec, false, 500);
@@ -804,8 +804,8 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, wand);
             ActionSingleItemAdjust action = new ActionSingleItemAdjust(guid, -10, sub_props, add_props);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(wand.value_override, 500);
             Assert.AreEqual(wand.properties.Count, 1);
             Assert.IsTrue(wand.properties.ContainsKey("Charges"));
@@ -814,7 +814,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_sparse() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Magic", 1);
             ItemSpec wand_spec = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
             SingleItem wand = new SingleItem(wand_spec, false, 500);
@@ -825,8 +825,8 @@ namespace CampLogTest {
             guid = state.inventories.add_entry(inv_guid, wand);
             ActionSingleItemAdjust action = new ActionSingleItemAdjust(guid, -10, null, null);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(wand.value_override, 500);
             Assert.AreEqual(wand.properties.Count, 1);
             Assert.IsTrue(wand.properties.ContainsKey("Charges"));
@@ -856,7 +856,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory c1 = new ItemCategory("Weapons", .5m), c2 = new ItemCategory("Magic", 1);
             ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
             ItemSpec sword = new ItemSpec("Longsword", c1, 30, 3), sack = new ItemSpec("Handy Haversack", c2, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
@@ -869,7 +869,7 @@ namespace CampLogTest {
             sword_guid = state.inventories.add_entry(inv_guid, sword_stack);
             ActionInventoryEntryMove action = new ActionInventoryEntryMove(sword_guid, inv_guid, null, sack_guid, 0);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(sack_guid));
             Assert.AreEqual(sack_itm.containers[0].contents.Count, 1);
@@ -879,7 +879,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory c1 = new ItemCategory("Weapons", .5m), c2 = new ItemCategory("Magic", 1);
             ContainerSpec pouch = new ContainerSpec("Magic Pouch", 0, 30), reducer = new ContainerSpec("Weight Reducer", .5m, 100);
             ItemSpec sword = new ItemSpec("Longsword", c1, 30, 3), sack = new ItemSpec("Handy Haversack", c2, 2000, 20, 1800, new ContainerSpec[] { reducer, pouch, pouch });
@@ -892,8 +892,8 @@ namespace CampLogTest {
             sword_guid = state.inventories.add_entry(inv_guid, sword_stack);
             ActionInventoryEntryMove action = new ActionInventoryEntryMove(sword_guid, inv_guid, null, sack_guid, 0);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 2);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(sack_guid));
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(sword_guid));
@@ -923,7 +923,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -935,7 +935,7 @@ namespace CampLogTest {
             item_guid = state.inventories.add_entry(inv_guid, gem_item);
             ActionInventoryEntryMerge action = new ActionInventoryEntryMerge(inv_guid, null, stack_guid, item_guid, stack_guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack_guid));
             Assert.AreEqual(state.inventories.active_entries.Count, 1);
@@ -949,7 +949,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply_single_items() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem_spec = new ItemSpec("Gem", cat, 100, 1);
             SingleItem gem1 = new SingleItem(gem_spec, true), gem2 = new SingleItem(gem_spec, false);
@@ -960,7 +960,7 @@ namespace CampLogTest {
             gem2_guid = state.inventories.add_entry(inv_guid, gem2);
             ActionInventoryEntryMerge action = new ActionInventoryEntryMerge(inv_guid, null, gem1_guid, gem2_guid, stack_guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack_guid));
             Assert.AreEqual(state.inventories.active_entries.Count, 1);
@@ -977,7 +977,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 3);
@@ -989,8 +989,8 @@ namespace CampLogTest {
             item_guid = state.inventories.add_entry(inv_guid, gem_item);
             ActionInventoryEntryMerge action = new ActionInventoryEntryMerge(inv_guid, null, stack_guid, item_guid, stack_guid);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 2);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack_guid));
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(item_guid));
@@ -1006,7 +1006,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert_single_items() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem_spec = new ItemSpec("Gem", cat, 100, 1);
             SingleItem gem1 = new SingleItem(gem_spec, true), gem2 = new SingleItem(gem_spec, false);
@@ -1017,8 +1017,8 @@ namespace CampLogTest {
             gem2_guid = state.inventories.add_entry(inv_guid, gem2);
             ActionInventoryEntryMerge action = new ActionInventoryEntryMerge(inv_guid, null, gem1_guid, gem2_guid, stack_guid);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 2);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(gem1_guid));
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(gem2_guid));
@@ -1052,7 +1052,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 1, 1);
@@ -1062,7 +1062,7 @@ namespace CampLogTest {
             stack_guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionInventoryEntryUnstack action = new ActionInventoryEntryUnstack(inv_guid, null, stack_guid, item_guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(item_guid));
             Assert.AreEqual(state.inventories.active_entries.Count, 1);
@@ -1078,7 +1078,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack = new ItemStack(gem, 1, 1);
@@ -1088,8 +1088,8 @@ namespace CampLogTest {
             stack_guid = state.inventories.add_entry(inv_guid, gem_stack);
             ActionInventoryEntryUnstack action = new ActionInventoryEntryUnstack(inv_guid, null, stack_guid, item_guid);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack_guid));
             Assert.AreEqual(state.inventories.active_entries.Count, 1);
@@ -1122,7 +1122,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_apply() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack1 = new ItemStack(gem, 5, 3), gem_stack2;
@@ -1132,7 +1132,7 @@ namespace CampLogTest {
             stack1_guid = state.inventories.add_entry(inv_guid, gem_stack1);
             ActionInventoryEntrySplit action = new ActionInventoryEntrySplit(inv_guid, null, stack1_guid, 2, 1, stack2_guid);
 
-            action.apply(state, evt);
+            action.apply(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 2);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack1_guid));
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack2_guid));
@@ -1152,7 +1152,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_revert() {
-            Event evt = new Event(42, DateTime.Now, "Some Event");
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
             ItemStack gem_stack1 = new ItemStack(gem, 5, 3);
@@ -1162,8 +1162,8 @@ namespace CampLogTest {
             stack1_guid = state.inventories.add_entry(inv_guid, gem_stack1);
             ActionInventoryEntrySplit action = new ActionInventoryEntrySplit(inv_guid, null, stack1_guid, 2, 1, stack2_guid);
 
-            action.apply(state, evt);
-            action.revert(state, evt);
+            action.apply(state, ent);
+            action.revert(state, ent);
             Assert.AreEqual(state.inventories.inventories[inv_guid].contents.Count, 1);
             Assert.IsTrue(state.inventories.inventories[inv_guid].contents.ContainsKey(stack1_guid));
             Assert.AreEqual(state.inventories.active_entries.Count, 1);

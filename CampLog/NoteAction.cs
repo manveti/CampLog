@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CampLog {
     [Serializable]
-    public class ActionNoteCreate : EventAction {
+    public class ActionNoteCreate : EntryAction {
         public readonly Guid guid;
         public readonly Note note;
 
@@ -15,11 +15,11 @@ namespace CampLog {
             this.note = note.copy();
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             state.notes.add_note(this.note.copy(), this.guid);
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             state.notes.remove_note(this.guid);
             state.notes.notes.Remove(this.guid);
         }
@@ -27,7 +27,7 @@ namespace CampLog {
 
 
     [Serializable]
-    public class ActionNoteRemove : EventAction {
+    public class ActionNoteRemove : EntryAction {
         public readonly Guid guid;
 
         public override string description { get => "Remove note"; }
@@ -36,18 +36,18 @@ namespace CampLog {
             this.guid = guid;
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             state.notes.remove_note(this.guid);
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             state.notes.restore_note(this.guid);
         }
     }
 
 
     [Serializable]
-    public class ActionNoteRestore : EventAction {
+    public class ActionNoteRestore : EntryAction {
         public readonly Guid guid;
 
         public override string description { get => "Restore note"; }
@@ -56,18 +56,18 @@ namespace CampLog {
             this.guid = guid;
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             state.notes.restore_note(this.guid);
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             state.notes.remove_note(this.guid);
         }
     }
 
 
     [Serializable]
-    public class ActionNoteUpdate : EventAction {
+    public class ActionNoteUpdate : EntryAction {
         public readonly Guid guid;
         public readonly string contents_from;
         public readonly string contents_to;
@@ -86,7 +86,7 @@ namespace CampLog {
             this.add_topics = add_topics;
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             if (!state.notes.notes.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             Note note = state.notes.notes[this.guid];
             if (this.contents_to is not null) { note.contents = this.contents_to; }
@@ -94,7 +94,7 @@ namespace CampLog {
             if (this.add_topics is not null) { note.topics.UnionWith(this.add_topics); }
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             if (!state.notes.notes.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             Note note = state.notes.notes[this.guid];
             if (this.contents_from is not null) { note.contents = this.contents_from; }

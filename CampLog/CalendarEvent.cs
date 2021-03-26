@@ -4,15 +4,15 @@ using System.Collections.Generic;
 namespace CampLog {
     [Serializable]
     public class CalendarEvent {
-        public Guid event_guid;
+        public Guid entry_guid;
         public decimal timestamp;
         public string name;
         public string description;
         public decimal? interval;
 
-        public CalendarEvent(Guid event_guid, decimal timestamp, string name, string description = null, decimal? interval = null) {
+        public CalendarEvent(Guid entry_guid, decimal timestamp, string name, string description = null, decimal? interval = null) {
             if (name is null) { throw new ArgumentNullException(nameof(name)); }
-            this.event_guid = event_guid;
+            this.entry_guid = entry_guid;
             this.timestamp = timestamp;
             this.name = name;
             this.description = description;
@@ -20,7 +20,7 @@ namespace CampLog {
         }
 
         public CalendarEvent copy() {
-            return new CalendarEvent(this.event_guid, this.timestamp, this.name, this.description, this.interval);
+            return new CalendarEvent(this.entry_guid, this.timestamp, this.name, this.description, this.interval);
         }
     }
 

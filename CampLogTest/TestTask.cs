@@ -20,7 +20,7 @@ namespace CampLogTest {
                 System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
                 bar = (Task)(fmt.ReadObject(xr, true));
             }
-            Assert.AreEqual(foo.event_guid, bar.event_guid);
+            Assert.AreEqual(foo.entry_guid, bar.entry_guid);
             Assert.AreEqual(foo.name, bar.name);
             Assert.AreEqual(foo.description, bar.description);
             Assert.AreEqual(foo.completed, bar.completed);
@@ -36,7 +36,7 @@ namespace CampLogTest {
 
             bar = foo.copy();
             Assert.IsFalse(ReferenceEquals(foo, bar));
-            Assert.AreEqual(foo.event_guid, bar.event_guid);
+            Assert.AreEqual(foo.entry_guid, bar.entry_guid);
             Assert.AreEqual(foo.name, bar.name);
             Assert.AreEqual(foo.description, bar.description);
             Assert.AreEqual(foo.completed, bar.completed);

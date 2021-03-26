@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CampLog {
     [Serializable]
-    public class ActionCharacterSet : EventAction {
+    public class ActionCharacterSet : EntryAction {
         public readonly Guid guid;
         public readonly Character from;
         public readonly Character to;
@@ -37,7 +37,7 @@ namespace CampLog {
             this.restore = restore;
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             if (this.from is null) {
                 // add new character
                 if (this.restore) {
@@ -57,7 +57,7 @@ namespace CampLog {
             }
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             if (this.from is null) {
                 // revert addition of new character
                 state.characters.remove_character(this.guid);
@@ -79,7 +79,7 @@ namespace CampLog {
 
 
     [Serializable]
-    public class ActionCharacterPropertySet : EventAction {
+    public class ActionCharacterPropertySet : EntryAction {
         public readonly Guid guid;
         public readonly List<string> path;
         public readonly CharProperty from;
@@ -110,7 +110,7 @@ namespace CampLog {
             this.to = to;
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             if (this.to is null) {
                 // remove existing property
                 state.characters.characters[this.guid].remove_property(path);
@@ -121,7 +121,7 @@ namespace CampLog {
             }
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             if (this.from is null) {
                 // revert addition of new property
                 state.characters.characters[this.guid].remove_property(path);
@@ -135,7 +135,7 @@ namespace CampLog {
 
 
     [Serializable]
-    public class ActionCharacterPropertyAdjust : EventAction {
+    public class ActionCharacterPropertyAdjust : EntryAction {
         public readonly Guid guid;
         public readonly List<string> path;
         public readonly CharProperty subtract;
@@ -160,13 +160,13 @@ namespace CampLog {
             this.add = add;
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             CharProperty prop = state.characters.characters[this.guid].get_property(this.path);
             if (this.subtract is not null) { prop.subtract(this.subtract); }
             if (this.add is not null) { prop.add(this.add); }
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             CharProperty prop = state.characters.characters[this.guid].get_property(this.path);
             if (this.add is not null) { prop.subtract(this.add); }
             if (this.subtract is not null) { prop.add(this.subtract); }
@@ -175,7 +175,7 @@ namespace CampLog {
 
 
     [Serializable]
-    public class ActionCharacterSetInventory : EventAction {
+    public class ActionCharacterSetInventory : EntryAction {
         public readonly Guid guid;
         public readonly Guid? from;
         public readonly Guid? to;
@@ -199,7 +199,7 @@ namespace CampLog {
             this.to = to;
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             if (this.to is null) {
                 state.character_inventory.Remove(this.guid);
             }
@@ -208,7 +208,7 @@ namespace CampLog {
             }
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             if (this.from is null) {
                 state.character_inventory.Remove(this.guid);
             }

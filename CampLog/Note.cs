@@ -5,18 +5,18 @@ namespace CampLog {
     [Serializable]
     public class Note {
         public string contents;
-        public Guid event_guid;
+        public Guid entry_guid;
         public HashSet<Guid> topics;
 
-        public Note(string contents, Guid event_guid, HashSet<Guid> topics = null) {
+        public Note(string contents, Guid entry_guid, HashSet<Guid> topics = null) {
             this.contents = contents;
-            this.event_guid = event_guid;
+            this.entry_guid = entry_guid;
             if (topics is null) { this.topics = new HashSet<Guid>(); }
             else { this.topics = new HashSet<Guid>(topics); }
         }
 
         public Note copy() {
-            return new Note(this.contents, this.event_guid, this.topics);
+            return new Note(this.contents, this.entry_guid, this.topics);
         }
     }
 

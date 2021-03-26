@@ -2,7 +2,7 @@
 
 namespace CampLog {
     [Serializable]
-    public class ActionTaskCreate : EventAction {
+    public class ActionTaskCreate : EntryAction {
         public readonly Guid guid;
         public readonly Task task;
 
@@ -14,11 +14,11 @@ namespace CampLog {
             this.task = task.copy();
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             state.tasks.add_task(this.task.copy(), this.guid);
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             state.tasks.remove_task(this.guid);
             state.tasks.tasks.Remove(this.guid);
         }
@@ -26,7 +26,7 @@ namespace CampLog {
 
 
     [Serializable]
-    public class ActionTaskRemove : EventAction {
+    public class ActionTaskRemove : EntryAction {
         public readonly Guid guid;
 
         public override string description { get => "Remove task"; }
@@ -35,18 +35,18 @@ namespace CampLog {
             this.guid = guid;
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             state.tasks.remove_task(this.guid);
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             state.tasks.restore_task(this.guid);
         }
     }
 
 
     [Serializable]
-    public class ActionTaskRestore : EventAction {
+    public class ActionTaskRestore : EntryAction {
         public readonly Guid guid;
 
         public override string description { get => "Restore task"; }
@@ -55,18 +55,18 @@ namespace CampLog {
             this.guid = guid;
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             state.tasks.restore_task(this.guid);
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             state.tasks.remove_task(this.guid);
         }
     }
 
 
     [Serializable]
-    public class ActionTaskUpdate : EventAction {
+    public class ActionTaskUpdate : EntryAction {
         public readonly Guid guid;
         public readonly Task from;
         public readonly Task to;
@@ -92,7 +92,7 @@ namespace CampLog {
             this.set_due = set_due;
         }
 
-        public override void apply(CampaignState state, Event evt) {
+        public override void apply(CampaignState state, Entry ent) {
             if (!state.tasks.tasks.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             Task task = state.tasks.tasks[this.guid];
             if (this.set_name) { task.name = to.name; }
@@ -102,7 +102,7 @@ namespace CampLog {
             if (this.set_due) { task.due = to.due; }
         }
 
-        public override void revert(CampaignState state, Event evt) {
+        public override void revert(CampaignState state, Entry ent) {
             if (!state.tasks.tasks.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             Task task = state.tasks.tasks[this.guid];
             if (this.set_name) { task.name = from.name; }
