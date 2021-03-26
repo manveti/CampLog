@@ -28,6 +28,10 @@ namespace CampLog {
     [KnownType(typeof(ActionTaskRemove))]
     [KnownType(typeof(ActionTaskRestore))]
     [KnownType(typeof(ActionTaskUpdate))]
+    [KnownType(typeof(ActionCalendarEventCreate))]
+    [KnownType(typeof(ActionCalendarEventRemove))]
+    [KnownType(typeof(ActionCalendarEventRestore))]
+    [KnownType(typeof(ActionCalendarEventUpdate))]
     [Serializable]
     public abstract class EntryAction {
         public abstract string description { get; }

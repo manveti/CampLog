@@ -95,21 +95,21 @@ namespace CampLog {
         public override void apply(CampaignState state, Entry ent) {
             if (!state.tasks.tasks.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             Task task = state.tasks.tasks[this.guid];
-            if (this.set_name) { task.name = to.name; }
-            if (this.set_desc) { task.description = to.description; }
-            if (this.set_completed) { task.completed = to.completed; }
-            if (this.set_failed) { task.failed = to.failed; }
-            if (this.set_due) { task.due = to.due; }
+            if (this.set_name) { task.name = this.to.name; }
+            if (this.set_desc) { task.description = this.to.description; }
+            if (this.set_completed) { task.completed = this.to.completed; }
+            if (this.set_failed) { task.failed = this.to.failed; }
+            if (this.set_due) { task.due = this.to.due; }
         }
 
         public override void revert(CampaignState state, Entry ent) {
             if (!state.tasks.tasks.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             Task task = state.tasks.tasks[this.guid];
-            if (this.set_name) { task.name = from.name; }
-            if (this.set_desc) { task.description = from.description; }
-            if (this.set_completed) { task.completed = from.completed; }
-            if (this.set_failed) { task.failed = from.failed; }
-            if (this.set_due) { task.due = from.due; }
+            if (this.set_name) { task.name = this.from.name; }
+            if (this.set_desc) { task.description = this.from.description; }
+            if (this.set_completed) { task.completed = this.from.completed; }
+            if (this.set_failed) { task.failed = this.from.failed; }
+            if (this.set_due) { task.due = this.from.due; }
         }
     }
 }
