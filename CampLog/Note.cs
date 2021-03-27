@@ -3,16 +3,24 @@ using System.Collections.Generic;
 
 namespace CampLog {
     [Serializable]
-    public class Note {
+    public class BaseNote {
         public string contents;
-        public Guid entry_guid;
         public RefcountSet<Guid> topics;
 
-        public Note(string contents, Guid entry_guid, HashSet<Guid> topics = null) {
+        public BaseNote(string contents, HashSet<Guid> topics = null) {
             this.contents = contents;
-            this.entry_guid = entry_guid;
             if (topics is null) { this.topics = new RefcountSet<Guid>(); }
             else { this.topics = new RefcountSet<Guid>(topics); }
+        }
+    }
+
+
+    [Serializable]
+    public class Note : BaseNote {
+        public Guid entry_guid;
+
+        public Note(string contents, Guid entry_guid, HashSet<Guid> topics = null) : base(contents, topics) {
+            this.entry_guid = entry_guid;
         }
 
         public Note copy() {
@@ -37,5 +45,15 @@ namespace CampLog {
         public void remove_note(Guid guid) => this.remove_item(guid);
 
         public void restore_note(Guid guid) => this.restore_item(guid);
+    }
+
+
+    [Serializable]
+    public class ExternalNote : BaseNote {
+        public DateTime timestamp;
+
+        public ExternalNote(string contents, DateTime timestamp, HashSet<Guid> topics = null) : base(contents, topics) {
+            this.timestamp = timestamp;
+        }
     }
 }

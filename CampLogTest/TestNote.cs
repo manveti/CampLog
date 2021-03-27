@@ -180,4 +180,29 @@ namespace CampLogTest {
             domain.restore_note(Guid.NewGuid());
         }
     }
+
+
+    [TestClass]
+    public class TestExternalNote {
+        [TestMethod]
+        public void test_serialization() {
+            ExternalNote foo = new ExternalNote("Some note", DateTime.Now), bar;
+
+            foo.topics.Add(Guid.NewGuid());
+
+            DataContractSerializer fmt = new DataContractSerializer(typeof(ExternalNote));
+            using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
+                fmt.WriteObject(ms, foo);
+                ms.Seek(0, System.IO.SeekOrigin.Begin);
+                System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
+                bar = (ExternalNote)(fmt.ReadObject(xr, true));
+            }
+            Assert.AreEqual(foo.contents, bar.contents);
+            Assert.AreEqual(foo.timestamp, bar.timestamp);
+            Assert.AreEqual(foo.topics.Count, bar.topics.Count);
+            foreach (Guid guid in foo.topics) {
+                Assert.IsTrue(bar.topics.Contains(guid));
+            }
+        }
+    }
 }
