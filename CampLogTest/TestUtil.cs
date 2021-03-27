@@ -93,6 +93,15 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_add_increment_count() {
+            RefcountSet<string> foo = new RefcountSet<string>() { "foo", "bar", "baz" };
+            foo.Add("baz", 5);
+            Assert.AreEqual(foo.Count, 3);
+            Assert.IsTrue(foo.contents.ContainsKey("baz"));
+            Assert.AreEqual(foo.contents["baz"], 6);
+        }
+
+        [TestMethod]
         public void test_clear() {
             RefcountSet<int> foo = new RefcountSet<int>() { 1, 2, 3 };
             foo.Clear();
@@ -183,6 +192,22 @@ namespace CampLogTest {
             Assert.IsFalse(foo.Contains(2));
             Assert.IsTrue(foo.Contains(3));
             Assert.IsFalse(foo.Contains(4));
+        }
+
+        [TestMethod]
+        public void test_remove_ref_count() {
+            RefcountSet<int> foo = new RefcountSet<int>() { 1, 2, 3 };
+
+            foo.Add(3, 5);
+
+            foo.RemoveRef(2, 2);
+            foo.RemoveRef(3, 2);
+            Assert.AreEqual(foo.Count, 2);
+            Assert.IsTrue(foo.Contains(1));
+            Assert.IsFalse(foo.Contains(2));
+            Assert.IsTrue(foo.Contains(3));
+            Assert.IsFalse(foo.Contains(4));
+            Assert.AreEqual(foo.contents[3], 4);
         }
 
         [TestMethod]
