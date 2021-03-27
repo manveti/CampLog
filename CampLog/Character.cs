@@ -69,28 +69,28 @@ namespace CampLog {
 
     [Serializable]
     public class CharSetProperty : CharProperty {
-        public HashSet<string> value;
+        public RefcountSet<string> value;
 
         public CharSetProperty() {
-            this.value = new HashSet<string>();
+            this.value = new RefcountSet<string>();
         }
 
         public override CharSetProperty copy() {
-            CharSetProperty result = new CharSetProperty();
-            result.value.UnionWith(this.value);
-            return result;
+            return new CharSetProperty {
+                value = new RefcountSet<string>(this.value.contents)
+            };
         }
 
         public override void add(CharProperty prop) {
             CharSetProperty p = prop as CharSetProperty;
             if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
-            this.value.UnionWith(p.value);
+            this.value.AddRefs(p.value);
         }
 
         public override void subtract(CharProperty prop) {
             CharSetProperty p = prop as CharSetProperty;
             if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
-            this.value.ExceptWith(p.value);
+            this.value.SubtractRefs(p.value);
         }
     }
 

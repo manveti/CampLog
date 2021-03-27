@@ -592,6 +592,52 @@ namespace CampLogTest {
 
             action.revert(state, ent);
         }
+
+        [TestMethod]
+        public void test_set_add_add_revert() {
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Character somebody = new Character("Somebody");
+            List<String> path = new List<string>() { "Feats" };
+            CharSetProperty feats = new CharSetProperty(), add_feats = new CharSetProperty();
+            feats.value.Add("Power Attack");
+            feats.value.Add("Cleave");
+            add_feats.value.Add("Cleave");
+            somebody.set_property(path, feats);
+            CampaignState state = new CampaignState();
+            Guid chr_guid = state.characters.add_character(somebody);
+            ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, path, null, add_feats);
+
+            action.apply(state, ent);
+            action.revert(state, ent);
+            CharSetProperty prop = somebody.get_property(path) as CharSetProperty;
+            Assert.IsNotNull(prop);
+            Assert.AreEqual(prop.value.Count, 2);
+            Assert.IsTrue(prop.value.Contains("Power Attack"));
+            Assert.IsTrue(prop.value.Contains("Cleave"));
+        }
+
+        [TestMethod]
+        public void test_set_add_add_revert_revert() {
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Character somebody = new Character("Somebody");
+            List<String> path = new List<string>() { "Feats" };
+            CharSetProperty feats = new CharSetProperty(), add_feats = new CharSetProperty();
+            feats.value.Add("Power Attack");
+            add_feats.value.Add("Cleave");
+            somebody.set_property(path, feats);
+            CampaignState state = new CampaignState();
+            Guid chr_guid = state.characters.add_character(somebody);
+            ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, path, null, add_feats);
+
+            action.apply(state, ent);
+            action.apply(state, ent);
+            action.revert(state, ent);
+            action.revert(state, ent);
+            CharSetProperty prop = somebody.get_property(path) as CharSetProperty;
+            Assert.IsNotNull(prop);
+            Assert.AreEqual(prop.value.Count, 1);
+            Assert.IsTrue(prop.value.Contains("Power Attack"));
+        }
     }
 
 

@@ -142,6 +142,21 @@ namespace CampLogTest {
             Assert.IsTrue(foo.value.Contains("blah"));
             Assert.IsTrue(foo.value.Contains("bleh"));
         }
+
+        [TestMethod]
+        public void test_subtract_extra_refs() {
+            CharSetProperty foo = new CharSetProperty(), bar = new CharSetProperty();
+            foo.value.Add("blah", 2);
+            foo.value.Add("bloh");
+            foo.value.Add("bleh");
+            bar.value.Add("blah");
+            bar.value.Add("bloh");
+
+            foo.subtract(bar);
+            Assert.AreEqual(foo.value.Count, 2);
+            Assert.IsTrue(foo.value.Contains("blah"));
+            Assert.IsTrue(foo.value.Contains("bleh"));
+        }
     }
 
 
