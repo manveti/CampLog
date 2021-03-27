@@ -20,4 +20,20 @@ namespace CampLog {
             this.events = new CalendarEventDomain();
         }
     }
+
+
+    [Serializable]
+    public class CampaignDomain {
+        public CampaignState state;
+        public List<Entry> entries;
+        public Dictionary<Guid, Topic> topics;
+        public List<ExternalNote> notes;
+
+        public CampaignDomain() {
+            this.state = new CampaignState();
+            this.entries = new List<Entry>();
+            this.topics = new Dictionary<Guid, Topic>();
+            this.notes = new List<ExternalNote>();
+        }
+    }
 }
