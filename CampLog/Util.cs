@@ -65,5 +65,21 @@ namespace CampLog {
                 this.Add(item);
             }
         }
+
+        public void AddRefs(RefcountSet<T> other) {
+            foreach (T item in other.contents.Keys) {
+                if (!this.contents.ContainsKey(item)) { this.contents[item] = 0; }
+                this.contents[item] += other.contents[item];
+                if (this.contents[item] <= 0) { this.contents.Remove(item); }
+            }
+        }
+
+        public void SubtractRefs(RefcountSet<T> other) {
+            foreach (T item in other.contents.Keys) {
+                if (!this.contents.ContainsKey(item)) { this.contents[item] = 0; }
+                this.contents[item] -= other.contents[item];
+                if (this.contents[item] <= 0) { this.contents.Remove(item); }
+            }
+        }
     }
 }

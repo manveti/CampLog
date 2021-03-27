@@ -239,5 +239,37 @@ namespace CampLogTest {
             Assert.AreEqual(foo.contents[3], 3);
             Assert.AreEqual(foo.contents[4], 1);
         }
+
+        [TestMethod]
+        public void test_add_refs() {
+            RefcountSet<int> foo = new RefcountSet<int>() { 1, 2, 3 }, bar = new RefcountSet<int>() { 2, 3, 4 };
+
+            foo.Add(3);
+            bar.Add(3);
+            bar.Add(4, 4);
+
+            foo.AddRefs(bar);
+            Assert.AreEqual(foo.Count, 4);
+            Assert.AreEqual(foo.contents[1], 1);
+            Assert.AreEqual(foo.contents[2], 2);
+            Assert.AreEqual(foo.contents[3], 4);
+            Assert.AreEqual(foo.contents[4], 5);
+        }
+
+        [TestMethod]
+        public void test_subtract_refs() {
+            RefcountSet<int> foo = new RefcountSet<int>() { 1, 2, 3, 4 }, bar = new RefcountSet<int>() { 2, 3, 4 };
+
+            foo.Add(3);
+            foo.Add(4);
+            bar.Add(3);
+
+            foo.SubtractRefs(bar);
+            Assert.AreEqual(foo.Count, 2);
+            Assert.AreEqual(foo.contents[1], 1);
+            Assert.IsFalse(foo.Contains(2));
+            Assert.IsFalse(foo.Contains(3));
+            Assert.AreEqual(foo.contents[4], 1);
+        }
     }
 }
