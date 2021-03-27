@@ -6,17 +6,17 @@ namespace CampLog {
     public class Note {
         public string contents;
         public Guid entry_guid;
-        public HashSet<Guid> topics;
+        public RefcountSet<Guid> topics;
 
         public Note(string contents, Guid entry_guid, HashSet<Guid> topics = null) {
             this.contents = contents;
             this.entry_guid = entry_guid;
-            if (topics is null) { this.topics = new HashSet<Guid>(); }
-            else { this.topics = new HashSet<Guid>(topics); }
+            if (topics is null) { this.topics = new RefcountSet<Guid>(); }
+            else { this.topics = new RefcountSet<Guid>(topics); }
         }
 
         public Note copy() {
-            return new Note(this.contents, this.entry_guid, this.topics);
+            return new Note(this.contents, this.entry_guid) { topics = new RefcountSet<Guid>(this.topics) };
         }
     }
 

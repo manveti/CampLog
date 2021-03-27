@@ -162,8 +162,11 @@ namespace CampLogTest {
     public class TestActionNoteUpdate {
         [TestMethod]
         public void test_serialization() {
-            HashSet<Guid> rem_topics = new HashSet<Guid>() { Guid.NewGuid() }, add_topics = new HashSet<Guid>() { Guid.NewGuid() };
-            ActionNoteUpdate foo = new ActionNoteUpdate(Guid.NewGuid(), "Old note", "New Note", rem_topics, add_topics), bar;
+            Dictionary<Guid, int> adjust_topics = new Dictionary<Guid, int>() {
+                [Guid.NewGuid()] = -2,
+                [Guid.NewGuid()] = 1,
+            };
+            ActionNoteUpdate foo = new ActionNoteUpdate(Guid.NewGuid(), "Old note", "New Note", adjust_topics), bar;
             DataContractSerializer fmt = new DataContractSerializer(typeof(ActionNoteUpdate));
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
                 fmt.WriteObject(ms, foo);
@@ -174,13 +177,10 @@ namespace CampLogTest {
             Assert.AreEqual(foo.guid, bar.guid);
             Assert.AreEqual(foo.contents_from, bar.contents_from);
             Assert.AreEqual(foo.contents_to, bar.contents_to);
-            Assert.AreEqual(foo.remove_topics.Count, bar.remove_topics.Count);
-            foreach (Guid topic in foo.remove_topics) {
-                Assert.IsTrue(bar.remove_topics.Contains(topic));
-            }
-            Assert.AreEqual(foo.add_topics.Count, bar.add_topics.Count);
-            foreach (Guid topic in foo.add_topics) {
-                Assert.IsTrue(bar.add_topics.Contains(topic));
+            Assert.AreEqual(foo.adjust_topics.Count, bar.adjust_topics.Count);
+            foreach (Guid topic in foo.adjust_topics.Keys) {
+                Assert.IsTrue(bar.adjust_topics.ContainsKey(topic));
+                Assert.AreEqual(foo.adjust_topics[topic], bar.adjust_topics[topic]);
             }
         }
 
@@ -188,11 +188,14 @@ namespace CampLogTest {
         public void test_apply() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid topic1 = Guid.NewGuid(), topic2 = Guid.NewGuid(), topic3 = Guid.NewGuid();
-            HashSet<Guid> rem_topics = new HashSet<Guid>() { topic2 }, add_topics = new HashSet<Guid>() { topic3 };
+            Dictionary<Guid, int> adjust_topics = new Dictionary<Guid, int>() {
+                [topic2] = -1,
+                [topic3] = 1,
+            };
             Note note = new Note("Some note", ent.guid, new HashSet<Guid>() { topic1, topic2 });
             CampaignState state = new CampaignState();
             Guid note_guid = state.notes.add_note(note);
-            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, "Some note", "New note", rem_topics, add_topics);
+            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, "Some note", "New note", adjust_topics);
 
             action.apply(state, ent);
             Assert.AreEqual(note.contents, "New note");
@@ -208,7 +211,7 @@ namespace CampLogTest {
             Note note = new Note("Some note", ent.guid, new HashSet<Guid>() { topic1, topic2 });
             CampaignState state = new CampaignState();
             Guid note_guid = state.notes.add_note(note);
-            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, "Some note", "New note", null, null);
+            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, "Some note", "New note", null);
 
             action.apply(state, ent);
             Assert.AreEqual(note.contents, "New note");
@@ -221,11 +224,14 @@ namespace CampLogTest {
         public void test_apply_topics_only() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid topic1 = Guid.NewGuid(), topic2 = Guid.NewGuid(), topic3 = Guid.NewGuid();
-            HashSet<Guid> rem_topics = new HashSet<Guid>() { topic2 }, add_topics = new HashSet<Guid>() { topic3 };
+            Dictionary<Guid, int> adjust_topics = new Dictionary<Guid, int>() {
+                [topic2] = -1,
+                [topic3] = 1,
+            };
             Note note = new Note("Some note", ent.guid, new HashSet<Guid>() { topic1, topic2 });
             CampaignState state = new CampaignState();
             Guid note_guid = state.notes.add_note(note);
-            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, null, null, rem_topics, add_topics);
+            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, null, null, adjust_topics);
 
             action.apply(state, ent);
             Assert.AreEqual(note.contents, "Some note");
@@ -238,11 +244,14 @@ namespace CampLogTest {
         public void test_revert() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid topic1 = Guid.NewGuid(), topic2 = Guid.NewGuid(), topic3 = Guid.NewGuid();
-            HashSet<Guid> rem_topics = new HashSet<Guid>() { topic2 }, add_topics = new HashSet<Guid>() { topic3 };
+            Dictionary<Guid, int> adjust_topics = new Dictionary<Guid, int>() {
+                [topic2] = -1,
+                [topic3] = 1,
+            };
             Note note = new Note("Some note", ent.guid, new HashSet<Guid>() { topic1, topic2 });
             CampaignState state = new CampaignState();
             Guid note_guid = state.notes.add_note(note);
-            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, "Some note", "New note", rem_topics, add_topics);
+            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, "Some note", "New note", adjust_topics);
 
             action.apply(state, ent);
             action.revert(state, ent);
@@ -259,7 +268,7 @@ namespace CampLogTest {
             Note note = new Note("Some note", ent.guid, new HashSet<Guid>() { topic1, topic2 });
             CampaignState state = new CampaignState();
             Guid note_guid = state.notes.add_note(note);
-            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, "Some note", "New note", null, null);
+            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, "Some note", "New note", null);
 
             action.apply(state, ent);
             action.revert(state, ent);
@@ -273,11 +282,14 @@ namespace CampLogTest {
         public void test_revert_topics_only() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid topic1 = Guid.NewGuid(), topic2 = Guid.NewGuid(), topic3 = Guid.NewGuid();
-            HashSet<Guid> rem_topics = new HashSet<Guid>() { topic2 }, add_topics = new HashSet<Guid>() { topic3 };
+            Dictionary<Guid, int> adjust_topics = new Dictionary<Guid, int>() {
+                [topic2] = -2,
+                [topic3] = 1,
+            };
             Note note = new Note("Some note", ent.guid, new HashSet<Guid>() { topic1, topic2 });
             CampaignState state = new CampaignState();
             Guid note_guid = state.notes.add_note(note);
-            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, null, null, rem_topics, add_topics);
+            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, null, null, adjust_topics);
 
             action.apply(state, ent);
             action.revert(state, ent);
@@ -285,6 +297,7 @@ namespace CampLogTest {
             Assert.AreEqual(note.topics.Count, 2);
             Assert.IsTrue(note.topics.Contains(topic1));
             Assert.IsTrue(note.topics.Contains(topic2));
+            Assert.AreEqual(note.topics.contents[topic2], 2);
         }
     }
 }
