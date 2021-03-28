@@ -37,12 +37,14 @@ namespace CampLog {
     public class CampaignDomain {
         public CampaignState state;
         public List<Entry> entries;
+        public int valid_entries;
         public Dictionary<Guid, Topic> topics;
         public List<ExternalNote> notes;
 
         public CampaignDomain() {
             this.state = new CampaignState();
             this.entries = new List<Entry>();
+            this.valid_entries = 0;
             this.topics = new Dictionary<Guid, Topic>();
             this.notes = new List<ExternalNote>();
         }

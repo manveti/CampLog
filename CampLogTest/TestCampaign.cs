@@ -114,6 +114,7 @@ namespace CampLogTest {
             Guid task_guid = foo.state.tasks.add_task(task);
             Guid event_guid = foo.state.events.add_event(evt);
             foo.entries.Add(ent);
+            foo.valid_entries = 1;
             Guid topic_guid = Guid.NewGuid();
             foo.topics[topic_guid] = topic;
             foo.notes.Add(oog_note);
@@ -147,6 +148,7 @@ namespace CampLogTest {
             for (int i = 0; i < foo.entries.Count; i++) {
                 Assert.AreEqual(foo.entries[i].guid, bar.entries[i].guid);
             }
+            Assert.AreEqual(foo.valid_entries, bar.valid_entries);
             Assert.AreEqual(foo.topics.Count, bar.topics.Count);
             Assert.IsTrue(bar.topics.ContainsKey(topic_guid));
             Assert.AreEqual(bar.topics[topic_guid].name, "Some topic");
