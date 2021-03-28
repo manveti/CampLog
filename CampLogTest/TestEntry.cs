@@ -92,6 +92,23 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_apply_start_index() {
+            Character c1 = new Character("Somebody"), c2 = new Character("Someone Else");
+            Guid c1_guid = Guid.NewGuid(), c2_guid = Guid.NewGuid();
+            ActionCharacterSet a1 = new ActionCharacterSet(c1_guid, null, c1), a2 = new ActionCharacterSet(c2_guid, null, c2);
+            CampaignState state = new CampaignState();
+            Entry ent = new Entry(42, DateTime.Now, "Do all the things");
+            ent.actions.Add(a1);
+            ent.actions.Add(a2);
+
+            ent.apply(state, 1);
+            Assert.AreEqual(state.characters.characters.Count, 1);
+            Assert.IsTrue(state.characters.characters.ContainsKey(c2_guid));
+            Assert.AreEqual(state.characters.active_characters.Count, 1);
+            Assert.IsTrue(state.characters.active_characters.Contains(c2_guid));
+        }
+
+        [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_bad_order() {
             Character c1 = new Character("Somebody"), c2 = new Character("Someone Else");
@@ -103,7 +120,14 @@ namespace CampLogTest {
             ent.actions.Add(a1);
             ent.actions.Add(a2);
 
-            ent.apply(state);
+            try {
+                ent.apply(state);
+            }
+            catch (ArgumentException e) {
+                Assert.IsTrue(e.Data.Contains("action_index"));
+                Assert.AreEqual(e.Data["action_index"], 0);
+                throw;
+            }
         }
 
         [TestMethod]
@@ -124,6 +148,24 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_revert_start_index() {
+            Character c1 = new Character("Somebody"), c2 = new Character("Someone Else");
+            Guid c1_guid = Guid.NewGuid(), c2_guid = Guid.NewGuid();
+            ActionCharacterSet a1 = new ActionCharacterSet(c1_guid, null, c1), a2 = new ActionCharacterSet(c2_guid, null, c2);
+            CampaignState state = new CampaignState();
+            Entry ent = new Entry(42, DateTime.Now, "Do all the things");
+            ent.actions.Add(a1);
+            ent.actions.Add(a2);
+
+            ent.apply(state);
+            ent.revert(state, 0);
+            Assert.AreEqual(state.characters.characters.Count, 1);
+            Assert.IsTrue(state.characters.characters.ContainsKey(c2_guid));
+            Assert.AreEqual(state.characters.active_characters.Count, 1);
+            Assert.IsTrue(state.characters.active_characters.Contains(c2_guid));
+        }
+
+        [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_bad_order() {
             Character c1 = new Character("Somebody"), c2 = new Character("Someone Else");
@@ -139,7 +181,14 @@ namespace CampLogTest {
             ent.actions[0] = a3;
             ent.actions[1] = a1;
             ent.actions[2] = a2;
-            ent.revert(state);
+            try {
+                ent.revert(state);
+            }
+            catch (ArgumentException e) {
+                Assert.IsTrue(e.Data.Contains("action_index"));
+                Assert.AreEqual(e.Data["action_index"], 1);
+                throw;
+            }
         }
     }
 }

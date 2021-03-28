@@ -83,15 +83,28 @@ namespace CampLog {
             return result;
         }
 
-        public void apply(CampaignState state) {
-            foreach (EntryAction action in this.actions) {
-                action.apply(state, this);
+        public void apply(CampaignState state, int start_index = 0) {
+            for (int i = start_index; i < this.actions.Count; i++) {
+                try {
+                    this.actions[i].apply(state, this);
+                }
+                catch (ArgumentException e) {
+                    e.Data["action_index"] = i;
+                    throw;
+                }
             }
         }
 
-        public void revert(CampaignState state) {
-            for (int i = this.actions.Count - 1; i >= 0; i--) {
-                this.actions[i].revert(state, this);
+        public void revert(CampaignState state, int start_index = -1) {
+            if (start_index < 0) { start_index = this.actions.Count - 1; }
+            for (int i = start_index; i >= 0; i--) {
+                try {
+                    this.actions[i].revert(state, this);
+                }
+                catch (ArgumentException e) {
+                    e.Data["action_index"] = i;
+                    throw;
+                }
             }
         }
     }
