@@ -48,6 +48,49 @@ namespace CampLogTest {
             Assert.IsTrue(bar.events.events.ContainsKey(event_guid));
             Assert.AreEqual(bar.events.events[event_guid].name, "Some event");
         }
+
+        [TestMethod]
+        public void test_copy() {
+            Character chr = new Character("Somebody");
+            Note note = new Note("Some note", Guid.NewGuid());
+            Task task = new Task(Guid.NewGuid(), "Some task");
+            CalendarEvent evt = new CalendarEvent(Guid.NewGuid(), 42, "Some event");
+            CampaignState foo = new CampaignState(), bar;
+
+            Guid chr_guid = foo.characters.add_character(chr);
+            Guid inv_guid = foo.inventories.new_inventory("Somebody's Inventory");
+            foo.character_inventory[chr_guid] = inv_guid;
+            Guid note_guid = foo.notes.add_note(note);
+            Guid task_guid = foo.tasks.add_task(task);
+            Guid event_guid = foo.events.add_event(evt);
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.IsFalse(ReferenceEquals(foo.characters, bar.characters));
+            Assert.AreEqual(foo.characters.characters.Count, bar.characters.characters.Count);
+            Assert.IsTrue(bar.characters.characters.ContainsKey(chr_guid));
+            Assert.AreEqual(bar.characters.characters[chr_guid].name, "Somebody");
+            Assert.IsFalse(ReferenceEquals(foo.inventories, bar.inventories));
+            Assert.AreEqual(foo.inventories.inventories.Count, bar.inventories.inventories.Count);
+            Assert.IsTrue(bar.inventories.inventories.ContainsKey(inv_guid));
+            Assert.AreEqual(bar.inventories.inventories[inv_guid].name, "Somebody's Inventory");
+            Assert.IsFalse(ReferenceEquals(foo.character_inventory, bar.character_inventory));
+            Assert.AreEqual(foo.character_inventory.Count, bar.character_inventory.Count);
+            Assert.IsTrue(bar.character_inventory.ContainsKey(chr_guid));
+            Assert.AreEqual(bar.character_inventory[chr_guid], inv_guid);
+            Assert.IsFalse(ReferenceEquals(foo.notes, bar.notes));
+            Assert.AreEqual(foo.notes.notes.Count, bar.notes.notes.Count);
+            Assert.IsTrue(bar.notes.notes.ContainsKey(note_guid));
+            Assert.AreEqual(bar.notes.notes[note_guid].contents, "Some note");
+            Assert.IsFalse(ReferenceEquals(foo.tasks, bar.tasks));
+            Assert.AreEqual(foo.tasks.tasks.Count, bar.tasks.tasks.Count);
+            Assert.IsTrue(bar.tasks.tasks.ContainsKey(task_guid));
+            Assert.AreEqual(bar.tasks.tasks[task_guid].name, "Some task");
+            Assert.IsFalse(ReferenceEquals(foo.events, bar.events));
+            Assert.AreEqual(foo.events.events.Count, bar.events.events.Count);
+            Assert.IsTrue(bar.events.events.ContainsKey(event_guid));
+            Assert.AreEqual(bar.events.events[event_guid].name, "Some event");
+        }
     }
 
 

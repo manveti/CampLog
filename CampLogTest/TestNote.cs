@@ -77,6 +77,31 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_copy() {
+            Note n1 = new Note("Some current note", Guid.NewGuid()), n2 = new Note("Some former note", Guid.NewGuid());
+            NoteDomain foo = new NoteDomain(), bar;
+
+            foo.add_note(n1);
+            Guid rem_guid = foo.add_note(n2);
+            foo.remove_note(rem_guid);
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.IsFalse(ReferenceEquals(foo.notes, bar.notes));
+            Assert.AreEqual(foo.notes.Count, bar.notes.Count);
+            foreach (Guid note in foo.notes.Keys) {
+                Assert.IsTrue(bar.notes.ContainsKey(note));
+                Assert.IsFalse(ReferenceEquals(foo.notes[note], bar.notes[note]));
+                Assert.AreEqual(foo.notes[note].contents, bar.notes[note].contents);
+            }
+            Assert.IsFalse(ReferenceEquals(foo.active_notes, bar.active_notes));
+            Assert.AreEqual(foo.active_notes.Count, bar.active_notes.Count);
+            foreach (Guid note in foo.active_notes) {
+                Assert.IsTrue(bar.active_notes.Contains(note));
+            }
+        }
+
+        [TestMethod]
         public void test_add_note() {
             NoteDomain domain = new NoteDomain();
             Note note = new Note("Some note", Guid.NewGuid());

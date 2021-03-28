@@ -1294,6 +1294,55 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_copy() {
+            ItemCategory c1 = new ItemCategory("Wealth", 1), c2 = new ItemCategory("Weapons", .5m);
+            ItemSpec gem = new ItemSpec("Gem", c1, 100, 1), gp = new ItemSpec("GP", c1, 1, 0), sword = new ItemSpec("Longsword", c2, 30, 3);
+            ItemStack gem_stack = new ItemStack(gem, 3), gp_stack = new ItemStack(gp, 150), sword_stack = new ItemStack(sword, 2);
+            InventoryDomain foo = new InventoryDomain(), bar;
+
+            Guid test_inv = foo.new_inventory("Test Inventory");
+            Guid gem_ent = foo.add_entry(test_inv, gem_stack);
+            foo.add_entry(test_inv, gp_stack);
+            Guid sword_ent = foo.add_entry(test_inv, sword_stack);
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.IsFalse(ReferenceEquals(foo.items, bar.items));
+            Assert.AreEqual(foo.items.Count, bar.items.Count);
+            foreach (ItemCategory cat in foo.items.Keys) {
+                Assert.IsTrue(bar.items.ContainsKey(cat));
+                Assert.IsFalse(ReferenceEquals(foo.items[cat], bar.items[cat]));
+                Assert.AreEqual(foo.items[cat].Count, bar.items[cat].Count);
+                for (int i = 0; i < foo.items[cat].Count; i++) {
+                    Assert.AreEqual(foo.items[cat][i], bar.items[cat][i]);
+                }
+            }
+            Assert.IsFalse(ReferenceEquals(foo.entries, bar.entries));
+            Assert.AreEqual(foo.entries.Count, bar.entries.Count);
+            foreach (Guid ent in foo.entries.Keys) {
+                Assert.IsTrue(bar.entries.ContainsKey(ent));
+                Assert.IsFalse(ReferenceEquals(foo.entries[ent], bar.entries[ent]));
+                Assert.AreEqual(foo.entries[ent].name, bar.entries[ent].name);
+            }
+            Assert.IsFalse(ReferenceEquals(foo.active_entries, bar.active_entries));
+            Assert.AreEqual(foo.active_entries.Count, bar.active_entries.Count);
+            foreach (Guid ent in foo.active_entries) {
+                Assert.IsTrue(bar.active_entries.Contains(ent));
+            }
+            Assert.IsFalse(ReferenceEquals(foo.inventories, bar.inventories));
+            Assert.AreEqual(foo.inventories.Count, bar.inventories.Count);
+            foreach (Guid inv in foo.inventories.Keys) {
+                Assert.IsTrue(bar.inventories.ContainsKey(inv));
+                Assert.IsFalse(ReferenceEquals(foo.inventories[inv], bar.inventories[inv]));
+                Assert.AreEqual(foo.inventories[inv].name, bar.inventories[inv].name);
+                Assert.AreEqual(foo.inventories[inv].contents.Count, bar.inventories[inv].contents.Count);
+            }
+            // make sure the things which are supposed to be references are such after deserialization
+            Assert.IsTrue(ReferenceEquals(bar.items[c2][0], bar.entries[sword_ent].item));
+            Assert.IsTrue(ReferenceEquals(bar.entries[gem_ent], bar.inventories[test_inv].contents[gem_ent]));
+        }
+
+        [TestMethod]
         public void test_new_inventory() {
             InventoryDomain domain = new InventoryDomain();
             Guid inv = domain.new_inventory("Test Inventory");

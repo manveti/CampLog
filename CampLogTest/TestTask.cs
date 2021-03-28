@@ -76,6 +76,31 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_copy() {
+            Task t1 = new Task(Guid.NewGuid(), "Some current task"), t2 = new Task(Guid.NewGuid(), "Some former task");
+            TaskDomain foo = new TaskDomain(), bar;
+
+            foo.add_task(t1);
+            Guid rem_guid = foo.add_task(t2);
+            foo.remove_task(rem_guid);
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.IsFalse(ReferenceEquals(foo.tasks, bar.tasks));
+            Assert.AreEqual(foo.tasks.Count, bar.tasks.Count);
+            foreach (Guid task in foo.tasks.Keys) {
+                Assert.IsTrue(bar.tasks.ContainsKey(task));
+                Assert.IsFalse(ReferenceEquals(foo.tasks[task], bar.tasks[task]));
+                Assert.AreEqual(foo.tasks[task].name, bar.tasks[task].name);
+            }
+            Assert.IsFalse(ReferenceEquals(foo.active_tasks, bar.active_tasks));
+            Assert.AreEqual(foo.active_tasks.Count, bar.active_tasks.Count);
+            foreach (Guid task in foo.active_tasks) {
+                Assert.IsTrue(bar.active_tasks.Contains(task));
+            }
+        }
+
+        [TestMethod]
         public void test_add_task() {
             TaskDomain domain = new TaskDomain();
             Task task = new Task(Guid.NewGuid(), "Some task");

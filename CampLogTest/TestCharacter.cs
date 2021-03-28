@@ -477,6 +477,31 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_copy() {
+            Character c1 = new Character("Somebody"), c2 = new Character("Mr. Boddy");
+            CharacterDomain foo = new CharacterDomain(), bar;
+
+            foo.add_character(c1);
+            Guid mr_boddy = foo.add_character(c2);
+            foo.remove_character(mr_boddy);
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.IsFalse(ReferenceEquals(foo.characters, bar.characters));
+            Assert.AreEqual(foo.characters.Count, bar.characters.Count);
+            foreach (Guid chr in foo.characters.Keys) {
+                Assert.IsTrue(bar.characters.ContainsKey(chr));
+                Assert.IsFalse(ReferenceEquals(foo.characters[chr], bar.characters[chr]));
+                Assert.AreEqual(foo.characters[chr].name, bar.characters[chr].name);
+            }
+            Assert.IsFalse(ReferenceEquals(foo.active_characters, bar.active_characters));
+            Assert.AreEqual(foo.active_characters.Count, bar.active_characters.Count);
+            foreach (Guid chr in foo.active_characters) {
+                Assert.IsTrue(bar.active_characters.Contains(chr));
+            }
+        }
+
+        [TestMethod]
         public void test_add_character() {
             CharacterDomain domain = new CharacterDomain();
             Character chr = new Character("Somebody");

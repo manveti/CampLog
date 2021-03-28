@@ -385,6 +385,29 @@ namespace CampLog {
             this.inventories = new Dictionary<Guid, Inventory>();
         }
 
+        private void record_inventory_contents(Inventory inv) {
+            foreach (Guid guid in inv.contents.Keys) {
+                this.add_item(inv.contents[guid].item);
+                this.entries[guid] = inv.contents[guid];
+                if ((this.entries[guid] is SingleItem si) && (si.containers is not null)) {
+                    foreach (Inventory subinv in si.containers) {
+                        this.record_inventory_contents(subinv);
+                    }
+                }
+            }
+        }
+
+        public InventoryDomain copy() {
+            InventoryDomain result = new InventoryDomain() {
+                active_entries = new HashSet<Guid>(this.active_entries)
+            };
+            foreach (Guid guid in this.inventories.Keys) {
+                result.inventories[guid] = this.inventories[guid].copy();
+                result.record_inventory_contents(result.inventories[guid]);
+            }
+            return result;
+        }
+
         public Guid new_inventory(string name = null, Guid? guid = null) {
             Guid inv_guid = guid ?? Guid.NewGuid();
             if (this.inventories.ContainsKey(inv_guid)) { throw new ArgumentOutOfRangeException(nameof(guid)); }

@@ -41,6 +41,16 @@ namespace CampLog {
             set => this.active_items = value;
         }
 
+        public TaskDomain copy() {
+            TaskDomain result = new TaskDomain() {
+                active_items = new HashSet<Guid>(this.active_items)
+            };
+            foreach (Guid guid in this.items.Keys) {
+                result.items[guid] = this.items[guid].copy();
+            }
+            return result;
+        }
+
         public Guid add_task(Task task, Guid? guid = null) => this.add_item(task, guid);
 
         public void remove_task(Guid guid) => this.remove_item(guid);

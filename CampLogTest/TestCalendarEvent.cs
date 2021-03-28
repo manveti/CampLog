@@ -69,6 +69,31 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_copy() {
+            CalendarEvent e1 = new CalendarEvent(Guid.NewGuid(), 42, "Some current event"), e2 = new CalendarEvent(Guid.NewGuid(), 45, "Some former event");
+            CalendarEventDomain foo = new CalendarEventDomain(), bar;
+
+            foo.add_event(e1);
+            Guid rem_guid = foo.add_event(e2);
+            foo.remove_event(rem_guid);
+
+            bar = foo.copy();
+            Assert.IsFalse(ReferenceEquals(foo, bar));
+            Assert.IsFalse(ReferenceEquals(foo.events, bar.events));
+            Assert.AreEqual(foo.events.Count, bar.events.Count);
+            foreach (Guid evt in foo.events.Keys) {
+                Assert.IsTrue(bar.events.ContainsKey(evt));
+                Assert.IsFalse(ReferenceEquals(foo.events[evt], bar.events[evt]));
+                Assert.AreEqual(foo.events[evt].name, bar.events[evt].name);
+            }
+            Assert.IsFalse(ReferenceEquals(foo.active_events, bar.active_events));
+            Assert.AreEqual(foo.active_events.Count, bar.active_events.Count);
+            foreach (Guid evt in foo.active_events) {
+                Assert.IsTrue(bar.active_events.Contains(evt));
+            }
+        }
+
+        [TestMethod]
         public void test_add_event() {
             CalendarEventDomain domain = new CalendarEventDomain();
             CalendarEvent evt = new CalendarEvent(Guid.NewGuid(), 42, "Some event");

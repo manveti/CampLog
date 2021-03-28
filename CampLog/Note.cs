@@ -40,6 +40,16 @@ namespace CampLog {
             set => this.active_items = value;
         }
 
+        public NoteDomain copy() {
+            NoteDomain result = new NoteDomain() {
+                active_items = new HashSet<Guid>(this.active_items)
+            };
+            foreach (Guid guid in this.items.Keys) {
+                result.items[guid] = this.items[guid].copy();
+            }
+            return result;
+        }
+
         public Guid add_note(Note note, Guid? guid = null) => this.add_item(note, guid);
 
         public void remove_note(Guid guid) => this.remove_item(guid);

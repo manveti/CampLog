@@ -36,6 +36,16 @@ namespace CampLog {
             set => this.active_items = value;
         }
 
+        public CalendarEventDomain copy() {
+            CalendarEventDomain result = new CalendarEventDomain() {
+                active_items = new HashSet<Guid>(this.active_items)
+            };
+            foreach (Guid guid in this.items.Keys) {
+                result.items[guid] = this.items[guid].copy();
+            }
+            return result;
+        }
+
         public Guid add_event(CalendarEvent evt, Guid? guid = null) => this.add_item(evt, guid);
 
         public void remove_event(Guid guid) => this.remove_item(guid);

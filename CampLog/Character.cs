@@ -207,6 +207,16 @@ namespace CampLog {
             set => this.active_items = value;
         }
 
+        public CharacterDomain copy() {
+            CharacterDomain result = new CharacterDomain() {
+                active_items = new HashSet<Guid>(this.active_items)
+            };
+            foreach (Guid guid in this.items.Keys) {
+                result.items[guid] = this.items[guid].copy();
+            }
+            return result;
+        }
+
         public Guid add_character(Character chr, Guid? guid = null) => this.add_item(chr, guid);
 
         public void remove_character(Guid guid) => this.remove_item(guid);

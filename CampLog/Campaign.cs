@@ -19,6 +19,17 @@ namespace CampLog {
             this.tasks = new TaskDomain();
             this.events = new CalendarEventDomain();
         }
+
+        public CampaignState copy() {
+            return new CampaignState() {
+                characters = this.characters.copy(),
+                inventories = this.inventories.copy(),
+                character_inventory = new Dictionary<Guid, Guid>(this.character_inventory),
+                notes = this.notes.copy(),
+                tasks = this.tasks.copy(),
+                events = this.events.copy(),
+            };
+        }
     }
 
 
