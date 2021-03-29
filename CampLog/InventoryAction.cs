@@ -53,7 +53,7 @@ namespace CampLog {
     [Serializable]
     public class ActionInventoryRename : EntryAction {
         public readonly Guid guid;
-        public readonly string from;
+        public string from;
         public readonly string to;
 
         public override string description {
@@ -69,6 +69,11 @@ namespace CampLog {
             this.guid = guid;
             this.from = from;
             this.to = to;
+        }
+
+        public override void rebase(CampaignState state) {
+            if (!state.inventories.inventories.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
+            this.from = state.inventories.inventories[this.guid].name;
         }
 
         public override void apply(CampaignState state, Entry ent) {
@@ -145,8 +150,8 @@ namespace CampLog {
     [Serializable]
     public class ActionItemStackSet : EntryAction {
         public readonly Guid guid;
-        public readonly long count_from;
-        public readonly long unidentified_from;
+        public long count_from;
+        public long unidentified_from;
         public readonly long count_to;
         public readonly long unidentified_to;
 
@@ -162,6 +167,14 @@ namespace CampLog {
             this.unidentified_from = unidentified_from;
             this.count_to = count_to;
             this.unidentified_to = unidentified_to;
+        }
+
+        public override void rebase(CampaignState state) {
+            if (!state.inventories.entries.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
+            ItemStack stack = state.inventories.entries[guid] as ItemStack;
+            if (stack is null) { throw new ArgumentOutOfRangeException(); }
+            this.count_from = stack.count;
+            this.unidentified_from = stack.unidentified;
         }
 
         public override void apply(CampaignState state, Entry ent) {
@@ -221,9 +234,9 @@ namespace CampLog {
     [Serializable]
     public class ActionSingleItemSet : EntryAction {
         public readonly Guid guid;
-        public readonly bool? unidentified_from;
-        public readonly decimal? value_override_from;
-        public readonly Dictionary<string, string> properties_from;
+        public bool? unidentified_from;
+        public decimal? value_override_from;
+        public Dictionary<string, string> properties_from;
         public readonly bool? unidentified_to;
         public readonly decimal? value_override_to;
         public readonly Dictionary<string, string> properties_to;
@@ -250,8 +263,7 @@ namespace CampLog {
                 this.properties_from = null;
             }
             else {
-                this.properties_from = new Dictionary<string, string>();
-                foreach (string key in properties_from.Keys) { this.properties_from[key] = properties_from[key]; }
+                this.properties_from = new Dictionary<string, string>(properties_from);
             }
             this.unidentified_to = unidentified_to;
             this.value_override_to = value_override_to;
@@ -259,10 +271,21 @@ namespace CampLog {
                 this.properties_to = null;
             }
             else {
-                this.properties_to = new Dictionary<string, string>();
-                foreach (string key in properties_to.Keys) { this.properties_to[key] = properties_to[key]; }
+                this.properties_to = new Dictionary<string, string>(properties_to);
             }
             this.set_value_override = set_value_override;
+        }
+
+        public override void rebase(CampaignState state) {
+            if (!state.inventories.entries.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
+            SingleItem itm = state.inventories.entries[guid] as SingleItem;
+            if (itm is null) { throw new ArgumentOutOfRangeException(); }
+            if (this.unidentified_from is not null) { this.unidentified_from = itm.unidentified; }
+            if (this.set_value_override) { this.value_override_from = itm.value_override; }
+            if (this.properties_from is not null) {
+                this.properties_from.Clear();
+                foreach (string key in itm.properties.Keys) { this.properties_from[key] = itm.properties[key]; }
+            }
         }
 
         public override void apply(CampaignState state, Entry ent) {

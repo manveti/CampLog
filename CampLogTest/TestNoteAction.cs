@@ -185,6 +185,26 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_rebase() {
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Guid topic1 = Guid.NewGuid(), topic2 = Guid.NewGuid(), topic3 = Guid.NewGuid();
+            Dictionary<Guid, int> adjust_topics = new Dictionary<Guid, int>() {
+                [topic2] = -1,
+                [topic3] = 1,
+            };
+            Note note = new Note("Some note", ent.guid, new HashSet<Guid>() { topic1, topic2 });
+            CampaignState state = new CampaignState();
+            Guid note_guid = state.notes.add_note(note);
+            ActionNoteUpdate action = new ActionNoteUpdate(note_guid, "Some modified note", "New note", adjust_topics);
+
+            note.topics.Add(topic2);
+
+            action.rebase(state);
+            Assert.AreEqual(action.contents_from, "Some note");
+            Assert.AreEqual(action.adjust_topics[topic2], -2);
+        }
+
+        [TestMethod]
         public void test_apply() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid topic1 = Guid.NewGuid(), topic2 = Guid.NewGuid(), topic3 = Guid.NewGuid();

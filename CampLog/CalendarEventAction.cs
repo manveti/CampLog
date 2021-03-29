@@ -68,7 +68,7 @@ namespace CampLog {
     [Serializable]
     public class ActionCalendarEventUpdate : EntryAction {
         public readonly Guid guid;
-        public readonly CalendarEvent from;
+        public CalendarEvent from;
         public readonly CalendarEvent to;
         public readonly bool set_timestamp;
         public readonly bool set_name;
@@ -88,6 +88,15 @@ namespace CampLog {
             this.set_name = set_name;
             this.set_desc = set_desc;
             this.set_interval = set_interval;
+        }
+
+        public override void rebase(CampaignState state) {
+            if (!state.events.events.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
+            CalendarEvent evt = state.events.events[this.guid];
+            if (this.set_timestamp) { this.from.timestamp = evt.timestamp; }
+            if (this.set_name) { this.from.name = evt.name; }
+            if (this.set_desc) { this.from.description = evt.description; }
+            if (this.set_interval) { this.from.interval = evt.interval; }
         }
 
         public override void apply(CampaignState state, Entry ent) {

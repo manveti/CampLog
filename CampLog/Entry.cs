@@ -36,6 +36,7 @@ namespace CampLog {
     public abstract class EntryAction {
         public abstract string description { get; }
 
+        public virtual void rebase(CampaignState state) { }
         public abstract void apply(CampaignState state, Entry ent);
         public abstract void revert(CampaignState state, Entry ent);
     }

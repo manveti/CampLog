@@ -27,6 +27,20 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_rebase() {
+            Character somebody = new Character("Somebody");
+            Guid chr_guid = Guid.NewGuid();
+            ActionCharacterSet action = new ActionCharacterSet(chr_guid, somebody, null, true);
+            CampaignState state = new CampaignState();
+
+            state.characters.add_character(somebody, chr_guid);
+            action.from.name = "Someone Else";
+
+            action.rebase(state);
+            Assert.AreEqual(action.from.name, "Somebody");
+        }
+
+        [TestMethod]
         public void test_apply_add() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Character somebody = new Character("Somebody");
@@ -275,6 +289,35 @@ namespace CampLogTest {
             Assert.IsNull(bar.from);
             Assert.IsNotNull(bar.to);
             Assert.AreEqual((foo.to as CharNumProperty).value, (bar.to as CharNumProperty).value);
+        }
+
+        [TestMethod]
+        public void test_rebase() {
+            Character somebody = new Character("Somebody");
+            List<String> path = new List<string>() { "Skills" };
+            somebody.set_property(path, new CharDictProperty());
+            path.Add("Jump");
+            CharNumProperty jump = new CharNumProperty(7);
+            somebody.set_property(path, jump);
+            CampaignState state = new CampaignState();
+            Guid chr_guid = state.characters.add_character(somebody);
+            ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, path, jump, null);
+            (action.from as CharNumProperty).value = 10;
+
+            action.rebase(state);
+            Assert.AreEqual((action.from as CharNumProperty).value, 7);
+        }
+
+        [TestMethod]
+        public void test_rebase_no_such_property() {
+            Character somebody = new Character("Somebody");
+            CampaignState state = new CampaignState();
+            Guid chr_guid = state.characters.add_character(somebody);
+            List<String> path = new List<string>() { "Skills", "Jump" };
+            ActionCharacterPropertySet action = new ActionCharacterPropertySet(chr_guid, path, new CharNumProperty(123), new CharNumProperty(42));
+
+            action.rebase(state);
+            Assert.IsNull(action.from);
         }
 
         [TestMethod]
@@ -763,6 +806,27 @@ namespace CampLogTest {
             Assert.IsNull(bar.from);
             Assert.IsNotNull(bar.to);
             Assert.AreEqual(foo.to, bar.to);
+        }
+
+        [TestMethod]
+        public void test_rebase() {
+            Guid chr_guid = Guid.NewGuid(), inv_guid1 = Guid.NewGuid(), inv_guid2 = Guid.NewGuid();
+            ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, Guid.NewGuid(), inv_guid2);
+            CampaignState state = new CampaignState();
+            state.character_inventory[chr_guid] = inv_guid1;
+
+            action.rebase(state);
+            Assert.AreEqual(action.from, inv_guid1);
+        }
+
+        [TestMethod]
+        public void test_rebase_no_association() {
+            Guid chr_guid = Guid.NewGuid(), inv_guid1 = Guid.NewGuid(), inv_guid2 = Guid.NewGuid();
+            ActionCharacterSetInventory action = new ActionCharacterSetInventory(chr_guid, inv_guid1, inv_guid2);
+            CampaignState state = new CampaignState();
+
+            action.rebase(state);
+            Assert.IsNull(action.from);
         }
 
         [TestMethod]

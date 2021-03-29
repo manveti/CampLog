@@ -161,6 +161,17 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_rebase() {
+            Guid inv_guid = Guid.NewGuid();
+            ActionInventoryRename action = new ActionInventoryRename(inv_guid, "Some Modified Inventory", "The Inventory's New Groove");
+            CampaignState state = new CampaignState();
+            state.inventories.new_inventory("Some Inventory", inv_guid);
+
+            action.rebase(state);
+            Assert.AreEqual(action.from, "Some Inventory");
+        }
+
+        [TestMethod]
         public void test_apply() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Guid inv_guid = Guid.NewGuid();
@@ -420,6 +431,22 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_rebase() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            Guid inv_guid, guid;
+            CampaignState state = new CampaignState();
+            inv_guid = state.inventories.new_inventory("Test Inventory");
+            guid = state.inventories.add_entry(inv_guid, gem_stack);
+            ActionItemStackSet action = new ActionItemStackSet(guid, 2, 1, 5, 1);
+
+            action.rebase(state);
+            Assert.AreEqual(action.count_from, 3);
+            Assert.AreEqual(action.unidentified_from, 0);
+        }
+
+        [TestMethod]
         public void test_apply() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             ItemCategory cat = new ItemCategory("Wealth", 1);
@@ -573,6 +600,28 @@ namespace CampLogTest {
                 Assert.AreEqual(foo.properties_to[key], bar.properties_to[key]);
             }
             Assert.AreEqual(foo.set_value_override, bar.set_value_override);
+        }
+
+        [TestMethod]
+        public void test_rebase() {
+            ItemCategory cat = new ItemCategory("Magic", 1);
+            ItemSpec wand_spec = new ItemSpec("Wand of Kaplowie", cat, 100, 1);
+            SingleItem wand = new SingleItem(wand_spec, true);
+            Dictionary<string, string> new_props = new Dictionary<string, string>();
+            wand.properties["Charges"] = "50";
+            new_props["Charges"] = "49";
+            Guid inv_guid, guid;
+            CampaignState state = new CampaignState();
+            inv_guid = state.inventories.new_inventory("Test Inventory");
+            guid = state.inventories.add_entry(inv_guid, wand);
+            ActionSingleItemSet action = new ActionSingleItemSet(guid, false, 200, wand.properties, false, 490, new_props, true);
+            action.properties_from["Charges"] = "51";
+
+            action.rebase(state);
+            Assert.AreEqual(action.unidentified_from, true);
+            Assert.IsNull(action.value_override_from);
+            Assert.IsTrue(action.properties_from.ContainsKey("Charges"));
+            Assert.AreEqual(action.properties_from["Charges"], "50");
         }
 
         [TestMethod]

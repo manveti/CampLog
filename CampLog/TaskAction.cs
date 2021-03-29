@@ -68,7 +68,7 @@ namespace CampLog {
     [Serializable]
     public class ActionTaskUpdate : EntryAction {
         public readonly Guid guid;
-        public readonly Task from;
+        public Task from;
         public readonly Task to;
         public readonly bool set_name;
         public readonly bool set_desc;
@@ -90,6 +90,16 @@ namespace CampLog {
             this.set_completed = set_completed;
             this.set_failed = set_failed;
             this.set_due = set_due;
+        }
+
+        public override void rebase(CampaignState state) {
+            if (!state.tasks.tasks.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
+            Task task = state.tasks.tasks[this.guid];
+            if (this.set_name) { this.from.name = task.name; }
+            if (this.set_desc) { this.from.description = task.description; }
+            if (this.set_completed) { this.from.completed = task.completed; }
+            if (this.set_failed) { this.from.failed = task.failed; }
+            if (this.set_due) { this.from.due = task.due; }
         }
 
         public override void apply(CampaignState state, Entry ent) {

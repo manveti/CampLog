@@ -181,6 +181,20 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_rebase() {
+            Task task = new Task(Guid.NewGuid(), "Some task", "Do a thing", 42), new_task = new Task(task.entry_guid, "Some updated task", "Do an updated thing", 84);
+            task.failed = true;
+            new_task.completed = true;
+            CampaignState state = new CampaignState();
+            Guid task_guid = state.tasks.add_task(task);
+            ActionTaskUpdate action = new ActionTaskUpdate(task_guid, task, new_task, true, true, true, true, true);
+            action.from.description = "Do a modified thing";
+
+            action.rebase(state);
+            Assert.AreEqual(action.from.description, "Do a thing");
+        }
+
+        [TestMethod]
         public void test_apply() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Task task = new Task(Guid.NewGuid(), "Some task", "Do a thing", 42), new_task = new Task(task.entry_guid, "Some updated task", "Do an updated thing", 84);

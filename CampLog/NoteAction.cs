@@ -69,9 +69,9 @@ namespace CampLog {
     [Serializable]
     public class ActionNoteUpdate : EntryAction {
         public readonly Guid guid;
-        public readonly string contents_from;
+        public string contents_from;
         public readonly string contents_to;
-        public readonly Dictionary<Guid, int> adjust_topics;
+        public Dictionary<Guid, int> adjust_topics;
 
         public override string description { get => "Update note"; }
 
@@ -89,6 +89,21 @@ namespace CampLog {
             this.contents_from = contents_from;
             this.contents_to = contents_to;
             this.adjust_topics = adjust_topics;
+        }
+
+        public override void rebase(CampaignState state) {
+            if (!state.notes.notes.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
+            Note note = state.notes.notes[this.guid];
+            if (this.contents_from is not null) { this.contents_from = note.contents; }
+            if (this.adjust_topics is not null) {
+                foreach (Guid topic in this.adjust_topics.Keys) {
+                    if (this.adjust_topics[topic] < 0) {
+                        if (note.topics.Contains(topic)) {
+                            this.adjust_topics[topic] = -note.topics.contents[topic];
+                        }
+                    }
+                }
+            }
         }
 
         public override void apply(CampaignState state, Entry ent) {

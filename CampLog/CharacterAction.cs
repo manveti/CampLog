@@ -5,7 +5,7 @@ namespace CampLog {
     [Serializable]
     public class ActionCharacterSet : EntryAction {
         public readonly Guid guid;
-        public readonly Character from;
+        public Character from;
         public readonly Character to;
         public readonly bool restore;
 
@@ -35,6 +35,13 @@ namespace CampLog {
             this.from = from;
             this.to = to;
             this.restore = restore;
+        }
+
+        public override void rebase(CampaignState state) {
+            if (this.from is not null) {
+                if (!state.characters.characters.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
+                this.from = state.characters.characters[this.guid].copy();
+            }
         }
 
         public override void apply(CampaignState state, Entry ent) {
@@ -82,7 +89,7 @@ namespace CampLog {
     public class ActionCharacterPropertySet : EntryAction {
         public readonly Guid guid;
         public readonly List<string> path;
-        public readonly CharProperty from;
+        public CharProperty from;
         public readonly CharProperty to;
 
         public override string description {
@@ -110,25 +117,38 @@ namespace CampLog {
             this.to = to;
         }
 
+        public override void rebase(CampaignState state) {
+            if (!state.characters.characters.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
+            try {
+                CharProperty prop = state.characters.characters[this.guid].get_property(this.path);
+                this.from = prop.copy();
+            }
+            catch (ArgumentOutOfRangeException) {
+                this.from = null;
+            }
+        }
+
         public override void apply(CampaignState state, Entry ent) {
+            if (!state.characters.characters.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             if (this.to is null) {
                 // remove existing property
-                state.characters.characters[this.guid].remove_property(path);
+                state.characters.characters[this.guid].remove_property(this.path);
             }
             else {
                 // add new property or update existing property
-                state.characters.characters[this.guid].set_property(path, this.to.copy());
+                state.characters.characters[this.guid].set_property(this.path, this.to.copy());
             }
         }
 
         public override void revert(CampaignState state, Entry ent) {
+            if (!state.characters.characters.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             if (this.from is null) {
                 // revert addition of new property
-                state.characters.characters[this.guid].remove_property(path);
+                state.characters.characters[this.guid].remove_property(this.path);
             }
             else {
                 // revert removal or update of existing property
-                state.characters.characters[this.guid].set_property(path, this.from.copy());
+                state.characters.characters[this.guid].set_property(this.path, this.from.copy());
             }
         }
     }
@@ -213,7 +233,7 @@ namespace CampLog {
     [Serializable]
     public class ActionCharacterSetInventory : EntryAction {
         public readonly Guid guid;
-        public readonly Guid? from;
+        public Guid? from;
         public readonly Guid? to;
 
         public override string description {
@@ -233,6 +253,15 @@ namespace CampLog {
             this.guid = guid;
             this.from = from;
             this.to = to;
+        }
+
+        public override void rebase(CampaignState state) {
+            if (state.character_inventory.ContainsKey(this.guid)) {
+                this.from = state.character_inventory[this.guid];
+            }
+            else {
+                this.from = null;
+            }
         }
 
         public override void apply(CampaignState state, Entry ent) {

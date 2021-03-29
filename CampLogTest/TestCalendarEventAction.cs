@@ -180,6 +180,25 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_rebase() {
+            CalendarEvent evt = new CalendarEvent(Guid.NewGuid(), 42, "Some event", "Something", 86400),
+                new_evt = new CalendarEvent(evt.entry_guid, 84, "Some updated event", "Some updated thing");
+            CampaignState state = new CampaignState();
+            Guid event_guid = state.events.add_event(evt);
+            ActionCalendarEventUpdate action = new ActionCalendarEventUpdate(event_guid, evt, new_evt, true, true, true, true);
+            action.from.timestamp = 17;
+            action.from.name = "Some modified event";
+            action.from.description = "Some modified thing";
+            action.from.interval = 1000;
+
+            action.rebase(state);
+            Assert.AreEqual(action.from.timestamp, 42);
+            Assert.AreEqual(action.from.name, "Some event");
+            Assert.AreEqual(action.from.description, "Something");
+            Assert.AreEqual(action.from.interval, 86400);
+        }
+
+        [TestMethod]
         public void test_apply() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             CalendarEvent evt = new CalendarEvent(Guid.NewGuid(), 42, "Some event", "Something", 86400),
