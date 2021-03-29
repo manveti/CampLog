@@ -136,7 +136,7 @@ namespace CampLog {
 
     [Serializable]
     public class ActionCharacterPropertyAdjust : EntryAction {
-        public readonly Guid guid;
+        public readonly HashSet<Guid> guids;
         public readonly List<string> path;
         public readonly CharProperty subtract;
         public readonly CharProperty add;
@@ -148,28 +148,64 @@ namespace CampLog {
             }
         }
 
-        public ActionCharacterPropertyAdjust(Guid guid, List<string> path, CharProperty subtract, CharProperty add) {
+        public ActionCharacterPropertyAdjust(HashSet<Guid> guids, List<string> path, CharProperty subtract, CharProperty add) {
             if (path is null) { throw new ArgumentNullException(nameof(path)); }
             if (path.Count <= 0) { throw new ArgumentOutOfRangeException(nameof(path)); }
             if ((subtract is null) && (add is null)) { throw new ArgumentNullException(nameof(add)); }
             if (subtract is not null) { subtract = subtract.copy(); }
             if (add is not null) { add = add.copy(); }
-            this.guid = guid;
+            this.guids = guids;
             this.path = path;
             this.subtract = subtract;
             this.add = add;
         }
 
-        public override void apply(CampaignState state, Entry ent) {
-            CharProperty prop = state.characters.characters[this.guid].get_property(this.path);
+        public ActionCharacterPropertyAdjust(
+            Guid guid, List<string> path, CharProperty subtract, CharProperty add
+        ) : this(new HashSet<Guid>() { guid }, path, subtract, add) { }
+
+        private void apply_one(CampaignState state, Guid guid) {
+            CharProperty prop = state.characters.characters[guid].get_property(this.path);
             if (this.subtract is not null) { prop.subtract(this.subtract); }
             if (this.add is not null) { prop.add(this.add); }
         }
 
-        public override void revert(CampaignState state, Entry ent) {
-            CharProperty prop = state.characters.characters[this.guid].get_property(this.path);
+        private void revert_one(CampaignState state, Guid guid) {
+            CharProperty prop = state.characters.characters[guid].get_property(this.path);
             if (this.add is not null) { prop.subtract(this.add); }
             if (this.subtract is not null) { prop.add(this.subtract); }
+        }
+
+        public override void apply(CampaignState state, Entry ent) {
+            HashSet<Guid> chars = this.guids ?? state.characters.active_characters, done = new HashSet<Guid>();
+            foreach (Guid guid in chars) {
+                try {
+                    this.apply_one(state, guid);
+                    done.Add(guid);
+                }
+                catch (ArgumentException) {
+                    foreach (Guid revert_guid in done) {
+                        this.revert_one(state, revert_guid);
+                    }
+                    throw;
+                }
+            }
+        }
+
+        public override void revert(CampaignState state, Entry ent) {
+            HashSet<Guid> chars = this.guids ?? state.characters.active_characters, done = new HashSet<Guid>();
+            foreach (Guid guid in chars) {
+                try {
+                    this.revert_one(state, guid);
+                    done.Add(guid);
+                }
+                catch (ArgumentException) {
+                    foreach (Guid reapply_guid in done) {
+                        this.apply_one(state, reapply_guid);
+                    }
+                    throw;
+                }
+            }
         }
     }
 

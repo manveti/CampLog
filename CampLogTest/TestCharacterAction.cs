@@ -437,7 +437,10 @@ namespace CampLogTest {
                 System.Xml.XmlDictionaryReader xr = System.Xml.XmlDictionaryReader.CreateTextReader(ms, new System.Xml.XmlDictionaryReaderQuotas());
                 bar = (ActionCharacterPropertyAdjust)(fmt.ReadObject(xr, true));
             }
-            Assert.AreEqual(foo.guid, bar.guid);
+            Assert.AreEqual(foo.guids.Count, bar.guids.Count);
+            foreach (Guid guid in foo.guids) {
+                Assert.IsTrue(bar.guids.Contains(guid));
+            }
             Assert.AreEqual(foo.path.Count, bar.path.Count);
             for (int i = 0; i < foo.path.Count; i++) {
                 Assert.AreEqual(foo.path[i], bar.path[i]);
@@ -507,6 +510,27 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_apply_multiple() {
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Character chr1 = new Character("Somebody"), chr2 = new Character("Someone else");
+            List<String> path = new List<string>() { "XP" };
+            chr1.set_property(path, new CharNumProperty(100));
+            chr2.set_property(path, new CharNumProperty(150));
+            CampaignState state = new CampaignState();
+            Guid c1_guid = state.characters.add_character(chr1), c2_guid = state.characters.add_character(chr2);
+            HashSet<Guid> chr_guids = new HashSet<Guid>() { c1_guid, c2_guid };
+            ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guids, path, new CharNumProperty(15), null);
+
+            action.apply(state, ent);
+            CharNumProperty prop = chr1.get_property(path) as CharNumProperty;
+            Assert.IsNotNull(prop);
+            Assert.AreEqual(prop.value, 85);
+            prop = chr2.get_property(path) as CharNumProperty;
+            Assert.IsNotNull(prop);
+            Assert.AreEqual(prop.value, 135);
+        }
+
+        [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_apply_no_such_property() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
@@ -517,6 +541,36 @@ namespace CampLogTest {
             ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, path, new CharNumProperty(15), null);
 
             action.apply(state, ent);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_apply_multiple_no_such_property() {
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Character chr1 = new Character("Somebody"), chr2 = new Character("Someone else"), chr3 = new Character("Yet another character");
+            List<String> path = new List<string>() { "XP" };
+            chr1.set_property(path, new CharNumProperty(100));
+            chr3.set_property(path, new CharNumProperty(150));
+            CampaignState state = new CampaignState();
+            HashSet<Guid> chr_guids = new HashSet<Guid>() {
+                state.characters.add_character(chr1),
+                state.characters.add_character(chr2),
+                state.characters.add_character(chr3),
+            };
+            ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guids, path, new CharNumProperty(15), null);
+
+            try {
+                action.apply(state, ent);
+            }
+            catch (ArgumentOutOfRangeException) {
+                CharNumProperty prop = chr1.get_property(path) as CharNumProperty;
+                Assert.IsNotNull(prop);
+                Assert.AreEqual(prop.value, 100);
+                prop = chr3.get_property(path) as CharNumProperty;
+                Assert.IsNotNull(prop);
+                Assert.AreEqual(prop.value, 150);
+                throw;
+            }
         }
 
         [TestMethod]
@@ -581,6 +635,28 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_revert_multiple() {
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Character chr1 = new Character("Somebody"), chr2 = new Character("Someone else");
+            List<String> path = new List<string>() { "XP" };
+            chr1.set_property(path, new CharNumProperty(100));
+            chr2.set_property(path, new CharNumProperty(150));
+            CampaignState state = new CampaignState();
+            Guid c1_guid = state.characters.add_character(chr1), c2_guid = state.characters.add_character(chr2);
+            HashSet<Guid> chr_guids = new HashSet<Guid>() { c1_guid, c2_guid };
+            ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guids, path, new CharNumProperty(15), null);
+
+            action.apply(state, ent);
+            action.revert(state, ent);
+            CharNumProperty prop = chr1.get_property(path) as CharNumProperty;
+            Assert.IsNotNull(prop);
+            Assert.AreEqual(prop.value, 100);
+            prop = chr2.get_property(path) as CharNumProperty;
+            Assert.IsNotNull(prop);
+            Assert.AreEqual(prop.value, 150);
+        }
+
+        [TestMethod]
         [ExpectedException(typeof(ArgumentOutOfRangeException))]
         public void test_revert_no_such_property() {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
@@ -591,6 +667,36 @@ namespace CampLogTest {
             ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guid, path, new CharNumProperty(15), null);
 
             action.revert(state, ent);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentOutOfRangeException))]
+        public void test_revert_multiple_no_such_property() {
+            Entry ent = new Entry(42, DateTime.Now, "Some Entry");
+            Character chr1 = new Character("Somebody"), chr2 = new Character("Someone else"), chr3 = new Character("Yet another character");
+            List<String> path = new List<string>() { "XP" };
+            chr1.set_property(path, new CharNumProperty(100));
+            chr3.set_property(path, new CharNumProperty(150));
+            CampaignState state = new CampaignState();
+            HashSet<Guid> chr_guids = new HashSet<Guid>() {
+                state.characters.add_character(chr1),
+                state.characters.add_character(chr2),
+                state.characters.add_character(chr3),
+            };
+            ActionCharacterPropertyAdjust action = new ActionCharacterPropertyAdjust(chr_guids, path, new CharNumProperty(15), null);
+
+            try {
+                action.revert(state, ent);
+            }
+            catch (ArgumentOutOfRangeException) {
+                CharNumProperty prop = chr1.get_property(path) as CharNumProperty;
+                Assert.IsNotNull(prop);
+                Assert.AreEqual(prop.value, 100);
+                prop = chr3.get_property(path) as CharNumProperty;
+                Assert.IsNotNull(prop);
+                Assert.AreEqual(prop.value, 150);
+                throw;
+            }
         }
 
         [TestMethod]
