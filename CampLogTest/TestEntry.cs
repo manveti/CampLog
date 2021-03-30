@@ -73,6 +73,25 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_rebase() {
+            Character c1 = new Character("Somebody"), c2 = new Character("Someone Else");
+            Guid c1_guid = Guid.NewGuid(), c2_guid = Guid.NewGuid();
+            ActionCharacterSet a1 = new ActionCharacterSet(c1_guid, null, c1), a2 = new ActionCharacterSet(c2_guid, null, c2), a3 = new ActionCharacterSet(c1_guid, c1, null);
+            CampaignState state = new CampaignState();
+            Entry ent = new Entry(42, DateTime.Now, "Do all the things");
+            ent.actions.Add(a1);
+            ent.actions.Add(a2);
+            ent.actions.Add(a3);
+
+            a1.apply(state, ent);
+            a2.apply(state, ent);
+            a3.from.name = "Somebody different";
+
+            ent.rebase(state);
+            Assert.AreEqual(a3.from.name, "Somebody");
+        }
+
+        [TestMethod]
         public void test_apply() {
             Character c1 = new Character("Somebody"), c2 = new Character("Someone Else");
             Guid c1_guid = Guid.NewGuid(), c2_guid = Guid.NewGuid();

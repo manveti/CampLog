@@ -84,6 +84,12 @@ namespace CampLog {
             return result;
         }
 
+        public void rebase(CampaignState state) {
+            foreach (EntryAction action in this.actions) {
+                action.rebase(state);
+            }
+        }
+
         public void apply(CampaignState state, int start_index = 0) {
             for (int i = start_index; i < this.actions.Count; i++) {
                 try {
