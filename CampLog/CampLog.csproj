@@ -6,4 +6,8 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\GUIx\GUIx\GUIx.csproj" />
+  </ItemGroup>
+
 </Project>

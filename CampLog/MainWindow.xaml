@@ -22,11 +22,21 @@
 
         <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
             <MenuItem Header="_File">
-                <!--TODO: file menu-->
+                <MenuItem Header="_New Campaign..."/>
+                <MenuItem Header="_Open..."/>
+                <MenuItem Header="_Save"/>
+                <MenuItem Header="Save _As..."/>
+                <Separator/>
                 <MenuItem Header="E_xit"/>
-                <!--/TODO-->
             </MenuItem>
-            <!--TODO: other menus-->
+            <MenuItem Header="_Campaign">
+                <MenuItem Header="Configure _Calendar..."/>
+                <MenuItem Header="Configure Character _Sheet..."/>
+                <Separator/>
+                <MenuItem Header="_Item Library"/>
+                <Separator/>
+                <MenuItem Header="_Revert to Timestamp..."/>
+            </MenuItem>
         </Menu>
 
         <!--Left panel: characters and inventories-->
