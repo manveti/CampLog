@@ -1,12 +1,282 @@
-﻿<Window x:Class="CampLog.MainWindow"
+﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CampLog"
+        xmlns:GUIx="clr-namespace:GUIx;assembly=GUIx" x:Class="CampLog.MainWindow"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Campaign Log" Width="1000" Height="800">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
 
+        <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
+            <MenuItem Header="_File">
+                <!--TODO: file menu-->
+                <MenuItem Header="E_xit"/>
+                <!--/TODO-->
+            </MenuItem>
+            <!--TODO: other menus-->
+        </Menu>
+
+        <!--Left panel: characters and inventories-->
+        <Grid Grid.Row="1" Grid.Column="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
+            <GroupBox Grid.Row="0" Grid.Column="0" Header="Characters">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Name="characters_list"/>
+
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Content="View"/>
+                </Grid>
+            </GroupBox>
+
+            <GridSplitter Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5"/>
+
+            <GroupBox Grid.Row="2" Grid.Column="0" Header="Inventories">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Name="inventories_list">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Name"/>
+                                <GridViewColumn Header="Value"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Content="View"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <GridSplitter Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
+
+        <Grid Grid.Row="1" Grid.Column="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
+            <GroupBox Grid.Row="0" Grid.Column="0" Header="Current State">
+                <Grid Name="campaign_state_grid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="2*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Session:"/>
+                    <Label Grid.Row="0" Grid.Column="1" Margin="1" Name="session_num_box" Content="0"/>
+                    <Label Grid.Row="0" Grid.Column="2" Margin="1" Content="Timestamp:"/>
+                    <Label Grid.Row="0" Grid.Column="3" Margin="1" Name="current_timestamp_box" Content=""/>
+                </Grid>
+            </GroupBox>
+
+            <GroupBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Header="Log Entries">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Name="entries_list">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Grid.Column="0">
+                                        <TextBlock.Inlines>
+                                            <Run FontWeight="Bold"/><!--TODO: timestamp-->
+                                        </TextBlock.Inlines>
+                                    </TextBlock>
+                                    <TextBlock Grid.Row="0" Grid.Column="2"/><!--TODO: session-->
+                                    <TextBlock Grid.Row="0" Grid.Column="3">
+                                        <TextBlock.Inlines>
+                                            <Run FontWeight="Bold"/><!--TODO: created-->
+                                        </TextBlock.Inlines>
+                                    </TextBlock>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"/><!--TODO: desc-->
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Content="View"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+
+        <GridSplitter Grid.Row="1" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
+
+        <!--Right panel: calendar events, tasks, and topics-->
+        <Grid Grid.Row="1" Grid.Column="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
+            <GroupBox Grid.Row="0" Grid.Column="0" Header="Events">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="1" Name="show_past_events_box" Content="Show Past Events"/>
+
+                    <ListView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Name="events_list">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Timestamp"/>
+                                <GridViewColumn Header="Name"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <Button Grid.Row="2" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
+                    <Button Grid.Row="2" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
+                    <Button Grid.Row="2" Grid.Column="3" Margin="1" Padding="1" Content="View"/>
+                </Grid>
+            </GroupBox>
+
+            <GridSplitter Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5"/>
+
+            <GroupBox Grid.Row="2" Grid.Column="0" Header="Tasks">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Margin="1" Name="show_inactive_tasks_box" Content="Show Inactive Tasks"/>
+
+                    <ListView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Name="tasks_list">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Done"/><!--TODO: '✓' vs '✔'-->
+                                <GridViewColumn Header="Task"/>
+                                <GridViewColumn Header="Due"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <Button Grid.Row="2" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
+                    <Button Grid.Row="2" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
+                    <Button Grid.Row="2" Grid.Column="3" Margin="1" Padding="1" Content="Resolve"/>
+                    <Button Grid.Row="2" Grid.Column="4" Margin="1" Padding="1" Content="View"/>
+                </Grid>
+            </GroupBox>
+
+            <GridSplitter Grid.Row="3" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5"/>
+
+            <GroupBox Grid.Row="4" Grid.Column="0" Header="Topics">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Name="topics_list"/>
+
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Content="View"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
     </Grid>
 </Window>
