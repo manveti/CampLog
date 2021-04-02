@@ -22,7 +22,7 @@
 
         <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
             <MenuItem Header="_File">
-                <MenuItem Header="_New Campaign..."/>
+                <MenuItem Header="_New Campaign..." Click="new_campaign"/>
                 <MenuItem Header="_Open..."/>
                 <MenuItem Header="_Save" Name="save_opt" IsEnabled="False"/>
                 <MenuItem Header="Save _As..." Name="save_as_opt" IsEnabled="False"/>
@@ -114,7 +114,7 @@
             </Grid.RowDefinitions>
 
             <GroupBox Grid.Row="0" Grid.Column="0" Header="Current State">
-                <Grid Name="campaign_state_grid">
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="1*"/>
