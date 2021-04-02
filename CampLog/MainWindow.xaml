@@ -24,18 +24,18 @@
             <MenuItem Header="_File">
                 <MenuItem Header="_New Campaign..."/>
                 <MenuItem Header="_Open..."/>
-                <MenuItem Header="_Save"/>
-                <MenuItem Header="Save _As..."/>
+                <MenuItem Header="_Save" Name="save_opt" IsEnabled="False"/>
+                <MenuItem Header="Save _As..." Name="save_as_opt" IsEnabled="False"/>
                 <Separator/>
                 <MenuItem Header="E_xit"/>
             </MenuItem>
             <MenuItem Header="_Campaign">
-                <MenuItem Header="Configure _Calendar..."/>
-                <MenuItem Header="Configure Character _Sheet..."/>
+                <MenuItem Header="Configure _Calendar..." Name="calendar_cfg_opt" IsEnabled="False"/>
+                <MenuItem Header="Configure Character _Sheet..." Name="charsheet_cfg_opt" IsEnabled="False"/>
                 <Separator/>
-                <MenuItem Header="_Item Library"/>
+                <MenuItem Header="_Item Library" Name="item_library_opt" IsEnabled="False"/>
                 <Separator/>
-                <MenuItem Header="_Revert to Timestamp..."/>
+                <MenuItem Header="_Revert to Timestamp..." Name="revert_opt" IsEnabled="False"/>
             </MenuItem>
         </Menu>
 
@@ -65,9 +65,9 @@
 
                     <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Name="characters_list"/>
 
-                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
-                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
-                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Content="View"/>
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Name="char_add_but" Content="Add..." IsEnabled="False"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Name="char_rem_but" Content="Remove" IsEnabled="False"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Name="char_view_but" Content="View" IsEnabled="False"/>
                 </Grid>
             </GroupBox>
 
@@ -95,9 +95,9 @@
                         </ListView.View>
                     </ListView>
 
-                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
-                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
-                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Content="View"/>
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Name="inv_add_but" Content="Add..." IsEnabled="False"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Name="inv_rem_but" Content="Remove" IsEnabled="False"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Name="inv_view_but" Content="View" IsEnabled="False"/>
                 </Grid>
             </GroupBox>
         </Grid>
@@ -176,9 +176,9 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
-                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
-                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Content="View"/>
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Name="ent_add_but" Content="Add..." IsEnabled="False"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Name="ent_rem_but" Content="Remove" IsEnabled="False"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Name="ent_view_but" Content="View" IsEnabled="False"/>
                 </Grid>
             </GroupBox>
         </Grid>
@@ -223,9 +223,9 @@
                         </ListView.View>
                     </ListView>
 
-                    <Button Grid.Row="2" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
-                    <Button Grid.Row="2" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
-                    <Button Grid.Row="2" Grid.Column="3" Margin="1" Padding="1" Content="View"/>
+                    <Button Grid.Row="2" Grid.Column="0" Margin="1" Padding="1" Name="event_add_but" Content="Add..." IsEnabled="False"/>
+                    <Button Grid.Row="2" Grid.Column="1" Margin="1" Padding="1" Name="event_rem_but" Content="Remove" IsEnabled="False"/>
+                    <Button Grid.Row="2" Grid.Column="3" Margin="1" Padding="1" Name="event_view_but" Content="View" IsEnabled="False"/>
                 </Grid>
             </GroupBox>
 
@@ -258,10 +258,10 @@
                         </ListView.View>
                     </ListView>
 
-                    <Button Grid.Row="2" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
-                    <Button Grid.Row="2" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
-                    <Button Grid.Row="2" Grid.Column="3" Margin="1" Padding="1" Content="Resolve"/>
-                    <Button Grid.Row="2" Grid.Column="4" Margin="1" Padding="1" Content="View"/>
+                    <Button Grid.Row="2" Grid.Column="0" Margin="1" Padding="1" Name="task_add_but" Content="Add..." IsEnabled="False"/>
+                    <Button Grid.Row="2" Grid.Column="1" Margin="1" Padding="1" Name="task_rem_but" Content="Remove" IsEnabled="False"/>
+                    <Button Grid.Row="2" Grid.Column="3" Margin="1" Padding="1" Name="task_resolve_but" Content="Resolve" IsEnabled="False"/>
+                    <Button Grid.Row="2" Grid.Column="4" Margin="1" Padding="1" Name="task_view_but" Content="View" IsEnabled="False"/>
                 </Grid>
             </GroupBox>
 
@@ -282,9 +282,9 @@
 
                     <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Name="topics_list"/>
 
-                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Content="Add"/>
-                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Content="Remove"/>
-                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Content="View"/>
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Name="topic_add_but" Content="Add..." IsEnabled="False"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Name="topic_rem_but" Content="Remove" IsEnabled="False"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Name="topic_view_but" Content="View" IsEnabled="False"/>
                 </Grid>
             </GroupBox>
         </Grid>
