@@ -68,5 +68,10 @@ namespace CampLog {
             //TODO: tasks_list, task_add_but, task_rem_but, task_resolve_but, task_view_but
             //TODO: topics_list, topic_add_but, topic_rem_but, topic_view_but
         }
+
+        private void do_test(object sender, RoutedEventArgs e) {
+            EntryWindow ew = new EntryWindow() { Owner = this };
+            ew.ShowDialog();
+        }
     }
 }

@@ -37,6 +37,11 @@
                 <Separator/>
                 <MenuItem Header="_Revert to Timestamp..." Name="revert_opt" IsEnabled="False"/>
             </MenuItem>
+            <!--TODO: remove-->
+            <MenuItem Header="_Testing">
+                <MenuItem Header="_Test" Click="do_test"/>
+            </MenuItem>
+            <!--TODO: /remove-->
         </Menu>
 
         <!--Left panel: characters and inventories-->
