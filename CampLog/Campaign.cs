@@ -92,14 +92,15 @@ namespace CampLog {
             }
         }
 
-        public void add_entry(Entry ent) {
+        public int add_entry(Entry ent) {
             int idx = this.entries.BinarySearch(ent);
             if (idx >= 0) { throw new ArgumentOutOfRangeException(nameof(ent)); }
             idx = ~idx;
             this.revert_state(idx - 1);
             this.entries.Insert(idx, ent);
-            if (this.valid_entries < idx) { return; }
+            if (this.valid_entries < idx) { return idx; }
             this.advance_state();
+            return idx;
         }
 
         public void remove_entry(int idx, bool invalidate = false) {

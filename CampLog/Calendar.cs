@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Windows;
 
 namespace CampLog {
     public static class CalendarSpecs {
@@ -11,8 +12,13 @@ namespace CampLog {
 
     [Serializable]
     public class Calendar {
+        public readonly decimal default_timestamp = 0;
+
         public virtual string format_timestamp(decimal timestamp, bool verbose = false) => string.Format("{0}", timestamp);
         public virtual string format_interval(decimal interval, bool verbose = false) => string.Format("{0}", interval);
+
+        public virtual FrameworkElement timestamp_control() => new SimpleCalendarControl();
+        public virtual FrameworkElement interval_control() => new SimpleCalendarControl();
     }
 
 

@@ -150,7 +150,7 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Name="entries_list">
+                    <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" HorizontalContentAlignment="Stretch" Name="entries_list">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid>
@@ -159,29 +159,36 @@
                                         <ColumnDefinition Width="1*"/>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Grid.Column="0">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Margin="2">
                                         <TextBlock.Inlines>
-                                            <Run FontWeight="Bold"/><!--TODO: timestamp-->
+                                            <Run FontWeight="Bold" Text="{Binding timestamp, Mode=OneWay}"/>
                                         </TextBlock.Inlines>
                                     </TextBlock>
-                                    <TextBlock Grid.Row="0" Grid.Column="2"/><!--TODO: session-->
-                                    <TextBlock Grid.Row="0" Grid.Column="3">
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Margin="2" HorizontalAlignment="Center">
                                         <TextBlock.Inlines>
-                                            <Run FontWeight="Bold"/><!--TODO: created-->
+                                            <Run Foreground="Red" Text="{Binding invalid, Mode=OneWay}"/>
                                         </TextBlock.Inlines>
                                     </TextBlock>
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"/><!--TODO: desc-->
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Margin="2" Text="Session:"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="3" Margin="2" Text="{Binding session, Mode=OneWay}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="4" Margin="2">
+                                        <TextBlock.Inlines>
+                                            <Run FontWeight="Bold" Text="{Binding created, Mode=OneWay}"/>
+                                        </TextBlock.Inlines>
+                                    </TextBlock>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Margin="2" Text="{Binding description, Mode=OneWay}"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Name="ent_add_but" Content="Add..." IsEnabled="False"/>
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Name="ent_add_but" Content="Add..." IsEnabled="False" Click="add_entry"/>
                     <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Name="ent_rem_but" Content="Remove" IsEnabled="False"/>
                     <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Name="ent_view_but" Content="View" IsEnabled="False"/>
                 </Grid>
