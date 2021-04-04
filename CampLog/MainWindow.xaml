@@ -150,7 +150,9 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" HorizontalContentAlignment="Stretch" Name="entries_list">
+                    <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4"
+                             HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             Name="entries_list" SelectionChanged="entries_list_sel_changed">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid>
@@ -182,15 +184,16 @@
                                             <Run FontWeight="Bold" Text="{Binding created, Mode=OneWay}"/>
                                         </TextBlock.Inlines>
                                     </TextBlock>
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Margin="2" Text="{Binding description, Mode=OneWay}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Margin="2"
+                                               TextTrimming="WordEllipsis" Text="{Binding description, Mode=OneWay}"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
 
                     <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Name="ent_add_but" Content="Add..." IsEnabled="False" Click="add_entry"/>
-                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Name="ent_rem_but" Content="Remove" IsEnabled="False"/>
-                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Name="ent_view_but" Content="View" IsEnabled="False"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Name="ent_rem_but" Content="Remove" IsEnabled="False" Click="remove_entry"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Name="ent_view_but" Content="View" IsEnabled="False" Click="view_entry"/>
                 </Grid>
             </GroupBox>
         </Grid>

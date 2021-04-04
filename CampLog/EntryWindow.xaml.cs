@@ -20,6 +20,8 @@ namespace CampLog {
 
         public bool valid;
         private CampaignSave save_state;
+        private List<Entry> entries;
+        private int previous_entry_idx = -1;
         private CampaignState state;
         public List<EntryAction> actions;
         public ICalendarControl timestamp_box;
@@ -28,19 +30,25 @@ namespace CampLog {
         public EntryWindow(CampaignSave save_state, int entry = -1) {
             this.valid = false;
             this.save_state = save_state;
+            this.entries = new List<Entry>();
+            for (int i = 0; i < save_state.domain.entries.Count; i++) {
+                if (i != entry) { this.entries.Add(save_state.domain.entries[i]); }
+            }
             this.state = save_state.domain.state.copy();
             Entry previous_entry = null, current_entry;
             if ((entry >= 0) && (entry < save_state.domain.entries.Count)) {
                 current_entry = save_state.domain.entries[entry];
                 if (entry > 0) {
-                    previous_entry = save_state.domain.entries[entry - 1];
+                    this.previous_entry_idx = entry - 1;
+                    previous_entry = this.entries[entry - 1];
                 }
             }
             else {
                 decimal timestamp;
                 int session;
                 if (save_state.domain.valid_entries > 0) {
-                    previous_entry = save_state.domain.entries[save_state.domain.valid_entries - 1];
+                    this.previous_entry_idx = save_state.domain.valid_entries - 1;
+                    previous_entry = this.entries[this.previous_entry_idx];
                     timestamp = previous_entry.timestamp + 1;
                 }
                 else {
@@ -78,22 +86,39 @@ namespace CampLog {
             //TODO: actions, events, characters, inventories, topics, tasks
         }
 
+        public DateTime get_created() {
+            DateTime created = this.created_date_box.SelectedDate ?? DateTime.Today;
+            created += new TimeSpan(((long)(this.created_time_box.Value)) * TimeSpan.TicksPerSecond);
+            return created;
+        }
+
         private void timestamp_changed() {
             decimal timestamp = this.timestamp_box.calendar_value, timestamp_diff;
-            int entry_idx = this.save_state.domain.get_timestamp_index(timestamp) + 1;
-            timestamp_diff = (entry_idx > 0 ? timestamp - this.save_state.domain.entries[entry_idx - 1].timestamp : 0);
+            Entry ent = new Entry(timestamp, this.get_created(), "");
+            int entry_idx = this.entries.BinarySearch(ent);
+            if (entry_idx >= 0) {
+                this.previous_entry_idx = entry_idx;
+            }
+            else {
+                this.previous_entry_idx = ~entry_idx - 1;
+            }
+            if (this.previous_entry_idx >= 0) {
+                timestamp_diff = timestamp - this.entries[this.previous_entry_idx].timestamp;
+            }
+            else {
+                timestamp_diff = 0;
+            }
             this.timestamp_diff_box.calendar_value = timestamp_diff;
             //TODO: update diff entry
         }
 
         private void timestamp_diff_changed() {
-            decimal timestamp = this.timestamp_box.calendar_value, timestamp_diff = this.timestamp_diff_box.calendar_value;
-            int entry_idx = this.save_state.domain.get_timestamp_index(timestamp) + 1;
-            if (entry_idx <= 0) {
+            decimal timestamp, timestamp_diff = this.timestamp_diff_box.calendar_value;
+            if (this.previous_entry_idx < 0) {
                 this.timestamp_diff_box.calendar_value = 0;
                 return;
             }
-            timestamp = this.save_state.domain.entries[entry_idx - 1].timestamp + timestamp_diff;
+            timestamp = this.entries[this.previous_entry_idx].timestamp + timestamp_diff;
             this.timestamp_box.calendar_value = timestamp;
             //TODO: update diff entry
         }

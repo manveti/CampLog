@@ -98,7 +98,6 @@ namespace CampLog {
             idx = ~idx;
             this.revert_state(idx - 1);
             this.entries.Insert(idx, ent);
-            if (this.valid_entries < idx) { return idx; }
             this.advance_state();
             return idx;
         }

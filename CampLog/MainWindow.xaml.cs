@@ -37,7 +37,7 @@ namespace CampLog {
             this.set_invalid(invalid);
             this._session = session;
             this._created = created;
-            this._description = description;
+            this._description = description.Split("\n")[0];
         }
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") {
@@ -116,19 +116,81 @@ namespace CampLog {
 
         //TODO: ...
 
+        private void entries_list_sel_changed(object sender, RoutedEventArgs e) {
+            bool entry_selected = this.entries_list.SelectedIndex >= 0;
+            this.ent_rem_but.IsEnabled = entry_selected;
+            this.ent_view_but.IsEnabled = entry_selected;
+        }
+
         private void add_entry(object sender, RoutedEventArgs e) {
             EntryWindow entry_window = new EntryWindow(this.state);
             entry_window.ShowDialog();
             if (!entry_window.valid) { return; }
 
             decimal timestamp = entry_window.timestamp_box.calendar_value;
-            DateTime created = entry_window.created_date_box.SelectedDate ?? DateTime.Today;
-            created += new TimeSpan(((long)(entry_window.created_time_box.Value)) * TimeSpan.TicksPerSecond);
+            DateTime created = entry_window.get_created();
             string description = entry_window.description_box.Text;
             int session = (int)(entry_window.session_box.Value);
             Entry ent = new Entry(timestamp, created, description, session, entry_window.actions);
             this.state_dirty = true;
             int idx = this.state.domain.add_entry(ent);
+            int valid_idx = this.state.domain.valid_entries - 1;
+            if (valid_idx < 0) { valid_idx = this.state.domain.entries.Count - 1; }
+            this.session_num_box.Content = (this.state.domain.entries[valid_idx].session ?? 0).ToString();
+            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.state.domain.entries[valid_idx].timestamp);
+            EntryRow row = new EntryRow(
+                this.state.calendar.format_timestamp(ent.timestamp),
+                idx >= this.state.domain.valid_entries,
+                (ent.session ?? 0).ToString(),
+                ent.created.ToString("G"),
+                ent.description
+            );
+            this.entry_rows.Insert(this.entry_rows.Count - idx, row);
+            for (int i = 0; i < this.entry_rows.Count; i++) {
+                this.entry_rows[i].set_invalid(this.entry_rows.Count - i > this.state.domain.valid_entries);
+            }
+        }
+
+        private void remove_entry(object sender, RoutedEventArgs e) {
+            int row_idx = this.entries_list.SelectedIndex, idx = this.state.domain.entries.Count - row_idx - 1;
+            if ((idx < 0) || (idx >= this.state.domain.entries.Count)) { return; }
+            this.state_dirty = true;
+            this.state.domain.remove_entry(idx);
+            this.entry_rows.RemoveAt(row_idx);
+        }
+
+        private void view_entry(object sender, RoutedEventArgs e) {
+            int row_idx = this.entries_list.SelectedIndex, idx = this.state.domain.entries.Count - row_idx - 1;
+            if ((idx < 0) || (idx >= this.state.domain.entries.Count)) { return; }
+            EntryWindow entry_window = new EntryWindow(this.state, idx);
+            entry_window.ShowDialog();
+            if (!entry_window.valid) { return; }
+
+            decimal timestamp = entry_window.timestamp_box.calendar_value;
+            DateTime created = entry_window.get_created();
+            string description = entry_window.description_box.Text;
+            int session = (int)(entry_window.session_box.Value);
+            Entry ent = this.state.domain.entries[idx];
+            bool changed = (timestamp != ent.timestamp) || (created != ent.created) || (description != ent.description) || (session != ent.session);
+            if ((!changed) && (entry_window.actions.Count != ent.actions.Count)) { changed = true; }
+            if (!changed) {
+                for (int i = 0; i < entry_window.actions.Count; i++) {
+                    if (entry_window.actions[i] != ent.actions[i]) {
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+            if (!changed) { return; }
+            this.state_dirty = true;
+            this.state.domain.remove_entry(idx, true);
+            this.entry_rows.RemoveAt(row_idx);
+            ent.timestamp = timestamp;
+            ent.created = created;
+            ent.description = description;
+            ent.session = session;
+            ent.actions = entry_window.actions;
+            idx = this.state.domain.add_entry(ent);
             int valid_idx = this.state.domain.valid_entries - 1;
             if (valid_idx < 0) { valid_idx = this.state.domain.entries.Count - 1; }
             this.session_num_box.Content = (this.state.domain.entries[valid_idx].session ?? 0).ToString();
