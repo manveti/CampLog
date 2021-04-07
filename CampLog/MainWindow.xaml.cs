@@ -212,8 +212,20 @@ namespace CampLog {
 
         //TODO: remove
         private void do_test(object sender, RoutedEventArgs e) {
-            EntryWindow ew = new EntryWindow(new CampaignSave(new Calendar())) { Owner = this };
-            ew.ShowDialog();
+            CampaignSave state = new CampaignSave(new Calendar());
+            Character chr = new Character("Bob");
+            chr.set_property(new List<string>() { "Skills" }, new CharDictProperty());
+            chr.set_property(new List<string>() { "Skills", "Jump" }, new CharNumProperty(7));
+            chr.set_property(new List<string>() { "Skills", "Skull Smashing" }, new CharNumProperty(42));
+            Guid guid = state.domain.state.characters.add_character(chr);
+            SimpleCharacterWindow cw = new SimpleCharacterWindow(state, guid) { Owner = this };
+            cw.ShowDialog();
+#if false
+            if (!cw.valid) { return; }
+            List<string> action_types = new List<string>();
+            foreach (EntryAction action in cw.actions) { action_types.Add(action.GetType().ToString()); }
+            MessageBox.Show(String.Join(", ", action_types), "Actions", MessageBoxButton.OK);
+#endif
         }
         //TODO: /remove
     }
