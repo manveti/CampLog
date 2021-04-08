@@ -13,6 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
+using GUIx;
+
 namespace CampLog {
     public class PropertyRow {
         public string _name;
@@ -42,6 +44,9 @@ namespace CampLog {
         private Guid? guid;
         ObservableCollection<PropertyRow> property_rows;
         public List<EntryAction> actions;
+        private List<string> selected_path;
+        private CharProperty selected_prop;
+        private string selected_member;
 
         private void populate_property_rows(ObservableCollection<PropertyRow> prop_rows, List<string> path, CharDictProperty prop) {
             List<string> prop_names = new List<string>(prop.value.Keys);
@@ -92,6 +97,9 @@ namespace CampLog {
             this.guid = guid;
             this.property_rows = new ObservableCollection<PropertyRow>();
             this.populate_property_rows(this.property_rows, new List<string>(), this.character.properties);
+            this.selected_path = null;
+            this.selected_prop = null;
+            this.selected_member = null;
             InitializeComponent();
             this.name_box.Text = this.character.name;
             this.properties_list.ItemsSource = this.property_rows;
@@ -99,33 +107,37 @@ namespace CampLog {
 
         private void properties_list_sel_changed(object sender, RoutedEventArgs e) {
             List<string> path = this.properties_list.SelectedValue as List<string>;
-            string member = null;
-            CharProperty prop = null;
-            try {
-                prop = this.character.get_property(path);
-            }
-            catch (ArgumentException) {
-                if (path.Count > 1) {
-                    member = path[^1];
-                    path.RemoveAt(path.Count - 1);
-                    try {
-                        prop = this.character.get_property(path);
-                    }
-                    catch (ArgumentException) { }
+            this.selected_path = null;
+            this.selected_prop = null;
+            this.selected_member = null;
+            if (path is not null) {
+                try {
+                    this.selected_prop = this.character.get_property(path);
                 }
+                catch (ArgumentException) {
+                    if (path.Count > 1) {
+                        this.selected_member = path[^1];
+                        path.RemoveAt(path.Count - 1);
+                        try {
+                            this.selected_prop = this.character.get_property(path);
+                        }
+                        catch (ArgumentException) { }
+                    }
+                }
+                this.selected_path = new List<string>(path);
             }
-            if ((prop is CharTextProperty) || (prop is CharNumProperty)) {
+            if ((this.selected_prop is CharTextProperty) || (this.selected_prop is CharNumProperty)) {
                 this.edit_but.Content = "Adjust Value...";
-                this.edit_but.IsEnabled = (prop is CharNumProperty);
+                this.edit_but.IsEnabled = (this.selected_prop is CharNumProperty);
                 this.set_but.Content = "Set Value...";
                 this.set_but.IsEnabled = true;
                 this.rem_but.IsEnabled = true;
             }
-            else if(prop is CharSetProperty) {
+            else if(this.selected_prop is CharSetProperty) {
                 this.edit_but.Content = "Add Element...";
                 this.edit_but.IsEnabled = true;
-                if (member is null) {
-                    this.set_but.Content = "Clear Value";
+                if (this.selected_member is null) {
+                    this.set_but.Content = "Clear Elements";
                 }
                 else {
                     this.set_but.Content = "Set Element...";
@@ -133,10 +145,10 @@ namespace CampLog {
                 this.set_but.IsEnabled = true;
                 this.rem_but.IsEnabled = true;
             }
-            else if (prop is CharDictProperty) {
+            else if (this.selected_prop is CharDictProperty) {
                 this.edit_but.Content = "Add Child...";
                 this.edit_but.IsEnabled = true;
-                this.set_but.Content = "Clear Value";
+                this.set_but.Content = "Clear Children";
                 this.set_but.IsEnabled = true;
                 this.rem_but.IsEnabled = true;
             }
@@ -149,7 +161,95 @@ namespace CampLog {
             }
         }
 
-        //TODO: add_top_level, adjust_value/add_child/add_element, set/clear, remove
+        private void do_add(object sender, RoutedEventArgs e) {
+            //TODO: prompt for new top-level property
+        }
+
+        private void do_edit(object sender, RoutedEventArgs e) {
+            if ((this.selected_prop is null) || (this.selected_prop is CharTextProperty)) { return; }
+            CharProperty add_prop = null;
+            if (this.selected_prop is CharNumProperty num_prop) {
+                double? new_value = SimpleDialog.askFloat(this.selected_path[^1], "New value:", (double)(num_prop.value), this);
+                if (new_value is not null) {
+                    add_prop = new CharNumProperty(((decimal)(new_value.Value)) - num_prop.value);
+                    num_prop.value = (decimal)(new_value.Value);
+                }
+                else { return; }
+            }
+            else if (this.selected_prop is CharSetProperty set_prop) {
+                // set property selected; add an element
+                string new_value = SimpleDialog.askString(this.selected_path[^1], "New element:", owner: this);
+                if (new_value is not null) {
+                    set_prop.value.Add(new_value);
+                    add_prop = new CharSetProperty(new HashSet<string>() { new_value });
+                }
+                else { return; }
+            }
+            else if (this.selected_prop is CharDictProperty dict_prop) {
+                // dict property selected; add a child property
+                //TODO: prompt for new property (as in do_add)
+            }
+            else { return; }
+            if (this.guid is not null) {
+                this.actions.Add(new ActionCharacterPropertyAdjust(this.guid.Value, this.selected_path, null, add_prop));
+            }
+            this.property_rows.Clear();
+            this.populate_property_rows(this.property_rows, new List<string>(), this.character.properties);
+        }
+
+        private void do_set(object sender, RoutedEventArgs e) {
+            if (this.selected_prop is null) { return; }
+            CharProperty original_prop = this.selected_prop.copy();
+            if (this.selected_prop is CharTextProperty text_prop) {
+                string new_value = SimpleDialog.askString(this.selected_path[^1], "New value:", text_prop.value, this);
+                if (new_value is not null) {
+                    text_prop.value = new_value;
+                }
+                else { return; }
+            }
+            else if (this.selected_prop is CharNumProperty num_prop) {
+                double? new_value = SimpleDialog.askFloat(this.selected_path[^1], "New value:", (double)(num_prop.value), this);
+                if (new_value is not null) {
+                    num_prop.value = (decimal)(new_value.Value);
+                }
+                else { return; }
+            }
+            else if (this.selected_prop is CharSetProperty set_prop) {
+                if (this.selected_member is null) {
+                    // set property selected; clear it
+                    set_prop.value.Clear();
+                }
+                else {
+                    // single member selected; set it
+                    string new_value = SimpleDialog.askString(this.selected_path[^1], "New value:", this.selected_member, this);
+                    if (new_value is not null) {
+                        set_prop.value.Remove(this.selected_member);
+                        set_prop.value.Add(new_value);
+                    }
+                    else { return; }
+                }
+            }
+            else if (this.selected_prop is CharDictProperty dict_prop) {
+                // dict property selected; clear it
+                dict_prop.value.Clear();
+            }
+            else { return; }
+            if (this.guid is not null) {
+                this.actions.Add(new ActionCharacterPropertySet(this.guid.Value, this.selected_path, original_prop, this.selected_prop));
+            }
+            this.property_rows.Clear();
+            this.populate_property_rows(this.property_rows, new List<string>(), this.character.properties);
+        }
+
+        private void do_rem(object sender, RoutedEventArgs e) {
+            if (this.selected_prop is null) { return; }
+            if (this.guid is not null) {
+                this.actions.Add(new ActionCharacterPropertySet(this.guid.Value, this.selected_path, this.selected_prop, null));
+            }
+            this.character.remove_property(this.selected_path);
+            this.property_rows.Clear();
+            this.populate_property_rows(this.property_rows, new List<string>(), this.character.properties);
+        }
 
         private void do_ok(object sender, RoutedEventArgs e) {
             if (this.name_box.Text != this.character.name) {

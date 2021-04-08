@@ -103,6 +103,14 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_constructor_argument() {
+            CharSetProperty foo = new CharSetProperty(new HashSet<string>() { "blah", "bloh" });
+            Assert.AreEqual(foo.value.Count, 2);
+            Assert.IsTrue(foo.value.Contains("blah"));
+            Assert.IsTrue(foo.value.Contains("bloh"));
+        }
+
+        [TestMethod]
         public void test_copy() {
             CharSetProperty foo = new CharSetProperty(), bar;
             foo.value.Add("blah");

@@ -71,8 +71,13 @@ namespace CampLog {
     public class CharSetProperty : CharProperty {
         public RefcountSet<string> value;
 
-        public CharSetProperty() {
-            this.value = new RefcountSet<string>();
+        public CharSetProperty(IEnumerable<string> value = null) {
+            if (value is null) {
+                this.value = new RefcountSet<string>();
+            }
+            else {
+                this.value = new RefcountSet<string>(value);
+            }
         }
 
         public override CharSetProperty copy() {

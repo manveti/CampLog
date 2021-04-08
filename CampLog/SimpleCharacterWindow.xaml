@@ -189,10 +189,10 @@
                     </TreeView.Resources>
                 </TreeView>
 
-                <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Content="Add Top-Level..."/>
-                <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Content="Adjust Value..." IsEnabled="False" Name="edit_but"/>
-                <Button Grid.Row="1" Grid.Column="2" Margin="1" Padding="1" Content="Set Value..." IsEnabled="False" Name="set_but"/>
-                <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Content="Remove" IsEnabled="False" Name="rem_but"/>
+                <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Content="Add Top-Level..." Click="do_add"/>
+                <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Content="Adjust Value..." IsEnabled="False" Name="edit_but" Click="do_edit"/>
+                <Button Grid.Row="1" Grid.Column="2" Margin="1" Padding="1" Content="Set Value..." IsEnabled="False" Name="set_but" Click="do_set"/>
+                <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Content="Remove" IsEnabled="False" Name="rem_but" Click="do_rem"/>
             </Grid>
         </GroupBox>
         
