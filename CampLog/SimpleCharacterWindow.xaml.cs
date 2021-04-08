@@ -243,10 +243,21 @@ namespace CampLog {
 
         private void do_rem(object sender, RoutedEventArgs e) {
             if (this.selected_prop is null) { return; }
-            if (this.guid is not null) {
-                this.actions.Add(new ActionCharacterPropertySet(this.guid.Value, this.selected_path, this.selected_prop, null));
+            if (this.selected_member is null) {
+                if (this.guid is not null) {
+                    this.actions.Add(new ActionCharacterPropertySet(this.guid.Value, this.selected_path, this.selected_prop, null));
+                }
+                this.character.remove_property(this.selected_path);
             }
-            this.character.remove_property(this.selected_path);
+            else {
+                CharSetProperty set_prop = this.selected_prop as CharSetProperty;
+                if (set_prop is null) { return; }
+                set_prop.value.Remove(this.selected_member);
+                if (this.guid is not null) {
+                    CharSetProperty sub_prop = new CharSetProperty(new HashSet<string>() { this.selected_member });
+                    this.actions.Add(new ActionCharacterPropertyAdjust(this.guid.Value, this.selected_path, sub_prop, null));
+                }
+            }
             this.property_rows.Clear();
             this.populate_property_rows(this.property_rows, new List<string>(), this.character.properties);
         }
