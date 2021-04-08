@@ -97,58 +97,6 @@ namespace CampLog {
             this.properties_list.ItemsSource = this.property_rows;
         }
 
-        private void add_action(EntryAction action) {
-            if (action is ActionCharacterSetInventory inventory_set_action) {
-                // see if there's an existing inventory set action we can replace
-                for (int i = 0; i < this.actions.Count; i++) {
-                    if (this.actions[i] is ActionCharacterSetInventory existing_action) {
-                        this.actions[i] = new ActionCharacterSetInventory(existing_action.guid, existing_action.from, inventory_set_action.to);
-                        return;
-                    }
-                }
-            }
-            else if (action is ActionCharacterSet character_set_action) {
-                // see if there's an existing character set action we can replace; remove all property actions
-                bool updated = false;
-                List<EntryAction> new_actions = new List<EntryAction>();
-                foreach (EntryAction existing_action in this.actions) {
-                    if ((existing_action is ActionCharacterPropertyAdjust) || (existing_action is ActionCharacterPropertySet)) { continue; }
-                    if (existing_action is ActionCharacterSet existing_set_action) {
-                        new_actions.Add(new ActionCharacterSet(existing_set_action.guid, existing_set_action.from, character_set_action.to));
-                        updated = true;
-                    }
-                    else {
-                        new_actions.Add(existing_action);
-                    }
-                }
-                this.actions = new_actions;
-                if (updated) { return; }
-            }
-            else if ((action is ActionCharacterPropertyAdjust) || (action is ActionCharacterPropertySet)) {
-                // check for existing actions we can update
-                ActionCharacterPropertyAdjust prop_adj_action = action as ActionCharacterPropertyAdjust;
-                ActionCharacterPropertySet prop_set_action = action as ActionCharacterPropertySet;
-                List<string> path = prop_adj_action?.path ?? prop_set_action?.path;
-                int adj_idx = -1, set_idx = -1;
-                for (int i = 0; i < this.actions.Count; i++) {
-                    if (this.actions[i] is ActionCharacterSet existing_action) {
-                        // there's an existing character set action, so update it
-                        if (prop_set_action is null) { throw new ArgumentOutOfRangeException(nameof(action)); }
-                        existing_action.to.set_property(path, prop_set_action.to.copy());
-                        return;
-                    }
-                    if (this.actions[i] is ActionCharacterPropertySet existing_set_action) {
-                        //TODO: if set_action operates on same path as action: set_idx = i
-                    }
-                    if (this.actions[i] is ActionCharacterPropertyAdjust existing_adj_action) {
-                        //TODO: if adjust_action operates on same path as action: adjust_idx = i
-                    }
-                }
-                //TODO: replace existing set or adjust action
-            }
-            this.actions.Add(action);
-        }
-
         private void properties_list_sel_changed(object sender, RoutedEventArgs e) {
             List<string> path = this.properties_list.SelectedValue as List<string>;
             string member = null;
@@ -211,7 +159,7 @@ namespace CampLog {
                 else {
                     ActionCharacterSet action = new ActionCharacterSet(this.guid.Value, this.character, this.character);
                     action.to.name = this.name_box.Text;
-                    this.add_action(action);
+                    this.actions.Add(action);
                 }
             }
             this.valid = true;
