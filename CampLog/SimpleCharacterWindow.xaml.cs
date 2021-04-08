@@ -76,11 +76,11 @@ namespace CampLog {
             }
         }
 
-        public SimpleCharacterWindow(CampaignSave save_state, List<EntryAction> actions, Guid? guid = null) {
+        public SimpleCharacterWindow(CampaignSave save_state, Guid? guid = null) {
             this.valid = false;
             this.save_state = save_state;
             this.state = save_state.domain.state.copy();
-            this.actions = new List<EntryAction>(actions);
+            this.actions = new List<EntryAction>();
             if (guid is null) {
                 ActionCharacterSet add_action = new ActionCharacterSet(Guid.NewGuid(), null, new Character(""));
                 this.actions.Add(add_action);
@@ -97,180 +97,54 @@ namespace CampLog {
             this.properties_list.ItemsSource = this.property_rows;
         }
 
-        private static int match_length(List<string> l1, List<string> l2) {
-            int i;
-            for (i = 0; (i < l1.Count) && (i < l2.Count); i++) {
-                if (l1[i] != l2[i]) { break; }
-            }
-            return i;
-        }
-
-        private static bool paths_equal(List<string> p1, List<string> p2) {
-            if (p1.Count != p2.Count) { return false; }
-            return match_length(p1, p2) == p1.Count;
-        }
-
         private void add_action(EntryAction action) {
-            if (action is ActionCharacterSet character_set_action) {
-                // see if there's an existing character set action we can replace; remove all property actions
-                List<int> remove_indices = new List<int>();
-                bool updated = false;
-                for (int i = 0; i < this.actions.Count; i++) {
-                    if (this.actions[i] is ActionCharacterPropertyAdjust adj_action) {
-                        if ((adj_action.guids is not null) && (adj_action.guids.Count == 1) && (adj_action.guids.Contains(character_set_action.guid))){
-                            remove_indices.Add(i);
-                        }
-                    }
-                    else if (this.actions[i] is ActionCharacterPropertySet prop_set_action) {
-                        if (prop_set_action.guid == character_set_action.guid) {
-                            remove_indices.Add(i);
-                        }
-                    }
-                    else if (this.actions[i] is ActionCharacterSet existing_set_action) {
-                        if (existing_set_action.guid == character_set_action.guid) {
-                            this.actions[i] = new ActionCharacterSet(existing_set_action.guid, existing_set_action.from, character_set_action.to);
-                            updated = true;
-                        }
-                    }
-                }
-                remove_indices.Reverse();
-                foreach (int rem_idx in remove_indices) {
-                    this.actions.RemoveAt(rem_idx);
-                }
-                if (updated) { return; }
-            }
-            else if (action is ActionCharacterPropertySet prop_set_action) {
-                // see if there's an existing action we can update
-                for (int i = 0; i < this.actions.Count; i++) {
-                    if (this.actions[i] is ActionCharacterSet char_set_action) {
-                        if (char_set_action.guid == prop_set_action.guid) {
-                            // there's an existing character set action; update it
-                            if (prop_set_action.to is null) {
-                                char_set_action.to.remove_property(prop_set_action.path);
-                            }
-                            else {
-                                char_set_action.to.set_property(prop_set_action.path, prop_set_action.to.copy());
-                            }
-                            // if everything's been done right so far, there aren't any other relevant actions to update, and our action is already added
-                            return;
-                        }
-                    }
-                    else if (this.actions[i] is ActionCharacterPropertySet existing_set_action) {
-                        if (existing_set_action.guid != prop_set_action.guid) { continue; }
-                        int prefix_length = match_length(existing_set_action.path, prop_set_action.path);
-                        if (prefix_length < existing_set_action.path.Count) { continue; }
-                        if (prefix_length >= prop_set_action.path.Count) {
-                            // there's an existing property set action for this or a child property; remove it
-                            this.actions.RemoveAt(i);
-                            // if everything's been done right so far, there aren't any other relevant actions to update, but our action hasn't been added yet
-                            break;
-                        }
-                        // there's an existing property set action for a parent property; update it
-                        CharProperty prop = existing_set_action.to;
-                        CharDictProperty dict_prop = null;
-                        string prop_name = null;
-                        for (int j = prefix_length; j < prop_set_action.path.Count; j++) {
-                            dict_prop = prop as CharDictProperty;
-                            prop_name = prop_set_action.path[j];
-                            if (dict_prop is null) { throw new ArgumentOutOfRangeException(nameof(action)); }
-                            if (j < prop_set_action.path.Count - 1) {
-                                if (!dict_prop.value.ContainsKey(prop_name)) { throw new ArgumentOutOfRangeException(nameof(action)); }
-                                prop = dict_prop.value[prop_name];
-                            }
-                        }
-                        // guaranteed at least one pass through loop, so dict_prop and prop_name are not null
-                        if (existing_set_action.to is null) {
-                            dict_prop.value.Remove(prop_name);
-                        }
-                        else {
-                            dict_prop.value[prop_name] = existing_set_action.to;
-                        }
-                        // if everything's been done right so far, there aren't any other relevant actions to update, and our action is already added
-                        return;
-                    }
-                    else if (this.actions[i] is ActionCharacterPropertyAdjust existing_adj_action) {
-                        if ((existing_adj_action.guids is null) || (existing_adj_action.guids.Count != 1)) { continue; }
-                        if (!existing_adj_action.guids.Contains(prop_set_action.guid)) { continue; }
-                        if (!paths_equal(existing_adj_action.path, prop_set_action.path)) { continue; }
-                        // there's an existing property adjust action; remove it
-                        this.actions.RemoveAt(i);
-                        // if everything's been done right so far, there aren't any other relevant actions to update, but our action hasn't been added yet
-                        break;
-                    }
-                }
-            }
-            else if (action is ActionCharacterPropertyAdjust prop_adj_action) {
-                // see if there's an existing action we can update
-                for (int i = 0; i < this.actions.Count; i++) {
-                    if (this.actions[i] is ActionCharacterSet char_set_action) {
-                        if ((prop_adj_action.guids is null) || (prop_adj_action.guids.Count != 1)) { continue; }
-                        if (!prop_adj_action.guids.Contains(char_set_action.guid)) { continue; }
-                        // there's an existing character set action; update it
-                        CharProperty prop = char_set_action.to.get_property(prop_adj_action.path);
-                        if (prop_adj_action.subtract is not null) { prop.subtract(prop_adj_action.subtract); }
-                        if (prop_adj_action.add is not null) { prop.add(prop_adj_action.add); }
-                        // if everything's been done right so far, there aren't any other relevant actions to update, and our action is already added
-                        return;
-                    }
-                    else if (this.actions[i] is ActionCharacterPropertySet existing_set_action) {
-                        if ((prop_adj_action.guids is null) || (prop_adj_action.guids.Count != 1)) { continue; }
-                        if (!prop_adj_action.guids.Contains(existing_set_action.guid)) { continue; }
-                        if (existing_set_action.path.Count > prop_adj_action.path.Count) { continue; }
-                        int prefix_length = match_length(existing_set_action.path, prop_adj_action.path);
-                        if (prefix_length < existing_set_action.path.Count) { continue; }
-                        // there's an existing property set action for this or a parent property; update it
-                        CharProperty prop = existing_set_action.to;
-                        for (int j = prefix_length; j < prop_adj_action.path.Count; j++) {
-                            CharDictProperty dict_prop = prop as CharDictProperty;
-                            string prop_name = prop_adj_action.path[j];
-                            if (dict_prop is null) { throw new ArgumentOutOfRangeException(nameof(action)); }
-                            if (j < prop_adj_action.path.Count - 1) {
-                                if (!dict_prop.value.ContainsKey(prop_name)) { throw new ArgumentOutOfRangeException(nameof(action)); }
-                                prop = dict_prop.value[prop_name];
-                            }
-                        }
-                        if (prop_adj_action.subtract is not null) { prop.subtract(prop_adj_action.subtract); }
-                        if (prop_adj_action.add is not null) { prop.add(prop_adj_action.add); }
-                        // if everything's been done right so far, there aren't any other relevant actions to update, and our action is already added
-                        return;
-                    }
-                    else if (this.actions[i] is ActionCharacterPropertyAdjust existing_adj_action) {
-                        if ((existing_adj_action.guids is null) != (prop_adj_action.guids is null)) { continue; }
-                        if (existing_adj_action.guids is not null) {
-                            if (existing_adj_action.guids.Count != prop_adj_action.guids.Count) { continue; }
-                            if (!existing_adj_action.guids.IsSubsetOf(prop_adj_action.guids)) { continue; }
-                        }
-                        if (!paths_equal(existing_adj_action.path, prop_adj_action.path)) { continue; }
-                        // there's an existing property adjust action; update it
-                        CharProperty new_sub = null, new_add = null;
-                        if ((existing_adj_action.subtract is null) || (prop_adj_action.subtract is null)) {
-                            new_sub = existing_adj_action.subtract ?? prop_adj_action.subtract;
-                        }
-                        else {
-                            new_sub = existing_adj_action.subtract;
-                            new_sub.add(prop_adj_action.subtract);
-                        }
-                        if ((existing_adj_action.add is null) || (prop_adj_action.add is null)) {
-                            new_add = existing_adj_action.add ?? prop_adj_action.add;
-                        }
-                        else {
-                            new_add = existing_adj_action.add;
-                            new_add.add(prop_adj_action.add);
-                        }
-                        this.actions[i] = new ActionCharacterPropertyAdjust(existing_adj_action.guids, existing_adj_action.path, new_sub, new_add);
-                        // if everything's been done right so far, there aren't any other relevant actions to update, and our action is already added
-                        return;
-                    }
-                }
-            }
-            else if (action is ActionCharacterSetInventory inventory_set_action) {
+            if (action is ActionCharacterSetInventory inventory_set_action) {
                 // see if there's an existing inventory set action we can replace
                 for (int i = 0; i < this.actions.Count; i++) {
-                    if ((this.actions[i] is ActionCharacterSetInventory existing_action) && (existing_action.guid == inventory_set_action.guid)) {
+                    if (this.actions[i] is ActionCharacterSetInventory existing_action) {
                         this.actions[i] = new ActionCharacterSetInventory(existing_action.guid, existing_action.from, inventory_set_action.to);
                         return;
                     }
                 }
+            }
+            else if (action is ActionCharacterSet character_set_action) {
+                // see if there's an existing character set action we can replace; remove all property actions
+                bool updated = false;
+                List<EntryAction> new_actions = new List<EntryAction>();
+                foreach (EntryAction existing_action in this.actions) {
+                    if ((existing_action is ActionCharacterPropertyAdjust) || (existing_action is ActionCharacterPropertySet)) { continue; }
+                    if (existing_action is ActionCharacterSet existing_set_action) {
+                        new_actions.Add(new ActionCharacterSet(existing_set_action.guid, existing_set_action.from, character_set_action.to));
+                        updated = true;
+                    }
+                    else {
+                        new_actions.Add(existing_action);
+                    }
+                }
+                this.actions = new_actions;
+                if (updated) { return; }
+            }
+            else if ((action is ActionCharacterPropertyAdjust) || (action is ActionCharacterPropertySet)) {
+                // check for existing actions we can update
+                ActionCharacterPropertyAdjust prop_adj_action = action as ActionCharacterPropertyAdjust;
+                ActionCharacterPropertySet prop_set_action = action as ActionCharacterPropertySet;
+                List<string> path = prop_adj_action?.path ?? prop_set_action?.path;
+                int adj_idx = -1, set_idx = -1;
+                for (int i = 0; i < this.actions.Count; i++) {
+                    if (this.actions[i] is ActionCharacterSet existing_action) {
+                        // there's an existing character set action, so update it
+                        if (prop_set_action is null) { throw new ArgumentOutOfRangeException(nameof(action)); }
+                        existing_action.to.set_property(path, prop_set_action.to.copy());
+                        return;
+                    }
+                    if (this.actions[i] is ActionCharacterPropertySet existing_set_action) {
+                        //TODO: if set_action operates on same path as action: set_idx = i
+                    }
+                    if (this.actions[i] is ActionCharacterPropertyAdjust existing_adj_action) {
+                        //TODO: if adjust_action operates on same path as action: adjust_idx = i
+                    }
+                }
+                //TODO: replace existing set or adjust action
             }
             this.actions.Add(action);
         }

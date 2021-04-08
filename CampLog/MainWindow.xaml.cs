@@ -218,8 +218,7 @@ namespace CampLog {
             chr.set_property(new List<string>() { "Skills", "Jump" }, new CharNumProperty(7));
             chr.set_property(new List<string>() { "Skills", "Skull Smashing" }, new CharNumProperty(42));
             Guid guid = state.domain.state.characters.add_character(chr);
-            List<EntryAction> actions = new List<EntryAction>();
-            SimpleCharacterWindow cw = new SimpleCharacterWindow(state, actions, guid) { Owner = this };
+            SimpleCharacterWindow cw = new SimpleCharacterWindow(state, guid) { Owner = this };
             cw.ShowDialog();
 #if false
             if (!cw.valid) { return; }
