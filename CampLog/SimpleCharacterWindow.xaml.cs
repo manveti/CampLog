@@ -81,6 +81,28 @@ namespace CampLog {
             }
         }
 
+        public void repopulate_property(List<string> path) {
+            List<string> parent_path = path.GetRange(0, path.Count - 1);
+            CharDictProperty parent_prop = this.character.properties;
+            ObservableCollection<PropertyRow> parent_rows = this.property_rows;
+            foreach (string token in parent_path) {
+                if (!parent_prop.value.ContainsKey(token)) { throw new ArgumentOutOfRangeException(nameof(path)); }
+                parent_prop = parent_prop.value[token] as CharDictProperty;
+                bool need_row = true;
+                foreach (PropertyRow row in parent_rows) {
+                    if (row.name == token) {
+                        parent_rows = row.children;
+                        need_row = false;
+                        break;
+                    }
+                }
+                if (need_row) { throw new ArgumentOutOfRangeException(nameof(path)); }
+                if ((parent_prop is null) || (parent_rows is null)) { throw new ArgumentOutOfRangeException(nameof(path)); }
+            }
+            parent_rows.Clear();
+            this.populate_property_rows(parent_rows, parent_path, parent_prop);
+        }
+
         public SimpleCharacterWindow(CampaignSave save_state, Guid? guid = null) {
             this.valid = false;
             this.save_state = save_state;
@@ -193,8 +215,7 @@ namespace CampLog {
             if (this.guid is not null) {
                 this.actions.Add(new ActionCharacterPropertyAdjust(this.guid.Value, this.selected_path, null, add_prop));
             }
-            this.property_rows.Clear();
-            this.populate_property_rows(this.property_rows, new List<string>(), this.character.properties);
+            this.repopulate_property(this.selected_path);
         }
 
         private void do_set(object sender, RoutedEventArgs e) {
@@ -237,8 +258,7 @@ namespace CampLog {
             if (this.guid is not null) {
                 this.actions.Add(new ActionCharacterPropertySet(this.guid.Value, this.selected_path, original_prop, this.selected_prop));
             }
-            this.property_rows.Clear();
-            this.populate_property_rows(this.property_rows, new List<string>(), this.character.properties);
+            this.repopulate_property(this.selected_path);
         }
 
         private void do_rem(object sender, RoutedEventArgs e) {
@@ -258,8 +278,7 @@ namespace CampLog {
                     this.actions.Add(new ActionCharacterPropertyAdjust(this.guid.Value, this.selected_path, sub_prop, null));
                 }
             }
-            this.property_rows.Clear();
-            this.populate_property_rows(this.property_rows, new List<string>(), this.character.properties);
+            this.repopulate_property(this.selected_path);
         }
 
         private void do_ok(object sender, RoutedEventArgs e) {
