@@ -58,13 +58,16 @@ namespace CampLog {
         private bool state_dirty;
         private string save_path;
         public ObservableCollection<EntryRow> entry_rows;
+        private CharacterListControl character_list;
 
         public MainWindow() {
             this.save_path = null;
             this.state = null;
             this.state_dirty = false;
             this.entry_rows = new ObservableCollection<EntryRow>();
+            this.character_list = new CharacterListControl(this.entry_action_callback);
             InitializeComponent();
+            this.character_group.Content = this.character_list;
             this.entries_list.ItemsSource = this.entry_rows;
         }
 
@@ -84,13 +87,14 @@ namespace CampLog {
             if (!props_window.valid) { return; }
 
             Calendar cal;
+            CharacterSheet char_sheet;
             try {
                 cal = props_window.get_calendar();
-                //TODO: character sheet
+                char_sheet = props_window.get_character_sheet();
             }
             catch (InvalidOperationException) { return; }
 
-            this.state = new CampaignSave(cal);
+            this.state = new CampaignSave(cal, char_sheet);
             this.state_dirty = false;
             this.save_path = null;
 
@@ -100,7 +104,8 @@ namespace CampLog {
             this.charsheet_cfg_opt.IsEnabled = true;
             this.item_library_opt.IsEnabled = true;
             this.revert_opt.IsEnabled = true;
-            //TODO: characters_list, char_add_but, char_rem_but, char_view_but
+            this.character_list.set_char_sheet(char_sheet);
+            this.character_list.set_state(this.state.domain.state);
             //TODO: inventories_list, inv_add_but, inv_rem_but, inv_view_but
             this.session_num_box.Content = "1";
             this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.state.calendar.default_timestamp);
@@ -116,14 +121,8 @@ namespace CampLog {
 
         //TODO: ...
 
-        private void entries_list_sel_changed(object sender, RoutedEventArgs e) {
-            bool entry_selected = this.entries_list.SelectedIndex >= 0;
-            this.ent_rem_but.IsEnabled = entry_selected;
-            this.ent_view_but.IsEnabled = entry_selected;
-        }
-
-        private void add_entry(object sender, RoutedEventArgs e) {
-            EntryWindow entry_window = new EntryWindow(this.state);
+        private void entry_action_callback(List<EntryAction> actions) {
+            EntryWindow entry_window = new EntryWindow(this.state, actions: actions);
             entry_window.ShowDialog();
             if (!entry_window.valid) { return; }
 
@@ -131,7 +130,7 @@ namespace CampLog {
             DateTime created = entry_window.get_created();
             string description = entry_window.description_box.Text;
             int session = (int)(entry_window.session_box.Value);
-            Entry ent = new Entry(timestamp, created, description, session, entry_window.actions);
+            Entry ent = new Entry(timestamp, created, description, session, new List<EntryAction>(entry_window.actions));
             this.state_dirty = true;
             int idx = this.state.domain.add_entry(ent);
             int valid_idx = this.state.domain.valid_entries - 1;
@@ -149,6 +148,18 @@ namespace CampLog {
             for (int i = 0; i < this.entry_rows.Count; i++) {
                 this.entry_rows[i].set_invalid(this.entry_rows.Count - i > this.state.domain.valid_entries);
             }
+            this.character_list.set_state(this.state.domain.state);
+            //TODO: set_state for other lists
+        }
+
+        private void entries_list_sel_changed(object sender, RoutedEventArgs e) {
+            bool entry_selected = this.entries_list.SelectedIndex >= 0;
+            this.ent_rem_but.IsEnabled = entry_selected;
+            this.ent_view_but.IsEnabled = entry_selected;
+        }
+
+        private void add_entry(object sender, RoutedEventArgs e) {
+            this.entry_action_callback(null);
         }
 
         private void remove_entry(object sender, RoutedEventArgs e) {
@@ -212,14 +223,15 @@ namespace CampLog {
 
         //TODO: remove
         private void do_test(object sender, RoutedEventArgs e) {
-            CampaignSave state = new CampaignSave(new Calendar());
+            CampaignSave state = new CampaignSave(new Calendar(), new CharacterSheet());
             Character chr = new Character("Bob");
             chr.set_property(new List<string>() { "Skills" }, new CharDictProperty());
             chr.set_property(new List<string>() { "Skills", "Jump" }, new CharNumProperty(7));
             chr.set_property(new List<string>() { "Skills", "Skull Smashing" }, new CharNumProperty(42));
             Guid guid = state.domain.state.characters.add_character(chr);
-            SimpleCharacterWindow cw = new SimpleCharacterWindow(state, guid) { Owner = this };
-            cw.ShowDialog();
+            //SimpleCharacterWindow cw = new SimpleCharacterWindow(state.domain.state, guid) { Owner = this };
+            //cw.ShowDialog();
+            this.character_list.set_state(state.domain.state);
 #if false
             if (!cw.valid) { return; }
             List<string> action_types = new List<string>();

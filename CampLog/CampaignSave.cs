@@ -7,14 +7,14 @@ namespace CampLog {
     public class CampaignSave {
         public CampaignDomain domain;
         public Calendar calendar;
-        //TODO: public CharacterSheet character_sheet;
+        public CharacterSheet character_sheet;
         public bool show_past_events;
         public bool show_inactive_tasks;
 
-        public CampaignSave(Calendar calendar) {
+        public CampaignSave(Calendar calendar, CharacterSheet character_sheet) {
             this.domain = new CampaignDomain();
             this.calendar = calendar;
-            //TODO: character_sheet
+            this.character_sheet = character_sheet;
             this.show_past_events = false;
             this.show_inactive_tasks = false;
         }

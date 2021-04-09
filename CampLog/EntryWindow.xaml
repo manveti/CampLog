@@ -77,9 +77,8 @@
 
         <GridSplitter Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="7" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5"/>
 
-        <GroupBox Grid.Row="5" Grid.Column="0" Header="Characters">
-            <!--TODO: characters list and buttons as in main window-->
-        </GroupBox>
+        <GroupBox Grid.Row="5" Grid.Column="0" Header="Characters" Name="character_group"/>
+        <!--character_list created in code-->
 
         <GridSplitter Grid.Row="5" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
 

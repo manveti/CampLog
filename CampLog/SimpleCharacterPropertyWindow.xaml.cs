@@ -20,6 +20,7 @@ namespace CampLog {
         dict,
     }
 
+
     public partial class SimpleCharacterPropertyWindow : Window {
         private readonly string[] PROPERTY_TYPE_NAMES = { "Text", "Number", "Set", "Dictionary" };
         public bool valid;

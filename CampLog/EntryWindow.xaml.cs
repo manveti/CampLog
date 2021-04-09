@@ -26,8 +26,9 @@ namespace CampLog {
         public List<EntryAction> actions;
         public ICalendarControl timestamp_box;
         private ICalendarControl timestamp_diff_box;
+        private CharacterListControl character_list;
 
-        public EntryWindow(CampaignSave save_state, int entry = -1) {
+        public EntryWindow(CampaignSave save_state, int entry = -1, List<EntryAction> actions = null) {
             this.valid = false;
             this.save_state = save_state;
             this.entries = new List<Entry>();
@@ -56,7 +57,12 @@ namespace CampLog {
                 }
                 session = previous_entry?.session ?? 1;
                 if ((previous_entry is not null) && ((DateTime.Now - previous_entry.created) >= SESSION_DOWNTIME_THRESHOLD)) { session += 1; }
-                current_entry = new Entry(timestamp, DateTime.Now, "", session);
+                current_entry = new Entry(timestamp, DateTime.Now, "", session, actions);
+                if (actions is not null) {
+                    foreach (EntryAction action in actions) {
+                        action.apply(this.state, current_entry);
+                    }
+                }
             }
             this.actions = new List<EntryAction>(current_entry.actions);
             InitializeComponent();
@@ -83,7 +89,12 @@ namespace CampLog {
             this.timestamp_diff_box.value_changed = this.timestamp_diff_changed;
             //TODO: previous entry
             this.description_box.Text = current_entry.description;
-            //TODO: actions, events, characters, inventories, topics, tasks
+            //TODO: actions, events
+            this.character_list = new CharacterListControl(null); //TODO: callback
+            this.character_list.set_char_sheet(this.save_state.character_sheet);
+            this.character_list.set_state(this.state);
+            this.character_group.Content = this.character_list;
+            //TODO: inventories, topics, tasks
         }
 
         public DateTime get_created() {

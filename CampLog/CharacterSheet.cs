@@ -12,11 +12,16 @@ namespace CampLog {
 
     [Serializable]
     public class CharacterSheet {
-        public virtual Window character_window(CampaignSave save_state, Guid? guid = null) => new SimpleCharacterWindow(save_state, guid);
+        public virtual Window character_window(CampaignState state, Guid? guid = null) => new SimpleCharacterWindow(state, guid);
     }
 
 
     public class CharacterSheetFactory {
         public virtual CharacterSheet get_character_sheet() => new CharacterSheet();
+    }
+
+
+    public interface ICharacterWindow {
+        public List<EntryAction> get_actions();
     }
 }

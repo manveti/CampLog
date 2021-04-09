@@ -26,14 +26,13 @@ namespace CampLog {
     }
 
 
-    public partial class SimpleCharacterWindow : Window {
+    public partial class SimpleCharacterWindow : Window, ICharacterWindow {
         public bool valid;
-        private CampaignSave save_state;
         private CampaignState state;
         private Character character;
         private Guid? guid;
-        ObservableCollection<PropertyRow> property_rows;
-        public List<EntryAction> actions;
+        private ObservableCollection<PropertyRow> property_rows;
+        private List<EntryAction> actions;
         private List<string> selected_path;
         private CharProperty selected_prop;
         private string selected_member;
@@ -93,10 +92,9 @@ namespace CampLog {
             this.populate_property_rows(parent_rows, parent_path, parent_prop);
         }
 
-        public SimpleCharacterWindow(CampaignSave save_state, Guid? guid = null) {
+        public SimpleCharacterWindow(CampaignState state, Guid? guid = null) {
             this.valid = false;
-            this.save_state = save_state;
-            this.state = save_state.domain.state.copy();
+            this.state = state.copy();
             this.actions = new List<EntryAction>();
             if (guid is null) {
                 ActionCharacterSet add_action = new ActionCharacterSet(Guid.NewGuid(), null, new Character(""));
@@ -104,7 +102,7 @@ namespace CampLog {
                 this.character = add_action.to;
             }
             else {
-                this.character = save_state.domain.state.characters.characters[guid.Value];
+                this.character = this.state.characters.characters[guid.Value];
             }
             this.guid = guid;
             this.property_rows = new ObservableCollection<PropertyRow>();
@@ -321,6 +319,11 @@ namespace CampLog {
 
         private void do_cancel(object sender, RoutedEventArgs e) {
             this.Close();
+        }
+
+        public List<EntryAction> get_actions() {
+            if (!this.valid) { return null; }
+            return this.actions;
         }
     }
 }

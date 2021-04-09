@@ -55,26 +55,8 @@
                 <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
 
-            <GroupBox Grid.Row="0" Grid.Column="0" Header="Characters">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="1*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <ListBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Name="characters_list"/>
-
-                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Padding="1" Name="char_add_but" Content="Add..." IsEnabled="False"/>
-                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Padding="1" Name="char_rem_but" Content="Remove" IsEnabled="False"/>
-                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Padding="1" Name="char_view_but" Content="View" IsEnabled="False"/>
-                </Grid>
-            </GroupBox>
+            <GroupBox Grid.Row="0" Grid.Column="0" Header="Characters" Name="character_group"/>
+            <!--character_list created in code-->
 
             <GridSplitter Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5"/>
 
