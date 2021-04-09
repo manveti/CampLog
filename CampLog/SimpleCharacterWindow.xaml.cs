@@ -174,7 +174,7 @@ namespace CampLog {
         }
 
         private void do_add(object sender, RoutedEventArgs e) {
-            SimpleCharacterPropertyWindow prop_win = new SimpleCharacterPropertyWindow();
+            SimpleCharacterPropertyWindow prop_win = new SimpleCharacterPropertyWindow() { Owner = this };
             prop_win.ShowDialog();
             if (!prop_win.valid) { return; }
             if (this.character.properties.value.ContainsKey(prop_win.name)) {
@@ -214,7 +214,7 @@ namespace CampLog {
             }
             else if (this.selected_prop is CharDictProperty dict_prop) {
                 // dict property selected; add a child property
-                SimpleCharacterPropertyWindow prop_win = new SimpleCharacterPropertyWindow();
+                SimpleCharacterPropertyWindow prop_win = new SimpleCharacterPropertyWindow() { Owner = this };
                 prop_win.ShowDialog();
                 if (!prop_win.valid) { return; }
                 if (dict_prop.value.ContainsKey(prop_win.name)) {

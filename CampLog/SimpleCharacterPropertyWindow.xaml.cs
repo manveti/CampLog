@@ -61,6 +61,7 @@ namespace CampLog {
         }
 
         public CharProperty get_property() {
+            if (!this.valid) { return null; }
             return this.type_list.SelectedIndex switch {
                 (int)(PropertyType.text) => new CharTextProperty(this.text_value_box.Text),
                 (int)(PropertyType.num) => new CharNumProperty((decimal)(this.num_value_box.Value)),
