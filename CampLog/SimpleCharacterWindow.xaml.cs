@@ -1,17 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 using GUIx;
 
@@ -184,7 +174,22 @@ namespace CampLog {
         }
 
         private void do_add(object sender, RoutedEventArgs e) {
-            //TODO: prompt for new top-level property
+            SimpleCharacterPropertyWindow prop_win = new SimpleCharacterPropertyWindow();
+            prop_win.ShowDialog();
+            if (!prop_win.valid) { return; }
+            if (this.character.properties.value.ContainsKey(prop_win.name)) {
+                MessageBox.Show("Property " + prop_win.name + " already exists.", "Error", MessageBoxButton.OK);
+                return;
+            }
+            CharProperty new_prop = prop_win.get_property();
+            if (new_prop is null) { return; }
+            List<string> new_path = new List<string>() { prop_win.name };
+            if (this.guid is not null) {
+                this.actions.Add(new ActionCharacterPropertySet(this.guid.Value, new_path, null, new_prop));
+            }
+            this.character.set_property(new_path, new_prop);
+            this.property_rows.Clear();
+            this.populate_property_rows(this.property_rows, new List<string>(), this.character.properties);
         }
 
         private void do_edit(object sender, RoutedEventArgs e) {
@@ -209,7 +214,23 @@ namespace CampLog {
             }
             else if (this.selected_prop is CharDictProperty dict_prop) {
                 // dict property selected; add a child property
-                //TODO: prompt for new property (as in do_add)
+                SimpleCharacterPropertyWindow prop_win = new SimpleCharacterPropertyWindow();
+                prop_win.ShowDialog();
+                if (!prop_win.valid) { return; }
+                if (dict_prop.value.ContainsKey(prop_win.name)) {
+                    MessageBox.Show("Property " + prop_win.name + " already exists.", "Error", MessageBoxButton.OK);
+                    return;
+                }
+                CharProperty new_prop = prop_win.get_property();
+                if (new_prop is not null) {
+                    List<string> new_path = new List<string>(this.selected_path) { prop_win.name };
+                    if (this.guid is not null) {
+                        this.actions.Add(new ActionCharacterPropertySet(this.guid.Value, new_path, null, new_prop));
+                    }
+                    this.character.set_property(new_path, new_prop);
+                    add_prop = new CharDictProperty(new Dictionary<string, CharProperty>() { [prop_win.name] = new_prop });
+                }
+                else { return; }
             }
             else { return; }
             if (this.guid is not null) {
@@ -280,6 +301,8 @@ namespace CampLog {
             }
             this.repopulate_property(this.selected_path);
         }
+
+        //TODO: inventory association
 
         private void do_ok(object sender, RoutedEventArgs e) {
             if (this.name_box.Text != this.character.name) {

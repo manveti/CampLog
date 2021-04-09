@@ -206,6 +206,17 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_constructor_argument() {
+            CharTextProperty tprop = new CharTextProperty("bloh"), subprop;
+            CharDictProperty foo = new CharDictProperty(new Dictionary<string, CharProperty>() { ["blah"] = tprop });
+            Assert.AreEqual(foo.value.Count, 1);
+            Assert.IsTrue(foo.value.ContainsKey("blah"));
+            subprop = foo.value["blah"] as CharTextProperty;
+            Assert.IsNotNull(subprop);
+            Assert.AreEqual(subprop.value, tprop.value);
+        }
+
+        [TestMethod]
         public void test_copy() {
             CharDictProperty foo = new CharDictProperty(), bar;
             CharTextProperty tprop = new CharTextProperty("blah");

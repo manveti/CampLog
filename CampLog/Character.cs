@@ -104,8 +104,13 @@ namespace CampLog {
     public class CharDictProperty : CharProperty {
         public Dictionary<string, CharProperty> value;
 
-        public CharDictProperty() {
-            this.value = new Dictionary<string, CharProperty>();
+        public CharDictProperty(IDictionary<string, CharProperty> value = null) {
+            if (value is null) {
+                this.value = new Dictionary<string, CharProperty>();
+            }
+            else {
+                this.value = new Dictionary<string, CharProperty>(value);
+            }
         }
 
         public override CharDictProperty copy() {
