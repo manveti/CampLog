@@ -28,6 +28,7 @@ namespace CampLog {
         public ICalendarControl timestamp_box;
         private ICalendarControl timestamp_diff_box;
         private CharacterListControl character_list;
+        private InventoryListControl inventory_list;
 
         public EntryWindow(CampaignSave save_state, int entry = -1, List<EntryAction> actions = null) {
             this.valid = false;
@@ -97,7 +98,10 @@ namespace CampLog {
             this.character_list.set_char_sheet(this.save_state.character_sheet);
             this.character_list.set_state(this.state);
             this.character_group.Content = this.character_list;
-            //TODO: inventories, topics, tasks
+            this.inventory_list = new InventoryListControl(this.entry_action_callback);
+            this.inventory_list.set_state(this.state);
+            this.inventory_group.Content = this.inventory_list;
+            //TODO: topics, tasks
         }
 
         private void add_action(EntryAction action) {

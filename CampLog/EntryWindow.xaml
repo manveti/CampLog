@@ -106,9 +106,8 @@
 
         <GridSplitter Grid.Row="5" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
 
-        <GroupBox Grid.Row="5" Grid.Column="2" Header="Inventories">
-            <!--TODO: inventories list and buttons as in main window-->
-        </GroupBox>
+        <GroupBox Grid.Row="5" Grid.Column="2" Header="Inventories" Name="inventory_group"/>
+        <!--inventory_list created in code-->
 
         <GridSplitter Grid.Row="5" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
 

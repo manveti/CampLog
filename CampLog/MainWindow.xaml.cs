@@ -59,6 +59,7 @@ namespace CampLog {
         private string save_path;
         public ObservableCollection<EntryRow> entry_rows;
         private CharacterListControl character_list;
+        private InventoryListControl inventory_list;
 
         public MainWindow() {
             this.save_path = null;
@@ -66,8 +67,10 @@ namespace CampLog {
             this.state_dirty = false;
             this.entry_rows = new ObservableCollection<EntryRow>();
             this.character_list = new CharacterListControl(this.entry_action_callback);
+            this.inventory_list = new InventoryListControl(this.entry_action_callback);
             InitializeComponent();
             this.character_group.Content = this.character_list;
+            this.inventory_group.Content = this.inventory_list;
             this.entries_list.ItemsSource = this.entry_rows;
         }
 
@@ -106,7 +109,7 @@ namespace CampLog {
             this.revert_opt.IsEnabled = true;
             this.character_list.set_char_sheet(char_sheet);
             this.character_list.set_state(this.state.domain.state);
-            //TODO: inventories_list, inv_add_but, inv_rem_but, inv_view_but
+            this.inventory_list.set_state(this.state.domain.state);
             this.session_num_box.Content = "1";
             this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.state.calendar.default_timestamp);
             this.entry_rows.Clear();
@@ -149,6 +152,7 @@ namespace CampLog {
                 this.entry_rows[i].set_invalid(this.entry_rows.Count - i > this.state.domain.valid_entries);
             }
             this.character_list.set_state(this.state.domain.state);
+            this.inventory_list.set_state(this.state.domain.state);
             //TODO: set_state for other lists
         }
 
@@ -224,6 +228,7 @@ namespace CampLog {
         //TODO: remove
         private void do_test(object sender, RoutedEventArgs e) {
             CampaignSave state = new CampaignSave(new Calendar(), new CharacterSheet());
+#if false
             Character chr = new Character("Bob");
             chr.set_property(new List<string>() { "Skills" }, new CharDictProperty());
             chr.set_property(new List<string>() { "Skills", "Jump" }, new CharNumProperty(7));
@@ -232,6 +237,9 @@ namespace CampLog {
             //SimpleCharacterWindow cw = new SimpleCharacterWindow(state.domain.state, guid) { Owner = this };
             //cw.ShowDialog();
             this.character_list.set_state(state.domain.state);
+#endif
+            Guid guid = state.domain.state.inventories.new_inventory("Party Loot");
+            this.inventory_list.set_state(state.domain.state);
 #if false
             if (!cw.valid) { return; }
             List<string> action_types = new List<string>();
