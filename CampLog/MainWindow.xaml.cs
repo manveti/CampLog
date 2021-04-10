@@ -122,7 +122,7 @@ namespace CampLog {
         //TODO: ...
 
         private void entry_action_callback(List<EntryAction> actions) {
-            EntryWindow entry_window = new EntryWindow(this.state, actions: actions);
+            EntryWindow entry_window = new EntryWindow(this.state, actions: actions) { Owner = this };
             entry_window.ShowDialog();
             if (!entry_window.valid) { return; }
 
@@ -173,7 +173,7 @@ namespace CampLog {
         private void view_entry(object sender, RoutedEventArgs e) {
             int row_idx = this.entries_list.SelectedIndex, idx = this.state.domain.entries.Count - row_idx - 1;
             if ((idx < 0) || (idx >= this.state.domain.entries.Count)) { return; }
-            EntryWindow entry_window = new EntryWindow(this.state, idx);
+            EntryWindow entry_window = new EntryWindow(this.state, idx) { Owner = this };
             entry_window.ShowDialog();
             if (!entry_window.valid) { return; }
 

@@ -226,12 +226,11 @@ namespace CampLog {
                         this.actions.Add(new ActionCharacterPropertySet(this.guid.Value, new_path, null, new_prop));
                     }
                     this.character.set_property(new_path, new_prop);
-                    add_prop = new CharDictProperty(new Dictionary<string, CharProperty>() { [prop_win.name] = new_prop });
                 }
                 else { return; }
             }
             else { return; }
-            if (this.guid is not null) {
+            if ((this.guid is not null) && (add_prop is not null)) {
                 this.actions.Add(new ActionCharacterPropertyAdjust(this.guid.Value, this.selected_path, null, add_prop));
             }
             this.repopulate_property(this.selected_path);

@@ -7,6 +7,7 @@
         xmlns:GUIx="clr-namespace:GUIx;assembly=GUIx"
         mc:Ignorable="d"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
+        WindowStartupLocation="CenterOwner"
         Title="Property" Width="300" SizeToContent="Height">
     <Grid>
         <Grid.ColumnDefinitions>

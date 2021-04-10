@@ -10,8 +10,6 @@ namespace CampLog {
             this.valid = false;
             this.parameters = null;
             InitializeComponent();
-            this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            this.SizeToContent = SizeToContent.WidthAndHeight;
             this.calendar_box.ItemsSource = CalendarSpecs.specs.Keys;
             this.calendar_box.SelectedValue = "None";
             this.charsheet_box.ItemsSource = CharacterSheetSpecs.specs.Keys;

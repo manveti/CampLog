@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CampLog"
         mc:Ignorable="d"
-        Title="Campaign Properties">
+        WindowStartupLocation="CenterOwner"
+        Title="Campaign Properties" SizeToContent="WidthAndHeight">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>

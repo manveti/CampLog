@@ -84,6 +84,7 @@ namespace CampLog {
         private void do_add(object sender, RoutedEventArgs e) {
             if ((this.char_sheet is null) || (this.state is null)) { return; }
             Window dialog_window = this.char_sheet.character_window(this.state);
+            dialog_window.Owner = Window.GetWindow(this);
             dialog_window.ShowDialog();
             if (this.change_callback is null) { return; }
             ICharacterWindow char_window = dialog_window as ICharacterWindow;
@@ -107,6 +108,7 @@ namespace CampLog {
             Guid? guid = this.character_list.SelectedValue as Guid?;
             if ((guid is null) || (!this.state.characters.active_characters.Contains(guid.Value))) { return; }
             Window dialog_window = this.char_sheet.character_window(this.state, guid.Value);
+            dialog_window.Owner = Window.GetWindow(this);
             dialog_window.ShowDialog();
             if (this.change_callback is null) { return; }
             ICharacterWindow char_window = dialog_window as ICharacterWindow;
