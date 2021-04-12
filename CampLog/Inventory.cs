@@ -313,7 +313,13 @@ namespace CampLog {
             }
         }
         public Dictionary<string, string> properties;
-        public override string name { get => this.item.name; }
+        public override string name {
+            get {
+                string n = this.item.name;
+                if (this.unidentified) { n += " (unidentified)"; }
+                return n;
+            }
+        }
         public override decimal weight { get => this.item.weight + this.contents_weight; }
         public override decimal value { get => (this.value_override ?? this.item.value) + this.contents_value; }
 

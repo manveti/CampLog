@@ -933,7 +933,7 @@ namespace CampLogTest {
             Assert.IsNull(itm.containers);
             Assert.AreEqual(itm.contents_weight, 0);
             Assert.AreEqual(itm.contents_value, 0);
-            Assert.AreEqual(itm.name, "Wand of Kaplowie");
+            Assert.AreEqual(itm.name, "Wand of Kaplowie (unidentified)");
             Assert.AreEqual(itm.weight, 1);
             Assert.AreEqual(itm.value, 100);
         }

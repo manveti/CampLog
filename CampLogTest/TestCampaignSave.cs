@@ -11,7 +11,7 @@ namespace CampLogTest {
         [TestMethod]
         public void test_serialization() {
             Character chr = new Character("Somebody");
-            CampaignSave foo = new CampaignSave(new Calendar()), bar;
+            CampaignSave foo = new CampaignSave(new Calendar(), new CharacterSheet()), bar;
 
             Guid chr_guid = foo.domain.state.characters.add_character(chr);
 
@@ -26,7 +26,7 @@ namespace CampLogTest {
             Assert.IsTrue(bar.domain.state.characters.characters.ContainsKey(chr_guid));
             Assert.AreEqual(bar.domain.state.characters.characters[chr_guid].name, "Somebody");
             Assert.AreEqual(foo.calendar.GetType(), bar.calendar.GetType());
-            //TODO: character_sheet
+            Assert.AreEqual(foo.character_sheet.GetType(), bar.character_sheet.GetType());
             Assert.AreEqual(foo.show_past_events, bar.show_past_events);
             Assert.AreEqual(foo.show_inactive_tasks, bar.show_inactive_tasks);
         }
