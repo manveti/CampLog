@@ -67,7 +67,8 @@ namespace CampLog {
                     }
                 }
             }
-            this.actions = new List<EntryAction>(current_entry.actions);
+            this.actions = new List<EntryAction>();
+            this.add_actions(current_entry.actions, false);
             InitializeComponent();
             this.session_box.textBox.VerticalContentAlignment = VerticalAlignment.Center;
             this.session_box.Value = current_entry.session ?? 0;
@@ -272,10 +273,89 @@ namespace CampLog {
                     }
                 }
             }
+            // ActionInventoryCreate: no merging possible
+            else if (action is ActionInventoryRemove act_inv_remove) {
+                bool omit_new_action = false;
+                for (int i = this.actions.Count - 1; i >= 0; i--) {
+                    if (this.actions[i] is ActionInventoryCreate ext_inv_create) {
+                        if (ext_inv_create.guid == act_inv_remove.guid) {
+                            // existing ActionInventoryCreate with this guid; remove it and new action
+                            this.actions.RemoveAt(i);
+                            omit_new_action = true;
+                        }
+                    }
+                    if (this.actions[i] is ActionInventoryRename ext_inv_rename) {
+                        if (ext_inv_rename.guid == act_inv_remove.guid) {
+                            // existing ActionInventoryRename with this guid; remove it
+                            this.actions.RemoveAt(i);
+                        }
+                    }
+                    if (this.actions[i] is ActionInventoryEntryAdd ext_inv_entry_add) {
+                        if (ext_inv_entry_add.inv_guid == act_inv_remove.guid) {
+                            // existing ActionInventoryEntryAdd with this guid; remove it
+                            this.actions.RemoveAt(i);
+                        }
+                    }
+                    if (this.actions[i] is ActionInventoryEntryRemove ext_inv_entry_rem) {
+                        if (ext_inv_entry_rem.inv_guid == act_inv_remove.guid) {
+                            // existing ActionInventoryEntryRemove with this guid; remove it
+                            this.actions.RemoveAt(i);
+                        }
+                    }
+                    //TODO: ActionItemStackSet, ActionItemStackAdjust, ActionSingleItemSet, ActionSingleItemAdjust with guid in act_inv_remove inventory
+                    if (this.actions[i] is ActionInventoryEntryMove ext_inv_entry_move) {
+                        if ((ext_inv_entry_move.from_guid == act_inv_remove.guid) || ((ext_inv_entry_move.to_guid == act_inv_remove.guid))) {
+                            // existing ActionInventoryEntryMove from or to this guid; remove it
+                            this.actions.RemoveAt(i);
+                        }
+                    }
+                    if (this.actions[i] is ActionInventoryEntryMerge ext_inv_entry_merge) {
+                        if (ext_inv_entry_merge.inv_guid == act_inv_remove.guid) {
+                            // existing ActionInventoryEntryMerge with this guid; remove it
+                            this.actions.RemoveAt(i);
+                        }
+                    }
+                    if (this.actions[i] is ActionInventoryEntryUnstack ext_inv_entry_unstack) {
+                        if (ext_inv_entry_unstack.inv_guid == act_inv_remove.guid) {
+                            // existing ActionInventoryEntryUnstack with this guid; remove it
+                            this.actions.RemoveAt(i);
+                        }
+                    }
+                    if (this.actions[i] is ActionInventoryEntrySplit ext_inv_entry_split) {
+                        if (ext_inv_entry_split.inv_guid == act_inv_remove.guid) {
+                            // existing ActionInventoryEntrySplit with this guid; remove it
+                            this.actions.RemoveAt(i);
+                        }
+                    }
+                }
+                if (omit_new_action) {
+                    return;
+                }
+            }
+            else if (action is ActionInventoryRename act_inv_rename) {
+                for (int i = this.actions.Count - 1; i >= 0; i--) {
+                    if (this.actions[i] is ActionInventoryCreate ext_inv_create) {
+                        if (ext_inv_create.guid == act_inv_rename.guid) {
+                            // existing ActionInventoryCreate with this guid; update its "done" field based on new action and we're done
+                            this.actions[i] = new ActionInventoryCreate(ext_inv_create.guid, act_inv_rename.to);
+                            return;
+                        }
+                    }
+                    if (this.actions[i] is ActionInventoryRemove ext_inv_remove) {
+                        if (ext_inv_remove.guid == act_inv_rename.guid) {
+                            // existing ActionInventoryRemove with this guid; remove new entry
+                            return;
+                        }
+                    }
+                    if (this.actions[i] is ActionInventoryRename ext_inv_rename) {
+                        if (ext_inv_rename.guid == act_inv_rename.guid) {
+                            // existing ActionInventoryRename with this guid; update its "to" field based on new action and we're done
+                            this.actions[i] = new ActionInventoryRename(ext_inv_rename.guid, ext_inv_rename.from, act_inv_rename.to);
+                        }
+                    }
+                }
+            }
             //TODO:
-            //  ActionInventoryCreate
-            //  ActionInventoryRemove
-            //  ActionInventoryRename
             //  ActionInventoryEntryAdd
             //  ActionInventoryEntryRemove
             //  ActionItemStackSet
@@ -302,11 +382,13 @@ namespace CampLog {
             this.actions.Add(action);
         }
 
-        private void add_actions(List<EntryAction> actions) {
+        private void add_actions(List<EntryAction> actions, bool refresh = true) {
             foreach (EntryAction action in actions) {
                 this.add_action(action);
             }
-            this.action_list.Items.Refresh();
+            if (refresh) {
+                this.action_list.Items.Refresh();
+            }
         }
 
         public DateTime get_created() {

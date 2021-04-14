@@ -84,15 +84,12 @@ namespace CampLog {
 
         private void do_add(object sender, RoutedEventArgs e) {
             if (this.state is null) { return; }
-            //TODO:
-#if false
-            Window dialog_window = new InventoryWindow(this.state) { Owner = Window.GetWindow(this) };
+            InventoryWindow dialog_window = new InventoryWindow(this.state) { Owner = Window.GetWindow(this) };
             dialog_window.ShowDialog();
             if (this.change_callback is null) { return; }
             List<EntryAction> actions = dialog_window.get_actions();
             if ((actions is null) || (actions.Count <= 0)) { return; }
             this.change_callback(actions);
-#endif
         }
 
         private void do_rem(object sender, RoutedEventArgs e) {
@@ -108,16 +105,13 @@ namespace CampLog {
             if (this.state is null) { return; }
             Guid? guid = this.inventory_list.SelectedValue as Guid?;
             if ((guid is null) || (!this.state.inventories.inventories.ContainsKey(guid.Value))) { return; }
-            //TODO:
-#if false
-            Window dialog_window = new InventoryWindow(this.state, guid.Value) { Owner = Window.GetWindow(this) };
+            InventoryWindow dialog_window = new InventoryWindow(this.state, guid.Value) { Owner = Window.GetWindow(this) };
             dialog_window.Owner = Window.GetWindow(this);
             dialog_window.ShowDialog();
             if (this.change_callback is null) { return; }
             List<EntryAction> actions = dialog_window.get_actions();
             if ((actions is null) || (actions.Count <= 0)) { return; }
             this.change_callback(actions);
-#endif
         }
     }
 }

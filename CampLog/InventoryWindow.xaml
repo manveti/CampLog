@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:CampLog"
         xmlns:GUIx="clr-namespace:GUIx;assembly=GUIx"
         mc:Ignorable="d"
+        WindowStartupLocation="CenterOwner"
         Title="Inventory" Width="800" Height="450">
     <Window.Resources>
         <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Stroke" Color="#FF818181"/>
