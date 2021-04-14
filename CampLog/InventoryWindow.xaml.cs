@@ -85,7 +85,7 @@ namespace CampLog {
     public partial class InventoryWindow : Window {
         public bool valid;
         private CampaignState state;
-        private Guid? guid;
+        private Guid guid;
         private List<EntryAction> actions;
         private Inventory inventory;
         private ObservableCollection<InventoryItemBaseRow> inventory_rows;
@@ -110,7 +110,7 @@ namespace CampLog {
                 cat_weights[inv.contents[guid].item.category.name] += inv.contents[guid].weight;
             }
             foreach (string cat in categories.Keys) {
-                InventoryItemIdent cat_ident = new InventoryItemIdent(parent?.guid, parent?.idx, cat);
+                InventoryItemIdent cat_ident = new InventoryItemIdent(parent?.guid ?? this.guid, parent?.idx, cat);
                 InventoryItemRow cat_row = new InventoryItemRow(
                     parent, cat_ident, cat, cat_values[cat].ToString(), cat_weights[cat].ToString(), new ObservableCollection<InventoryItemBaseRow>()
                 );
@@ -148,15 +148,16 @@ namespace CampLog {
         public InventoryWindow(CampaignState state, Guid? guid = null) {
             this.valid = false;
             this.state = state.copy();
-            this.guid = guid;
             this.actions = new List<EntryAction>();
             if (guid is null) {
-                ActionInventoryCreate add_action = new ActionInventoryCreate(Guid.NewGuid(), "");
+                this.guid = Guid.NewGuid();
+                ActionInventoryCreate add_action = new ActionInventoryCreate(this.guid, "");
                 this.actions.Add(add_action);
                 this.state.inventories.new_inventory(add_action.name, add_action.guid);
                 this.inventory = this.state.inventories.inventories[add_action.guid];
             }
             else {
+                this.guid = guid.Value;
                 this.inventory = this.state.inventories.inventories[guid.Value];
             }
             this.inventory_rows = new ObservableCollection<InventoryItemBaseRow>();
@@ -165,8 +166,19 @@ namespace CampLog {
             this.item_prop_rows = new ObservableCollection<InventoryItemPropRow>();
             this.selected = null;
             InitializeComponent();
+            this.inv_name_box.Text = this.inventory.name;
             this.inventory_list.ItemsSource = this.inventory_rows;
             this.prop_list.ItemsSource = this.item_prop_rows;
+        }
+
+        private static bool is_merge_target(InventoryEntry ent, ItemSpec item) {
+            if (ent.item != item) { return false; }
+            if (ent is SingleItem ent_item) {
+                if (ent_item.value_override is not null) { return false; }
+                if (ent_item.properties.Count > 0) { return false; }
+                if (ent_item.containers is not null) { return false; }
+            }
+            return true;
         }
 
         private void inventory_list_sel_changed(object sender, RoutedEventArgs e) {
@@ -192,17 +204,23 @@ namespace CampLog {
                 }
                 if (this.inventory_row_index.ContainsKey(sel)) {
                     sel_row = this.inventory_row_index[sel];
-                    if ((sel_row.parent?.guid is not null) && (this.state.inventories.entries.ContainsKey(sel_row.parent.guid.Value))) {
-                        SingleItem parent_item = this.state.inventories.entries[sel_row.parent.guid.Value] as SingleItem;
-                        if ((parent_item?.containers is not null) && (sel_row.parent.idx is not null)) {
-                            if (sel_row.parent.idx.Value < parent_item.containers.Length) {
-                                Inventory parent_inv = parent_item.containers[sel_row.parent.idx.Value];
-                                foreach (Guid guid in parent_inv.contents.Keys) {
-                                    if (guid == sel.guid) { continue; }
-                                    if (parent_inv.contents[guid].item == entry.item) {
-                                        can_merge = true;
-                                        break;
-                                    }
+                    Inventory parent_inv = null;
+                    if (sel_row.parent?.guid is not null) {
+                        if (this.state.inventories.inventories.ContainsKey(sel_row.parent.guid.Value)) {
+                            parent_inv = this.state.inventories.inventories[sel_row.parent.guid.Value];
+                        }
+                        else if ((sel_row.parent.idx is not null) && (this.state.inventories.entries.ContainsKey(sel_row.parent.guid.Value))) {
+                            SingleItem parent_item = this.state.inventories.entries[sel_row.parent.guid.Value] as SingleItem;
+                            if ((parent_item?.containers is not null) && (sel_row.parent.idx.Value < parent_item.containers.Length)) {
+                                parent_inv = parent_item.containers[sel_row.parent.idx.Value];
+                            }
+                        }
+                        if (parent_inv is not null) {
+                            foreach (Guid guid in parent_inv.contents.Keys) {
+                                if (guid == sel.guid) { continue; }
+                                if (is_merge_target(parent_inv.contents[guid], entry.item)) {
+                                    can_merge = true;
+                                    break;
                                 }
                             }
                         }
@@ -218,7 +236,6 @@ namespace CampLog {
             this.item_split_but.Content = ((is_stack && (stack.count == 1)) ? "Unstack" : "Split...");
             this.item_split_but.IsEnabled = is_stack;
             this.item_name_box.Text = entry?.item?.name ?? sel_row?.name ?? "";
-            this.item_sel_but.Visibility = (is_entry ? Visibility.Visible : Visibility.Collapsed);
             if (is_stack) {
                 this.count_grid.Visibility = Visibility.Visible;
                 this.count_box.Value = stack.count;
@@ -309,9 +326,29 @@ namespace CampLog {
             }
         }
 
+        private void item_add(object sender, RoutedEventArgs e) {
+            //TODO: add new item
+        }
+
+        private void item_rem(object sender, RoutedEventArgs e) {
+            //TODO: remove selected item
+        }
+
+        private void item_move(object sender, RoutedEventArgs e) {
+            //TODO: prompt for destination; move selected item
+        }
+
+        private void item_merge(object sender, RoutedEventArgs e) {
+            //TODO: prompt for merge target; merge selected items
+        }
+
+        private void item_split(object sender, RoutedEventArgs e) {
+            //TODO: split: { prompt for count & unidentified; split selected stack } unstack: { unstack selected stack }
+        }
+
         private void do_ok(object sender, RoutedEventArgs e) {
             if (this.inv_name_box.Text != this.inventory.name) {
-                ActionInventoryRename action = new ActionInventoryRename(this.guid.Value, this.inventory.name, this.inv_name_box.Text);
+                ActionInventoryRename action = new ActionInventoryRename(this.guid, this.inventory.name, this.inv_name_box.Text);
                 this.actions.Add(action);
             }
             this.valid = true;

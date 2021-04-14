@@ -240,23 +240,25 @@ namespace CampLog {
 #endif
             Guid guid = state.domain.state.inventories.new_inventory("Party Loot");
             ItemCategory wealth = new ItemCategory("Wealth", 1), weaps = new ItemCategory("Weapons", .5m), adv = new ItemCategory("Adventuring", .5m);
-            state.domain.state.inventories.add_entry(guid, new ItemStack(new ItemSpec("Gem", wealth, 100, 0)));
+            ItemSpec gem = new ItemSpec("Gem", wealth, 100, 0);
+            state.domain.state.inventories.add_entry(guid, new ItemStack(gem));
             state.domain.state.inventories.add_entry(guid, new ItemStack(new ItemSpec("GP", wealth, 1, 0), 123));
             state.domain.state.inventories.add_entry(guid, new ItemStack(new ItemSpec("Sword", weaps, 10, 2)));
+            state.domain.state.inventories.add_entry(guid, new ItemStack(gem));
             ItemSpec backpack = new ItemSpec("Backpack", adv, 2, 2, null, new ContainerSpec[] { new ContainerSpec("Main Pack", 1, 100) });
             backpack.properties["foo"] = "bar";
             Guid bp_id = state.domain.state.inventories.add_entry(guid, new SingleItem(backpack));
             state.domain.state.inventories.add_entry(bp_id, 0, new ItemStack(new ItemSpec("Ration", adv, 2, 1), 7));
             state.domain.state.inventories.add_entry(bp_id, 0, new ItemStack(new ItemSpec("Bedroll", adv, 2, 2)));
             //this.inventory_list.set_state(state.domain.state);
-#if false
-            if (!cw.valid) { return; }
-            List<string> action_types = new List<string>();
-            foreach (EntryAction action in cw.actions) { action_types.Add(action.GetType().ToString()); }
-            MessageBox.Show(String.Join(", ", action_types), "Actions", MessageBoxButton.OK);
-#endif
             InventoryWindow iw = new InventoryWindow(state.domain.state, guid);
             iw.ShowDialog();
+#if true
+            if (!iw.valid) { return; }
+            List<string> action_types = new List<string>();
+            foreach (EntryAction action in iw.get_actions()) { action_types.Add(action.GetType().ToString()); }
+            MessageBox.Show(String.Join(", ", action_types), "Actions", MessageBoxButton.OK);
+#endif
         }
         //TODO: /remove
     }
