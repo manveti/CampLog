@@ -29,7 +29,7 @@ namespace CampLog {
     [Serializable]
     public class ActionInventoryRemove : EntryAction {
         public readonly Guid guid;
-        public readonly string name;
+        public string name;
 
         public override string description {
             get => string.Format("Remove inventory {0}", this.name ?? this.guid.ToString());
@@ -46,6 +46,63 @@ namespace CampLog {
 
         public override void revert(CampaignState state, Entry ent) {
             state.inventories.new_inventory(this.name, this.guid);
+        }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionInventoryCreate ext_inv_create) {
+                    if (ext_inv_create.guid == this.guid) {
+                        // existing ActionInventoryCreate with this guid; remove it and we're done
+                        actions.RemoveAt(i);
+                        return;
+                    }
+                }
+                if (actions[i] is ActionInventoryRename ext_inv_rename) {
+                    if (ext_inv_rename.guid == this.guid) {
+                        // existing ActionInventoryRename with this guid; remove it and update our "name" field
+                        this.name = ext_inv_rename.from;
+                        actions.RemoveAt(i);
+                    }
+                }
+                if (actions[i] is ActionInventoryEntryAdd ext_inv_entry_add) {
+                    if (ext_inv_entry_add.inv_guid == this.guid) {
+                        // existing ActionInventoryEntryAdd with this guid; remove it
+                        actions.RemoveAt(i);
+                    }
+                }
+                if (actions[i] is ActionInventoryEntryRemove ext_inv_entry_rem) {
+                    if (ext_inv_entry_rem.inv_guid == this.guid) {
+                        // existing ActionInventoryEntryRemove with this guid; remove it
+                        actions.RemoveAt(i);
+                    }
+                }
+                //TODO: ActionItemStackSet, ActionItemStackAdjust, ActionSingleItemSet, ActionSingleItemAdjust with guid in inventories[this.guid]
+                if (actions[i] is ActionInventoryEntryMove ext_inv_entry_move) {
+                    if ((ext_inv_entry_move.from_guid == this.guid) || ((ext_inv_entry_move.to_guid == this.guid))) {
+                        // existing ActionInventoryEntryMove from or to this guid; remove it
+                        actions.RemoveAt(i);
+                    }
+                }
+                if (actions[i] is ActionInventoryEntryMerge ext_inv_entry_merge) {
+                    if (ext_inv_entry_merge.inv_guid == this.guid) {
+                        // existing ActionInventoryEntryMerge with this guid; remove it
+                        actions.RemoveAt(i);
+                    }
+                }
+                if (actions[i] is ActionInventoryEntryUnstack ext_inv_entry_unstack) {
+                    if (ext_inv_entry_unstack.inv_guid == this.guid) {
+                        // existing ActionInventoryEntryUnstack with this guid; remove it
+                        actions.RemoveAt(i);
+                    }
+                }
+                if (actions[i] is ActionInventoryEntrySplit ext_inv_entry_split) {
+                    if (ext_inv_entry_split.inv_guid == this.guid) {
+                        // existing ActionInventoryEntrySplit with this guid; remove it
+                        actions.RemoveAt(i);
+                    }
+                }
+            }
+            actions.Add(this);
         }
     }
 
@@ -84,6 +141,31 @@ namespace CampLog {
         public override void revert(CampaignState state, Entry ent) {
             if (!state.inventories.inventories.ContainsKey(this.guid)) { throw new ArgumentOutOfRangeException(); }
             state.inventories.inventories[this.guid].name = this.from;
+        }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionInventoryCreate ext_inv_create) {
+                    if (ext_inv_create.guid == this.guid) {
+                        // existing ActionInventoryCreate with this guid; update its "name" field based on ours and we're done
+                        actions[i] = new ActionInventoryCreate(ext_inv_create.guid, this.to);
+                        return;
+                    }
+                }
+                if (actions[i] is ActionInventoryRemove ext_inv_remove) {
+                    if (ext_inv_remove.guid == this.guid) {
+                        // existing ActionInventoryRemove with this guid; we're done
+                        return;
+                    }
+                }
+                if (actions[i] is ActionInventoryRename ext_inv_rename) {
+                    if (ext_inv_rename.guid == this.guid) {
+                        // existing ActionInventoryRename with this guid; update its "to" field based on ours and we're done
+                        actions[i] = new ActionInventoryRename(ext_inv_rename.guid, ext_inv_rename.from, this.to);
+                    }
+                }
+            }
+            actions.Add(this);
         }
     }
 

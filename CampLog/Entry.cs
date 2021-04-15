@@ -39,6 +39,7 @@ namespace CampLog {
         public virtual void rebase(CampaignState state) { }
         public abstract void apply(CampaignState state, Entry ent);
         public abstract void revert(CampaignState state, Entry ent);
+        public virtual void merge_to(List<EntryAction> actions) { actions.Add(this); }
     }
 
 
