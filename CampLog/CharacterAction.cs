@@ -108,6 +108,7 @@ namespace CampLog {
                         this.from.set_property(ext_prop_set.path, ext_prop_set.from);
                     }
                     actions.RemoveAt(i);
+                    continue;
                 }
                 if (actions[i] is ActionCharacterPropertyAdjust ext_prop_adj) {
                     if ((ext_prop_adj.guids is null) || (ext_prop_adj.guids.Count != 1) || (!ext_prop_adj.guids.Contains(this.guid))) {
@@ -118,11 +119,13 @@ namespace CampLog {
                     if (ext_prop_adj.add is not null) { prop.subtract(ext_prop_adj.add); }
                     if (ext_prop_adj.subtract is not null) { prop.add(ext_prop_adj.subtract); }
                     actions.RemoveAt(i);
+                    continue;
                 }
                 if (actions[i] is ActionCharacterSetInventory ext_set_inv) {
                     if ((ext_set_inv.guid != this.guid) || (this.to is not null)) { continue; }
                     // existing ActionCharacterSetInventory with this guid and we're deleting the character; delete the inventory set action
                     actions.RemoveAt(i);
+                    continue;
                 }
             }
             actions.Add(this);
@@ -241,17 +244,22 @@ namespace CampLog {
                         dict_prop = dict_prop.value[ext_prop_set.path[j]] as CharDictProperty;
                     }
                     if (dict_prop is not null) {
-                        dict_prop.value[ext_prop_set.path[^1]] = ext_prop_set.from;
+                        if (ext_prop_set.from is null) {
+                            dict_prop.value.Remove(ext_prop_set.path[^1]);
+                        }
+                        else {
+                            dict_prop.value[ext_prop_set.path[^1]] = ext_prop_set.from;
+                        }
                     }
                     actions.RemoveAt(i);
+                    continue;
                 }
                 if (actions[i] is ActionCharacterPropertyAdjust ext_prop_adj) {
                     if ((ext_prop_adj.guids is null) || (ext_prop_adj.guids.Count != 1) || (!ext_prop_adj.guids.Contains(this.guid))) {
                         continue;
                     }
                     if (PropertyUtil.path_common_prefix_length(ext_prop_adj.path, this.path) < this.path.Count) { continue; }
-                    // existing ActionCharacterPropertyAdjust with this guid and this or a child path;
-                    // updateour "from" field based on it then delete it
+                    // existing ActionCharacterPropertyAdjust with this guid and this or a child path; update our "from" field based on it then delete it
                     CharProperty prop = this.from;
                     for (int j = this.path.Count; j < ext_prop_adj.path.Count; j++) {
                         if ((prop is CharDictProperty dict_prop) && (dict_prop.value.ContainsKey(ext_prop_adj.path[j]))) {
@@ -267,6 +275,7 @@ namespace CampLog {
                         if (ext_prop_adj.subtract is not null) { prop.add(ext_prop_adj.subtract); }
                     }
                     actions.RemoveAt(i);
+                    continue;
                 }
             }
             actions.Add(this);
