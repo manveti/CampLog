@@ -124,6 +124,12 @@ namespace CampLog {
 
         //TODO: ...
 
+        private void refresh_lists() {
+            this.character_list.set_state(this.state.domain.state);
+            this.inventory_list.set_state(this.state.domain.state);
+            //TODO: set_state for other lists
+        }
+
         private void entry_action_callback(List<EntryAction> actions) {
             EntryWindow entry_window = new EntryWindow(this.state, actions: actions) { Owner = this };
             entry_window.ShowDialog();
@@ -151,9 +157,7 @@ namespace CampLog {
             for (int i = 0; i < this.entry_rows.Count; i++) {
                 this.entry_rows[i].set_invalid(this.entry_rows.Count - i > this.state.domain.valid_entries);
             }
-            this.character_list.set_state(this.state.domain.state);
-            this.inventory_list.set_state(this.state.domain.state);
-            //TODO: set_state for other lists
+            this.refresh_lists();
         }
 
         private void entries_list_sel_changed(object sender, RoutedEventArgs e) {
@@ -172,6 +176,7 @@ namespace CampLog {
             this.state_dirty = true;
             this.state.domain.remove_entry(idx);
             this.entry_rows.RemoveAt(row_idx);
+            this.refresh_lists();
         }
 
         private void view_entry(object sender, RoutedEventArgs e) {
@@ -221,6 +226,7 @@ namespace CampLog {
             for (int i = 0; i < this.entry_rows.Count; i++) {
                 this.entry_rows[i].set_invalid(this.entry_rows.Count - i > this.state.domain.valid_entries);
             }
+            this.refresh_lists();
         }
 
         //TODO: ...
