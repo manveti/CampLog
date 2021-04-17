@@ -384,13 +384,25 @@ namespace CampLog {
                 }
                 if (actions[i] is ActionCharacterPropertyAdjust ext_prop_adj) {
                     if ((ext_prop_adj.guids is null) != (this.guids is null)) { continue; }
+                    if (ext_prop_adj.path.Count != this.path.Count) { continue; }
+                    if (PropertyUtil.path_common_prefix_length(ext_prop_adj.path, this.path) < this.path.Count) { continue; }
                     if (ext_prop_adj.guids is not null) {
+                        HashSet<Guid> merged_guids = new HashSet<Guid>(this.guids);
+                        merged_guids.UnionWith(ext_prop_adj.guids);
+                        if (merged_guids.Count >= this.guids.Count + ext_prop_adj.guids.Count) {
+                            if (((ext_prop_adj.subtract is null) != (this.subtract is null)) || ((ext_prop_adj.add is null) != (this.add is null))) {
+                                continue;
+                            }
+                            if ((ext_prop_adj.subtract is not null) && (!ext_prop_adj.subtract.equals(this.subtract))) { continue; }
+                            if ((ext_prop_adj.add is not null) && (!ext_prop_adj.add.equals(this.add))) { continue; }
+                            // existing ActionCharacterPropertyAdjust with this path and subtract/add and disjoint guids; add our guids to it and we're done
+                            actions[i] = new ActionCharacterPropertyAdjust(merged_guids, ext_prop_adj.path, ext_prop_adj.subtract, ext_prop_adj.add);
+                            return;
+                        }
                         if ((ext_prop_adj.guids.Count != this.guids.Count) || (!ext_prop_adj.guids.IsSubsetOf(this.guids))) {
                             continue;
                         }
                     }
-                    if (ext_prop_adj.path.Count != this.path.Count) { continue; }
-                    if (PropertyUtil.path_common_prefix_length(ext_prop_adj.path, this.path) < this.path.Count) { continue; }
                     // existing ActionCharacterPropertyAdjust with this guid (or set of guids) and this path; update it based on this and we're done
                     CharProperty new_subtract, new_add;
                     if (ext_prop_adj.subtract is null) { new_subtract = this.subtract; }

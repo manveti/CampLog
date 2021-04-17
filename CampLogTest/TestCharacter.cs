@@ -29,6 +29,15 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_equals() {
+            CharTextProperty foo = new CharTextProperty("blah"), bar = foo.copy(), baz = new CharTextProperty("bloh");
+            Assert.IsTrue(foo.equals(bar));
+            Assert.IsTrue(bar.equals(foo));
+            Assert.IsFalse(foo.equals(baz));
+            Assert.IsFalse(baz.equals(foo));
+        }
+
+        [TestMethod]
         public void test_add() {
             CharTextProperty foo = new CharTextProperty("blah"), bar = new CharTextProperty(" bloh");
             foo.add(bar);
@@ -64,6 +73,15 @@ namespace CampLogTest {
             CharNumProperty foo = new CharNumProperty(1.3m), bar = foo.copy();
             Assert.IsFalse(ReferenceEquals(foo, bar));
             Assert.AreEqual(foo.value, bar.value);
+        }
+
+        [TestMethod]
+        public void test_equals() {
+            CharNumProperty foo = new CharNumProperty(1.3m), bar = foo.copy(), baz = new CharNumProperty(42);
+            Assert.IsTrue(foo.equals(bar));
+            Assert.IsTrue(bar.equals(foo));
+            Assert.IsFalse(foo.equals(baz));
+            Assert.IsFalse(baz.equals(foo));
         }
 
         [TestMethod]
@@ -112,7 +130,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_copy() {
-            CharSetProperty foo = new CharSetProperty(), bar;
+            CharSetProperty foo = new CharSetProperty(), bar, baz;
             foo.value.Add("blah");
             foo.value.Add("bloh");
 
@@ -123,6 +141,20 @@ namespace CampLogTest {
             foreach (string s in foo.value) {
                 Assert.IsTrue(bar.value.Contains(s));
             }
+        }
+
+        [TestMethod]
+        public void test_equals() {
+            CharSetProperty foo = new CharSetProperty(), bar, baz = new CharSetProperty();
+            foo.value.Add("blah");
+            foo.value.Add("bloh");
+            bar = foo.copy();
+            baz.value.Add("blah");
+            baz.value.Add("bleh");
+            Assert.IsTrue(foo.equals(bar));
+            Assert.IsTrue(bar.equals(foo));
+            Assert.IsFalse(foo.equals(baz));
+            Assert.IsFalse(baz.equals(foo));
         }
 
         [TestMethod]
@@ -247,6 +279,25 @@ namespace CampLogTest {
             Assert.AreEqual(sp.value.Count, 2);
             Assert.IsTrue(sp.value.Contains("bloh"));
             Assert.IsTrue(sp.value.Contains("bleh"));
+        }
+
+        [TestMethod]
+        public void test_equals() {
+            CharDictProperty foo = new CharDictProperty(), bar, baz = new CharDictProperty();
+            CharTextProperty tprop = new CharTextProperty("blah");
+            CharNumProperty nprop = new CharNumProperty(1.23m);
+            CharSetProperty sprop = new CharSetProperty();
+            sprop.value.Add("bloh");
+            sprop.value.Add("bleh");
+            foo.value["Some Text"] = tprop;
+            foo.value["Some Number"] = nprop;
+            foo.value["Some Collection"] = sprop;
+            bar = foo.copy();
+            baz.value["Some Text"] = tprop;
+            Assert.IsTrue(foo.equals(bar));
+            Assert.IsTrue(bar.equals(foo));
+            Assert.IsFalse(foo.equals(baz));
+            Assert.IsFalse(baz.equals(foo));
         }
 
         [TestMethod]

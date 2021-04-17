@@ -10,6 +10,7 @@ namespace CampLog {
     [Serializable]
     public abstract class CharProperty {
         public abstract CharProperty copy();
+        public abstract bool equals(CharProperty prop);
         public abstract void add(CharProperty prop);
         public abstract void subtract(CharProperty prop);
     }
@@ -25,6 +26,11 @@ namespace CampLog {
 
         public override CharTextProperty copy() {
             return new CharTextProperty(this.value);
+        }
+
+        public override bool equals(CharProperty prop) {
+            if (prop is CharTextProperty text_prop) { return text_prop.value == this.value; }
+            return false;
         }
 
         public override void add(CharProperty prop) {
@@ -51,6 +57,11 @@ namespace CampLog {
 
         public override CharNumProperty copy() {
             return new CharNumProperty(this.value);
+        }
+
+        public override bool equals(CharProperty prop) {
+            if (prop is CharNumProperty num_prop) { return num_prop.value == this.value; }
+            return false;
         }
 
         public override void add(CharProperty prop) {
@@ -86,6 +97,17 @@ namespace CampLog {
             };
         }
 
+        public override bool equals(CharProperty prop) {
+            if (prop is CharSetProperty set_prop) {
+                if (set_prop.value.Count != this.value.Count) { return false; }
+                foreach (string s in this.value) {
+                    if (!set_prop.value.Contains(s)) { return false; }
+                }
+                return true;
+            }
+            return false;
+        }
+
         public override void add(CharProperty prop) {
             CharSetProperty p = prop as CharSetProperty;
             if (p is null) { throw new ArgumentOutOfRangeException(nameof(prop)); }
@@ -119,6 +141,17 @@ namespace CampLog {
                 result.value[s] = this.value[s].copy();
             }
             return result;
+        }
+
+        public override bool equals(CharProperty prop) {
+            if (prop is CharDictProperty dict_prop) {
+                if (dict_prop.value.Count != this.value.Count) { return false; }
+                foreach (string k in this.value.Keys) {
+                    if ((!dict_prop.value.ContainsKey(k)) || (!this.value[k].equals(dict_prop.value[k]))) { return false; }
+                }
+                return true;
+            }
+            return false;
         }
 
         public override void add(CharProperty prop) {

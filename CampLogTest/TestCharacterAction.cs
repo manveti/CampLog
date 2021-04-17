@@ -1232,6 +1232,34 @@ namespace CampLogTest {
             Assert.IsNotNull(add_prop);
             Assert.AreEqual(add_prop.value, 5);
         }
+
+        [TestMethod]
+        public void test_merge_to_same_adjust_different_guid() {
+            HashSet<Guid> existing_guids = new HashSet<Guid>() { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() },
+                new_guids = new HashSet<Guid>() { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() }, expected_guids = new HashSet<Guid>(existing_guids);
+            expected_guids.UnionWith(new_guids);
+            List<string> jump_path = new List<string>() { "Skills", "Jump" };
+            CharNumProperty prop_adj = new CharNumProperty(2);
+            ActionCharacterPropertyAdjust existing_action = new ActionCharacterPropertyAdjust(existing_guids, jump_path, null, prop_adj);
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(new_guids, jump_path, null, prop_adj);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionCharacterPropertyAdjust merged_action = actions[0] as ActionCharacterPropertyAdjust;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guids.Count, expected_guids.Count);
+            Assert.IsTrue(merged_action.guids.IsSubsetOf(expected_guids));
+            Assert.AreEqual(merged_action.path.Count, jump_path.Count);
+            for (int i = 0; i < jump_path.Count; i++) {
+                Assert.AreEqual(merged_action.path[i], jump_path[i]);
+            }
+            Assert.IsNull(merged_action.subtract);
+            CharNumProperty add_prop = merged_action.add as CharNumProperty;
+            Assert.IsNotNull(add_prop);
+            Assert.AreEqual(add_prop.value, 2);
+        }
     }
 
 
