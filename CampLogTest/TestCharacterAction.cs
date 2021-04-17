@@ -437,6 +437,25 @@ namespace CampLogTest {
             Assert.AreEqual(from_prop.value, 32);
             Assert.IsNull(merged_action.to);
         }
+
+        [TestMethod]
+        public void test_merge_to_invset_remove() {
+            Character somebody = new Character("Somebody");
+            Guid chr_guid = Guid.NewGuid(), inv_guid = Guid.NewGuid();
+            ActionCharacterSetInventory invset_action = new ActionCharacterSetInventory(chr_guid, null, inv_guid);
+            List<EntryAction> actions = new List<EntryAction>() { invset_action };
+
+            ActionCharacterSet remove_action = new ActionCharacterSet(chr_guid, somebody, null);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionCharacterSet merged_action = actions[0] as ActionCharacterSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, chr_guid);
+            Assert.IsNotNull(merged_action.from);
+            Assert.AreEqual(merged_action.from.name, somebody.name);
+            Assert.IsNull(merged_action.to);
+        }
     }
 
 
@@ -1381,6 +1400,23 @@ namespace CampLogTest {
             Assert.AreEqual(state.character_inventory.Count, 1);
             Assert.IsTrue(state.character_inventory.ContainsKey(chr_guid));
             Assert.AreEqual(state.character_inventory[chr_guid], inv_guid1);
+        }
+
+        [TestMethod]
+        public void test_merge_to_invset_invset() {
+            Guid chr_guid = Guid.NewGuid(), existing_inv_guid = Guid.NewGuid(), new_inv_guid = Guid.NewGuid();
+            ActionCharacterSetInventory existing_action = new ActionCharacterSetInventory(chr_guid, null, existing_inv_guid);
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionCharacterSetInventory invset_action = new ActionCharacterSetInventory(chr_guid, existing_inv_guid, new_inv_guid);
+            invset_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionCharacterSetInventory merged_action = actions[0] as ActionCharacterSetInventory;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, chr_guid);
+            Assert.IsNull(merged_action.from);
+            Assert.AreEqual(merged_action.to, new_inv_guid);
         }
     }
 }
