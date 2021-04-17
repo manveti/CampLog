@@ -337,7 +337,7 @@ namespace CampLogTest {
             List<string> xp_path = new List<string> { "XP" };
             CharNumProperty xp_prop = new CharNumProperty(42), prop_adj = new CharNumProperty(10);
             somebody.set_property(xp_path, xp_prop);
-            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(new HashSet<Guid>() { chr_guid }, xp_path, null, prop_adj);
+            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(chr_guid, xp_path, null, prop_adj);
             List<EntryAction> actions = new List<EntryAction>() { adjust_action };
 
             ActionCharacterSet update_action = new ActionCharacterSet(chr_guid, somebody, someone_else);
@@ -419,7 +419,7 @@ namespace CampLogTest {
             List<string> xp_path = new List<string> { "XP" };
             CharNumProperty xp_prop = new CharNumProperty(42), prop_adj = new CharNumProperty(10);
             somebody.set_property(xp_path, xp_prop);
-            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(new HashSet<Guid>() { chr_guid }, xp_path, null, prop_adj);
+            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(chr_guid, xp_path, null, prop_adj);
             List<EntryAction> actions = new List<EntryAction>() { adjust_action };
 
             ActionCharacterSet remove_action = new ActionCharacterSet(chr_guid, somebody, null);
@@ -749,7 +749,7 @@ namespace CampLogTest {
             Guid chr_guid = Guid.NewGuid();
             List<string> jump_path = new List<string>() { "Skills", "Jump" };
             CharNumProperty jump_prop = new CharNumProperty(7), prop_adj = new CharNumProperty(2);
-            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(new HashSet<Guid>() { chr_guid }, jump_path, null, prop_adj);
+            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(chr_guid, jump_path, null, prop_adj);
             List<EntryAction> actions = new List<EntryAction>() { adjust_action };
 
             ActionCharacterPropertySet propset_action = new ActionCharacterPropertySet(chr_guid, jump_path, jump_prop, new CharNumProperty(10));
@@ -777,7 +777,7 @@ namespace CampLogTest {
             List<string> skills_path = new List<string>() { "Skills" }, jump_path = new List<string>() { "Skills", "Jump" };
             CharNumProperty jump_prop = new CharNumProperty(7), prop_adj = new CharNumProperty(2);
             CharDictProperty skills_prop = new CharDictProperty(new Dictionary<string, CharProperty>() { ["Jump"] = jump_prop });
-            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(new HashSet<Guid>() { chr_guid }, jump_path, null, prop_adj);
+            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(chr_guid, jump_path, null, prop_adj);
             List<EntryAction> actions = new List<EntryAction>() { adjust_action };
 
             CharDictProperty new_skills = new CharDictProperty(new Dictionary<string, CharProperty>() { ["Stealth"] = new CharNumProperty(10) });
@@ -1126,6 +1126,111 @@ namespace CampLogTest {
             Assert.IsNotNull(prop);
             Assert.AreEqual(prop.value.Count, 1);
             Assert.IsTrue(prop.value.Contains("Power Attack"));
+        }
+
+        [TestMethod]
+        public void test_merge_to_add_adjust() {
+            Character somebody = new Character("Somebody");
+            List<string> xp_path = new List<string> { "XP" };
+            CharNumProperty xp_prop = new CharNumProperty(42), prop_adj = new CharNumProperty(10);
+            somebody.set_property(xp_path, xp_prop);
+            Guid chr_guid = Guid.NewGuid();
+            ActionCharacterSet add_action = new ActionCharacterSet(chr_guid, null, somebody, true);
+            List<EntryAction> actions = new List<EntryAction>() { add_action };
+
+            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(chr_guid, xp_path, null, prop_adj);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionCharacterSet merged_action = actions[0] as ActionCharacterSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, chr_guid);
+            Assert.IsNull(merged_action.from);
+            Assert.IsNotNull(merged_action.to);
+            Assert.AreEqual(merged_action.to.name, somebody.name);
+            Assert.IsTrue(merged_action.to.properties.value.ContainsKey("XP"));
+            CharNumProperty to_prop = merged_action.to.properties.value["XP"] as CharNumProperty;
+            Assert.IsNotNull(to_prop);
+            Assert.AreEqual(to_prop.value, 52);
+            Assert.AreEqual(merged_action.restore, add_action.restore);
+        }
+
+        [TestMethod]
+        public void test_merge_to_update_adjust() {
+            Character somebody = new Character("Somebody"), someone_else = new Character("Someone Else");
+            List<string> xp_path = new List<string> { "XP" };
+            CharNumProperty xp_prop = new CharNumProperty(42), prop_adj = new CharNumProperty(10);
+            someone_else.set_property(xp_path, xp_prop);
+            Guid chr_guid = Guid.NewGuid();
+            ActionCharacterSet update_action = new ActionCharacterSet(chr_guid, somebody, someone_else);
+            List<EntryAction> actions = new List<EntryAction>() { update_action };
+
+            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(chr_guid, xp_path, null, prop_adj);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionCharacterSet merged_action = actions[0] as ActionCharacterSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, chr_guid);
+            Assert.IsNotNull(merged_action.from);
+            Assert.AreEqual(merged_action.from.name, somebody.name);
+            Assert.IsNotNull(merged_action.to);
+            Assert.AreEqual(merged_action.to.name, someone_else.name);
+            Assert.IsTrue(merged_action.to.properties.value.ContainsKey("XP"));
+            CharNumProperty to_prop = merged_action.to.properties.value["XP"] as CharNumProperty;
+            Assert.IsNotNull(to_prop);
+            Assert.AreEqual(to_prop.value, 52);
+        }
+
+        [TestMethod]
+        public void test_merge_to_propset_adjust() {
+            Guid chr_guid = Guid.NewGuid();
+            List<string> jump_path = new List<string>() { "Skills", "Jump" };
+            CharNumProperty jump_prop = new CharNumProperty(7), prop_adj = new CharNumProperty(3);
+            ActionCharacterPropertySet propset_action = new ActionCharacterPropertySet(chr_guid, jump_path, null, jump_prop);
+            List<EntryAction> actions = new List<EntryAction>() { propset_action };
+
+            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(chr_guid, jump_path, null, prop_adj);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionCharacterPropertySet merged_action = actions[0] as ActionCharacterPropertySet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, chr_guid);
+            Assert.AreEqual(merged_action.path.Count, jump_path.Count);
+            for (int i = 0; i < jump_path.Count; i++) {
+                Assert.AreEqual(merged_action.path[i], jump_path[i]);
+            }
+            Assert.IsNull(merged_action.from);
+            CharNumProperty to_prop = merged_action.to as CharNumProperty;
+            Assert.IsNotNull(to_prop);
+            Assert.AreEqual(to_prop.value, 10);
+        }
+
+        [TestMethod]
+        public void test_merge_to_adjust_adjust() {
+            HashSet<Guid> chr_guids = new HashSet<Guid>() { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+            List<string> jump_path = new List<string>() { "Skills", "Jump" };
+            CharNumProperty existing_adj = new CharNumProperty(3), prop_adj = new CharNumProperty(2);
+            ActionCharacterPropertyAdjust existing_action = new ActionCharacterPropertyAdjust(chr_guids, jump_path, null, existing_adj);
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionCharacterPropertyAdjust adjust_action = new ActionCharacterPropertyAdjust(chr_guids, jump_path, null, prop_adj);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionCharacterPropertyAdjust merged_action = actions[0] as ActionCharacterPropertyAdjust;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guids.Count, chr_guids.Count);
+            Assert.IsTrue(merged_action.guids.IsSubsetOf(chr_guids));
+            Assert.AreEqual(merged_action.path.Count, jump_path.Count);
+            for (int i = 0; i < jump_path.Count; i++) {
+                Assert.AreEqual(merged_action.path[i], jump_path[i]);
+            }
+            Assert.IsNull(merged_action.subtract);
+            CharNumProperty add_prop = merged_action.add as CharNumProperty;
+            Assert.IsNotNull(add_prop);
+            Assert.AreEqual(add_prop.value, 5);
         }
     }
 
