@@ -71,6 +71,21 @@ namespace CampLogTest {
             state.inventories.remove_inventory(inv_guid);
             action.revert(state, ent);
         }
+
+        [TestMethod]
+        public void test_merge_to() {
+            Guid inv_guid = Guid.NewGuid();
+            List<EntryAction> actions = new List<EntryAction>();
+
+            ActionInventoryCreate create_action = new ActionInventoryCreate(inv_guid, "Some Inventory");
+            create_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryCreate merged_action = actions[0] as ActionInventoryCreate;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, inv_guid);
+            Assert.AreEqual(merged_action.name, "Some Inventory");
+        }
     }
 
 
@@ -139,6 +154,90 @@ namespace CampLogTest {
             action.apply(state, ent);
             state.inventories.new_inventory("Some Inventory", inv_guid);
             action.revert(state, ent);
+        }
+
+        [TestMethod]
+        public void test_merge_to_invset_remove() {
+            Guid chr_guid = Guid.NewGuid(), inv_guid = Guid.NewGuid();
+            ActionCharacterSetInventory invset_action = new ActionCharacterSetInventory(chr_guid, null, inv_guid);
+            List<EntryAction> actions = new List<EntryAction>() { invset_action };
+
+            ActionInventoryRemove remove_action = new ActionInventoryRemove(inv_guid, "Some Inventory");
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryRemove merged_action = actions[0] as ActionInventoryRemove;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, inv_guid);
+            Assert.AreEqual(merged_action.name, "Some Inventory");
+        }
+
+        [TestMethod]
+        public void test_merge_to_create_remove() {
+            Guid inv_guid = Guid.NewGuid();
+            ActionInventoryCreate create_action = new ActionInventoryCreate(inv_guid, "Some Inventory");
+            List<EntryAction> actions = new List<EntryAction>() { create_action };
+
+            ActionInventoryRemove remove_action = new ActionInventoryRemove(inv_guid, "Some Inventory");
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_rename_remove() {
+            Guid inv_guid = Guid.NewGuid();
+            ActionInventoryRename rename_action = new ActionInventoryRename(inv_guid, "Some Inventory", "Some Renamed Inventory");
+            List<EntryAction> actions = new List<EntryAction>() { rename_action };
+
+            ActionInventoryRemove remove_action = new ActionInventoryRemove(inv_guid, "Some Renamed Inventory");
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryRemove merged_action = actions[0] as ActionInventoryRemove;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, inv_guid);
+            Assert.AreEqual(merged_action.name, "Some Inventory");
+        }
+
+        [TestMethod]
+        public void test_merge_to_modentries_remove() {
+            Guid inv_guid = Guid.NewGuid();
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            ActionInventoryEntryAdd entry_add_action = new ActionInventoryEntryAdd(inv_guid, null, Guid.NewGuid(), gem_stack);
+            ActionInventoryEntryRemove entry_rem_action = new ActionInventoryEntryRemove(inv_guid, null, Guid.NewGuid());
+            ActionInventoryEntryMove entry_move_in_action = new ActionInventoryEntryMove(Guid.NewGuid(), Guid.NewGuid(), null, inv_guid, null),
+                entry_move_out_action = new ActionInventoryEntryMove(Guid.NewGuid(), inv_guid, null, Guid.NewGuid(), null);
+            ActionInventoryEntryMerge entry_merge_action = new ActionInventoryEntryMerge(inv_guid, null, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+            ActionInventoryEntryUnstack entry_unstack_action = new ActionInventoryEntryUnstack(inv_guid, null, Guid.NewGuid(), Guid.NewGuid());
+            ActionInventoryEntrySplit entry_split_action = new ActionInventoryEntrySplit(inv_guid, null, Guid.NewGuid(), 2, 1, Guid.NewGuid());
+            List<EntryAction> actions = new List<EntryAction>() {
+                entry_add_action,
+                entry_rem_action,
+                entry_move_in_action,
+                entry_move_out_action,
+                entry_merge_action,
+                entry_unstack_action,
+                entry_split_action,
+            };
+
+            ActionInventoryRemove remove_action = new ActionInventoryRemove(inv_guid, "Some Inventory");
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 2);
+            ActionInventoryEntryMove remaining_action = actions[0] as ActionInventoryEntryMove;
+            Assert.IsNotNull(remaining_action);
+            Assert.AreEqual(remaining_action.guid, entry_move_out_action.guid);
+            Assert.AreEqual(remaining_action.from_guid, entry_move_out_action.from_guid);
+            Assert.AreEqual(remaining_action.from_idx, entry_move_out_action.from_idx);
+            Assert.AreEqual(remaining_action.to_guid, entry_move_out_action.to_guid);
+            Assert.AreEqual(remaining_action.to_idx, entry_move_out_action.to_idx);
+            ActionInventoryRemove merged_action = actions[1] as ActionInventoryRemove;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, inv_guid);
+            Assert.AreEqual(merged_action.name, "Some Inventory");
         }
     }
 
@@ -222,6 +321,39 @@ namespace CampLogTest {
             action.apply(state, ent);
             state.inventories.remove_inventory(inv_guid);
             action.revert(state, ent);
+        }
+
+        [TestMethod]
+        public void test_merge_to_create_rename() {
+            Guid inv_guid = Guid.NewGuid();
+            ActionInventoryCreate create_action = new ActionInventoryCreate(inv_guid, "Some Inventory");
+            List<EntryAction> actions = new List<EntryAction>() { create_action };
+
+            ActionInventoryRename rename_action = new ActionInventoryRename(inv_guid, "Some Inventory", "Renamed Inventory");
+            rename_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryCreate merged_action = actions[0] as ActionInventoryCreate;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, inv_guid);
+            Assert.AreEqual(merged_action.name, "Renamed Inventory");
+        }
+
+        [TestMethod]
+        public void test_merge_to_rename_rename() {
+            Guid inv_guid = Guid.NewGuid();
+            ActionInventoryRename existing_action = new ActionInventoryRename(inv_guid, "Some Inventory", "Renamed Inventory");
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionInventoryRename rename_action = new ActionInventoryRename(inv_guid, "Renamed Inventory", "Twice-Renamed Inventory");
+            rename_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryRename merged_action = actions[0] as ActionInventoryRename;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, inv_guid);
+            Assert.AreEqual(merged_action.from, "Some Inventory");
+            Assert.AreEqual(merged_action.to, "Twice-Renamed Inventory");
         }
     }
 
