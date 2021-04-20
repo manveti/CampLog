@@ -460,6 +460,26 @@ namespace CampLogTest {
             state.inventories.remove_entry(guid, inv_guid);
             action.revert(state, ent);
         }
+
+        [TestMethod]
+        public void test_merge_to() {
+            Guid inv_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid();
+            List<EntryAction> actions = new List<EntryAction>();
+
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            ActionInventoryEntryAdd add_action = new ActionInventoryEntryAdd(inv_guid, null, stack_guid, gem_stack);
+            add_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryAdd merged_action = actions[0] as ActionInventoryEntryAdd;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.IsNull(merged_action.inv_idx);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+            Assert.AreEqual(merged_action.entry.item, gem);
+        }
     }
 
 
@@ -539,6 +559,210 @@ namespace CampLogTest {
             Assert.AreEqual(state.inventories.entries.Count, 1);
             Assert.IsTrue(state.inventories.entries.ContainsKey(guid));
             Assert.AreEqual(state.inventories.entries[guid].item, gem);
+        }
+
+        [TestMethod]
+        public void test_merge_to_add_remove() {
+            Guid inv_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid();
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3);
+            ActionInventoryEntryAdd add_action = new ActionInventoryEntryAdd(inv_guid, null, stack_guid, gem_stack);
+            List<EntryAction> actions = new List<EntryAction>() { add_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(inv_guid, null, stack_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_stackset_remove() {
+            Guid inv_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid();
+            ActionItemStackSet set_action = new ActionItemStackSet(stack_guid, 3, 1, 4, 2);
+            List<EntryAction> actions = new List<EntryAction>() { set_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(inv_guid, null, stack_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryRemove merged_action = actions[0] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.IsNull(merged_action.inv_idx);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+        }
+
+        [TestMethod]
+        public void test_merge_to_stackadj_remove() {
+            Guid inv_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid();
+            ActionItemStackAdjust adjust_action = new ActionItemStackAdjust(stack_guid, 0, -2);
+            List<EntryAction> actions = new List<EntryAction>() { adjust_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(inv_guid, null, stack_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryRemove merged_action = actions[0] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.IsNull(merged_action.inv_idx);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemset_remove() {
+            Guid inv_guid = Guid.NewGuid(), item_guid = Guid.NewGuid();
+            ActionSingleItemSet set_action = new ActionSingleItemSet(item_guid, true, null, null, false, 42, null, true);
+            List<EntryAction> actions = new List<EntryAction>() { set_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(inv_guid, null, item_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryRemove merged_action = actions[0] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.IsNull(merged_action.inv_idx);
+            Assert.AreEqual(merged_action.guid, item_guid);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemadj_remove() {
+            Guid inv_guid = Guid.NewGuid(), item_guid = Guid.NewGuid();
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, -5, null, null);
+            List<EntryAction> actions = new List<EntryAction>() { adjust_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(inv_guid, null, item_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryRemove merged_action = actions[0] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.IsNull(merged_action.inv_idx);
+            Assert.AreEqual(merged_action.guid, item_guid);
+        }
+
+        [TestMethod]
+        public void test_merge_to_move_remove() {
+            Guid from_inv_guid = Guid.NewGuid(), to_inv_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid();
+            ActionInventoryEntryMove move_action = new ActionInventoryEntryMove(stack_guid, from_inv_guid, 1, to_inv_guid, 2);
+            List<EntryAction> actions = new List<EntryAction>() { move_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(to_inv_guid, 2, stack_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryRemove merged_action = actions[0] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, from_inv_guid);
+            Assert.AreEqual(merged_action.inv_idx, 1);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+        }
+
+        [TestMethod]
+        public void test_merge_to_merge_remove() {
+            Guid inv_guid = Guid.NewGuid(), ent1_guid = Guid.NewGuid(), ent2_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid();
+            ActionInventoryEntryMerge merge_action = new ActionInventoryEntryMerge(inv_guid, 2, ent1_guid, ent2_guid, stack_guid);
+            List<EntryAction> actions = new List<EntryAction>() { merge_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(inv_guid, 2, stack_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 2);
+            ActionInventoryEntryRemove merged_action1 = actions[0] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action1);
+            Assert.AreEqual(merged_action1.inv_guid, inv_guid);
+            Assert.AreEqual(merged_action1.inv_idx, 2);
+            Assert.AreEqual(merged_action1.guid, ent1_guid);
+            ActionInventoryEntryRemove merged_action2 = actions[1] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action2);
+            Assert.AreEqual(merged_action2.inv_guid, inv_guid);
+            Assert.AreEqual(merged_action2.inv_idx, 2);
+            Assert.AreEqual(merged_action2.guid, ent2_guid);
+        }
+
+        [TestMethod]
+        public void test_merge_to_merge_move_remove() {
+            Guid inv1_guid = Guid.NewGuid(), inv2_guid = Guid.NewGuid(), ent1_guid = Guid.NewGuid(), ent2_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid();
+            ActionInventoryEntryMerge merge_action = new ActionInventoryEntryMerge(inv1_guid, 2, ent1_guid, ent2_guid, stack_guid);
+            ActionInventoryEntryMove move_action = new ActionInventoryEntryMove(stack_guid, inv1_guid, 2, inv2_guid, 1);
+            List<EntryAction> actions = new List<EntryAction>() { merge_action, move_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(inv2_guid, 1, stack_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 2);
+            ActionInventoryEntryRemove merged_action1 = actions[0] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action1);
+            Assert.AreEqual(merged_action1.inv_guid, inv1_guid);
+            Assert.AreEqual(merged_action1.inv_idx, 2);
+            Assert.AreEqual(merged_action1.guid, ent1_guid);
+            ActionInventoryEntryRemove merged_action2 = actions[1] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action2);
+            Assert.AreEqual(merged_action2.inv_guid, inv1_guid);
+            Assert.AreEqual(merged_action2.inv_idx, 2);
+            Assert.AreEqual(merged_action2.guid, ent2_guid);
+        }
+
+        [TestMethod]
+        public void test_merge_to_move_merge_remove() {
+            Guid inv1_guid = Guid.NewGuid(), inv2_guid = Guid.NewGuid(), inv3_guid = Guid.NewGuid(),
+                ent1_guid = Guid.NewGuid(), ent2_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid();
+            ActionInventoryEntryMove move1_action = new ActionInventoryEntryMove(ent1_guid, inv1_guid, 1, inv3_guid, 3),
+                move2_action = new ActionInventoryEntryMove(ent2_guid, inv2_guid, 2, inv3_guid, 3);
+            ActionInventoryEntryMerge merge_action = new ActionInventoryEntryMerge(inv3_guid, 3, ent1_guid, ent2_guid, stack_guid);
+            List<EntryAction> actions = new List<EntryAction>() { move1_action, move2_action, merge_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(inv3_guid, 3, stack_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 2);
+            ActionInventoryEntryRemove merged_action1 = actions[0] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action1);
+            Assert.AreEqual(merged_action1.inv_guid, inv1_guid);
+            Assert.AreEqual(merged_action1.inv_idx, 1);
+            Assert.AreEqual(merged_action1.guid, ent1_guid);
+            ActionInventoryEntryRemove merged_action2 = actions[1] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action2);
+            Assert.AreEqual(merged_action2.inv_guid, inv2_guid);
+            Assert.AreEqual(merged_action2.inv_idx, 2);
+            Assert.AreEqual(merged_action2.guid, ent2_guid);
+        }
+
+        [TestMethod]
+        public void test_merge_to_unstack_remove() {
+            Guid inv_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid(), item_guid = Guid.NewGuid();
+            ActionInventoryEntryUnstack unstack_action = new ActionInventoryEntryUnstack(inv_guid, 2, stack_guid, item_guid);
+            List<EntryAction> actions = new List<EntryAction>() { unstack_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(inv_guid, 2, item_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryRemove merged_action = actions[0] as ActionInventoryEntryRemove;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.AreEqual(merged_action.inv_idx, 2);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+        }
+
+        [TestMethod]
+        public void test_merge_to_split_remove() {
+            Guid inv_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid(), new_stack_guid = Guid.NewGuid();
+            ActionInventoryEntrySplit split_action = new ActionInventoryEntrySplit(inv_guid, 2, stack_guid, 2, 1, new_stack_guid);
+            List<EntryAction> actions = new List<EntryAction>() { split_action };
+
+            ActionInventoryEntryRemove remove_action = new ActionInventoryEntryRemove(inv_guid, 2, new_stack_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionItemStackAdjust merged_action = actions[0] as ActionItemStackAdjust;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+            Assert.AreEqual(merged_action.count, -2);
+            Assert.AreEqual(merged_action.unidentified, -1);
         }
     }
 
