@@ -852,6 +852,65 @@ namespace CampLogTest {
             Assert.AreEqual(gem_stack.count, 3);
             Assert.AreEqual(gem_stack.unidentified, 0);
         }
+
+        [TestMethod]
+        public void test_merge_to_add_stackset() {
+            Guid inv_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid();
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3, 1);
+            ActionInventoryEntryAdd add_action = new ActionInventoryEntryAdd(inv_guid, 2, stack_guid, gem_stack);
+            List<EntryAction> actions = new List<EntryAction>() { add_action };
+
+            ActionItemStackSet set_action = new ActionItemStackSet(stack_guid, 3, 1, 4, 2);
+            set_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryAdd merged_action = actions[0] as ActionInventoryEntryAdd;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.AreEqual(merged_action.inv_idx, 2);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+            Assert.AreEqual(merged_action.entry.value, 400);
+        }
+
+        [TestMethod]
+        public void test_merge_to_stackset_stackset() {
+            Guid stack_guid = Guid.NewGuid();
+            ActionItemStackSet existing_action = new ActionItemStackSet(stack_guid, 3, 1, 4, 2);
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionItemStackSet set_action = new ActionItemStackSet(stack_guid, 4, 2, 8, 3);
+            set_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionItemStackSet merged_action = actions[0] as ActionItemStackSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+            Assert.AreEqual(merged_action.count_from, 3);
+            Assert.AreEqual(merged_action.count_to, 8);
+            Assert.AreEqual(merged_action.unidentified_from, 1);
+            Assert.AreEqual(merged_action.unidentified_to, 3);
+        }
+
+        [TestMethod]
+        public void test_merge_to_stackadj_stackset() {
+            Guid stack_guid = Guid.NewGuid();
+            ActionItemStackAdjust adjust_action = new ActionItemStackAdjust(stack_guid, 2, 1);
+            List<EntryAction> actions = new List<EntryAction>() { adjust_action };
+
+            ActionItemStackSet set_action = new ActionItemStackSet(stack_guid, 3, 1, 4, 2);
+            set_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionItemStackSet merged_action = actions[0] as ActionItemStackSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+            Assert.AreEqual(merged_action.count_from, 1);
+            Assert.AreEqual(merged_action.count_to, 4);
+            Assert.AreEqual(merged_action.unidentified_from, 0);
+            Assert.AreEqual(merged_action.unidentified_to, 2);
+        }
     }
 
 
@@ -921,6 +980,63 @@ namespace CampLogTest {
             action.revert(state, ent);
             Assert.AreEqual(gem_stack.count, 3);
             Assert.AreEqual(gem_stack.unidentified, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_add_stackadj() {
+            Guid inv_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid();
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3, 1);
+            ActionInventoryEntryAdd add_action = new ActionInventoryEntryAdd(inv_guid, 2, stack_guid, gem_stack);
+            List<EntryAction> actions = new List<EntryAction>() { add_action };
+
+            ActionItemStackAdjust adjust_action = new ActionItemStackAdjust(stack_guid, 2, 1);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryAdd merged_action = actions[0] as ActionInventoryEntryAdd;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.AreEqual(merged_action.inv_idx, 2);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+            Assert.AreEqual(merged_action.entry.value, 500);
+        }
+
+        [TestMethod]
+        public void test_merge_to_stackset_stackadj() {
+            Guid stack_guid = Guid.NewGuid();
+            ActionItemStackSet set_action = new ActionItemStackSet(stack_guid, 3, 1, 4, 2);
+            List<EntryAction> actions = new List<EntryAction>() { set_action };
+
+            ActionItemStackAdjust adjust_action = new ActionItemStackAdjust(stack_guid, 4, 1);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionItemStackSet merged_action = actions[0] as ActionItemStackSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+            Assert.AreEqual(merged_action.count_from, 3);
+            Assert.AreEqual(merged_action.count_to, 8);
+            Assert.AreEqual(merged_action.unidentified_from, 1);
+            Assert.AreEqual(merged_action.unidentified_to, 3);
+        }
+
+        [TestMethod]
+        public void test_merge_to_stackadj_stackadj() {
+            Guid stack_guid = Guid.NewGuid();
+            ActionItemStackAdjust existing_action = new ActionItemStackAdjust(stack_guid, 2, 1);
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionItemStackAdjust adjust_action = new ActionItemStackAdjust(stack_guid, 5, 3);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionItemStackAdjust merged_action = actions[0] as ActionItemStackAdjust;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, stack_guid);
+            Assert.AreEqual(merged_action.count, 7);
+            Assert.AreEqual(merged_action.unidentified, 4);
         }
     }
 

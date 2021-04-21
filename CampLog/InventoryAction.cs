@@ -356,6 +356,37 @@ namespace CampLog {
             stack.count = this.count_from;
             stack.unidentified = this.unidentified_from;
         }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionInventoryEntryAdd ext_entry_add) {
+                    if ((ext_entry_add.guid == this.guid) && (ext_entry_add.entry is ItemStack add_stack)) {
+                        // existing ActionInventoryEntryAdd with this guid; update its "entry" field based on our counts and we're done
+                        add_stack.count = this.count_to;
+                        add_stack.unidentified = this.unidentified_to;
+                        return;
+                    }
+                }
+                if (actions[i] is ActionItemStackSet ext_stack_set) {
+                    if (ext_stack_set.guid == this.guid) {
+                        // existing ActionItemStackSet with this guid; replace it with a new stack set action with its "from" and our "to" and we're done
+                        actions[i] = new ActionItemStackSet(
+                            this.guid, ext_stack_set.count_from, ext_stack_set.unidentified_from, this.count_to, this.unidentified_to
+                        );
+                        return;
+                    }
+                }
+                if (actions[i] is ActionItemStackAdjust ext_stack_adj) {
+                    if (ext_stack_adj.guid == this.guid) {
+                        // existing ActionItemStackAdjust with this guid; replace it with a new stack set action with adjusted "from" and we're done
+                        long new_count_from = this.count_from - ext_stack_adj.count, new_unidentified_from = this.unidentified_from - ext_stack_adj.unidentified;
+                        actions[i] = new ActionItemStackSet(this.guid, new_count_from, new_unidentified_from, this.count_to, this.unidentified_to);
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
+        }
     }
 
 
@@ -391,6 +422,37 @@ namespace CampLog {
             if ((count <= 0) || (unidentified < 0) || (unidentified > count)) { throw new ArgumentOutOfRangeException(); }
             stack.count = count;
             stack.unidentified = unidentified;
+        }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionInventoryEntryAdd ext_entry_add) {
+                    if ((ext_entry_add.guid == this.guid) && (ext_entry_add.entry is ItemStack add_stack)) {
+                        // existing ActionInventoryEntryAdd with this guid; update its "entry" field based on our counts and we're done
+                        add_stack.count += this.count;
+                        add_stack.unidentified += this.unidentified;
+                        return;
+                    }
+                }
+                if (actions[i] is ActionItemStackSet ext_stack_set) {
+                    if (ext_stack_set.guid == this.guid) {
+                        // existing ActionItemStackSet with this guid; add our counts to its "to" fields and we're done
+                        long new_count_to = ext_stack_set.count_to + this.count, new_unidentified_to = ext_stack_set.unidentified_to + this.unidentified;
+                        actions[i] = new ActionItemStackSet(
+                            this.guid, ext_stack_set.count_from, ext_stack_set.unidentified_from, new_count_to, new_unidentified_to
+                        );
+                        return;
+                    }
+                }
+                if (actions[i] is ActionItemStackAdjust ext_stack_adj) {
+                    if (ext_stack_adj.guid == this.guid) {
+                        // existing ActionItemStackAdjust with this guid; replace it with a new adjust action with the sum of both counts and we're done
+                        actions[i] = new ActionItemStackAdjust(this.guid, ext_stack_adj.count + this.count, ext_stack_adj.unidentified + this.unidentified);
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
         }
     }
 
