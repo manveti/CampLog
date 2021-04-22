@@ -1201,6 +1201,159 @@ namespace CampLogTest {
             Assert.IsTrue(wand.properties.ContainsKey("Charges"));
             Assert.AreEqual(wand.properties["Charges"], "50");
         }
+
+        [TestMethod]
+        public void test_merge_to_add_itemset() {
+            Guid inv_guid = Guid.NewGuid(), item_guid = Guid.NewGuid();
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            SingleItem gem_item = new SingleItem(gem, true, 70);
+            ActionInventoryEntryAdd add_action = new ActionInventoryEntryAdd(inv_guid, 2, item_guid, gem_item);
+            List<EntryAction> actions = new List<EntryAction>() { add_action };
+
+            ActionSingleItemSet set_action = new ActionSingleItemSet(item_guid, true, 70, null, false, 75, null, true);
+            set_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryAdd merged_action = actions[0] as ActionInventoryEntryAdd;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.AreEqual(merged_action.inv_idx, 2);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            Assert.AreEqual(merged_action.entry.value, 75);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemset_itemset() {
+            Guid item_guid = Guid.NewGuid();
+            ActionSingleItemSet existing_action = new ActionSingleItemSet(item_guid, null, 70, null, null, 75, null, true);
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            Dictionary<string, string> from_props = new Dictionary<string, string>(), to_props = new Dictionary<string, string>() {
+                ["Quality"] = "Low",
+            };
+            ActionSingleItemSet set_action = new ActionSingleItemSet(item_guid, true, null, from_props, false, null, to_props, false);
+            set_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionSingleItemSet merged_action = actions[0] as ActionSingleItemSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            Assert.IsNotNull(merged_action.unidentified_from);
+            Assert.IsTrue(merged_action.unidentified_from.Value);
+            Assert.AreEqual(merged_action.value_override_from, 70);
+            Assert.IsNotNull(merged_action.properties_from);
+            Assert.AreEqual(merged_action.properties_from.Count, 0);
+            Assert.IsNotNull(merged_action.unidentified_to);
+            Assert.IsFalse(merged_action.unidentified_to.Value);
+            Assert.AreEqual(merged_action.value_override_to, 75);
+            Assert.IsNotNull(merged_action.properties_to);
+            Assert.AreEqual(merged_action.properties_to.Count, 1);
+            Assert.IsTrue(merged_action.properties_to.ContainsKey("Quality"));
+            Assert.AreEqual(merged_action.properties_to["Quality"], "Low");
+            Assert.IsTrue(merged_action.set_value_override);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemadj_itemset_full() {
+            Guid item_guid = Guid.NewGuid();
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, 5, null, new Dictionary<string, string>() { ["foo"] = "bar" });
+            List<EntryAction> actions = new List<EntryAction>() { adjust_action };
+
+            Dictionary<string, string> from_props = new Dictionary<string, string>() { ["foo"] = "bar" }, to_props = new Dictionary<string, string>() {
+                ["Quality"] = "Low",
+            };
+            ActionSingleItemSet set_action = new ActionSingleItemSet(item_guid, true, 75, from_props, false, 80, to_props, true);
+            set_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionSingleItemSet merged_action = actions[0] as ActionSingleItemSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            Assert.IsNotNull(merged_action.unidentified_from);
+            Assert.IsTrue(merged_action.unidentified_from.Value);
+            Assert.AreEqual(merged_action.value_override_from, 70);
+            Assert.IsNotNull(merged_action.properties_from);
+            Assert.AreEqual(merged_action.properties_from.Count, 0);
+            Assert.IsNotNull(merged_action.unidentified_to);
+            Assert.IsFalse(merged_action.unidentified_to.Value);
+            Assert.AreEqual(merged_action.value_override_to, 80);
+            Assert.IsNotNull(merged_action.properties_to);
+            Assert.AreEqual(merged_action.properties_to.Count, 1);
+            Assert.IsTrue(merged_action.properties_to.ContainsKey("Quality"));
+            Assert.AreEqual(merged_action.properties_to["Quality"], "Low");
+            Assert.IsTrue(merged_action.set_value_override);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemadj_itemset_partial() {
+            Guid item_guid = Guid.NewGuid();
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, 5, null, new Dictionary<string, string>() { ["foo"] = "bar" });
+            List<EntryAction> actions = new List<EntryAction>() { adjust_action };
+
+            Dictionary<string, string> from_props = new Dictionary<string, string>() { ["foo"] = "bar" }, to_props = new Dictionary<string, string>() {
+                ["Quality"] = "Low",
+            };
+            ActionSingleItemSet set_action = new ActionSingleItemSet(item_guid, true, null, from_props, false, null, to_props, false);
+            set_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 2);
+            ActionSingleItemAdjust merged_adj_action = actions[0] as ActionSingleItemAdjust;
+            Assert.IsNotNull(merged_adj_action);
+            Assert.AreEqual(merged_adj_action.guid, item_guid);
+            Assert.AreEqual(merged_adj_action.value_override, 5);
+            Assert.IsNull(merged_adj_action.properties_subtract);
+            Assert.IsNull(merged_adj_action.properties_add);
+            ActionSingleItemSet merged_set_action = actions[1] as ActionSingleItemSet;
+            Assert.IsNotNull(merged_set_action);
+            Assert.AreEqual(merged_set_action.guid, item_guid);
+            Assert.IsNotNull(merged_set_action.unidentified_from);
+            Assert.IsTrue(merged_set_action.unidentified_from.Value);
+            Assert.IsNull(merged_set_action.value_override_from);
+            Assert.IsNotNull(merged_set_action.properties_from);
+            Assert.AreEqual(merged_set_action.properties_from.Count, 0);
+            Assert.IsNotNull(merged_set_action.unidentified_to);
+            Assert.IsFalse(merged_set_action.unidentified_to.Value);
+            Assert.IsNull(merged_set_action.value_override_to);
+            Assert.IsNotNull(merged_set_action.properties_to);
+            Assert.AreEqual(merged_set_action.properties_to.Count, 1);
+            Assert.IsTrue(merged_set_action.properties_to.ContainsKey("Quality"));
+            Assert.AreEqual(merged_set_action.properties_to["Quality"], "Low");
+            Assert.IsFalse(merged_set_action.set_value_override);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemadj_itemset_itemset() {
+            Guid item_guid = Guid.NewGuid();
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, 5, null, new Dictionary<string, string>() { ["foo"] = "bar" });
+            List<EntryAction> actions = new List<EntryAction>() { adjust_action };
+
+            ActionSingleItemSet set_action1 = new ActionSingleItemSet(item_guid, null, 75, null, null, 80, null, true);
+            set_action1.merge_to(actions);
+            Dictionary<string, string> from_props = new Dictionary<string, string>() { ["foo"] = "bar" }, to_props = new Dictionary<string, string>() {
+                ["Quality"] = "Low",
+            };
+            ActionSingleItemSet set_action2 = new ActionSingleItemSet(item_guid, true, null, from_props, false, null, to_props, false);
+            set_action2.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionSingleItemSet merged_action = actions[0] as ActionSingleItemSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            Assert.IsNotNull(merged_action.unidentified_from);
+            Assert.IsTrue(merged_action.unidentified_from.Value);
+            Assert.AreEqual(merged_action.value_override_from, 70);
+            Assert.IsNotNull(merged_action.properties_from);
+            Assert.AreEqual(merged_action.properties_from.Count, 0);
+            Assert.IsNotNull(merged_action.unidentified_to);
+            Assert.IsFalse(merged_action.unidentified_to.Value);
+            Assert.AreEqual(merged_action.value_override_to, 80);
+            Assert.IsNotNull(merged_action.properties_to);
+            Assert.AreEqual(merged_action.properties_to.Count, 1);
+            Assert.IsTrue(merged_action.properties_to.ContainsKey("Quality"));
+            Assert.AreEqual(merged_action.properties_to["Quality"], "Low");
+            Assert.IsTrue(merged_action.set_value_override);
+        }
     }
 
 
@@ -1352,6 +1505,217 @@ namespace CampLogTest {
             Assert.AreEqual(wand.properties.Count, 1);
             Assert.IsTrue(wand.properties.ContainsKey("Charges"));
             Assert.AreEqual(wand.properties["Charges"], "50");
+        }
+
+        [TestMethod]
+        public void test_merge_to_add_itemadj() {
+            Guid inv_guid = Guid.NewGuid(), item_guid = Guid.NewGuid();
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            SingleItem gem_item = new SingleItem(gem, true, 70);
+            ActionInventoryEntryAdd add_action = new ActionInventoryEntryAdd(inv_guid, 2, item_guid, gem_item);
+            List<EntryAction> actions = new List<EntryAction>() { add_action };
+
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, 5, null, null);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryAdd merged_action = actions[0] as ActionInventoryEntryAdd;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.AreEqual(merged_action.inv_idx, 2);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            Assert.AreEqual(merged_action.entry.value, 75);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemset_itemadj_full() {
+            Guid item_guid = Guid.NewGuid();
+            Dictionary<string, string> from_props = new Dictionary<string, string>(), to_props = new Dictionary<string, string>() {
+                ["Quality"] = "Low",
+            };
+            ActionSingleItemSet set_action = new ActionSingleItemSet(item_guid, true, 70, from_props, false, 75, to_props, true);
+            List<EntryAction> actions = new List<EntryAction>() { set_action };
+
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, 5, null, new Dictionary<string, string>() { ["foo"] = "bar" });
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionSingleItemSet merged_action = actions[0] as ActionSingleItemSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            Assert.IsNotNull(merged_action.unidentified_from);
+            Assert.IsTrue(merged_action.unidentified_from.Value);
+            Assert.AreEqual(merged_action.value_override_from, 70);
+            Assert.IsNotNull(merged_action.properties_from);
+            Assert.AreEqual(merged_action.properties_from.Count, 0);
+            Assert.IsNotNull(merged_action.unidentified_to);
+            Assert.IsFalse(merged_action.unidentified_to.Value);
+            Assert.AreEqual(merged_action.value_override_to, 80);
+            Assert.IsNotNull(merged_action.properties_to);
+            Assert.AreEqual(merged_action.properties_to.Count, 2);
+            Assert.IsTrue(merged_action.properties_to.ContainsKey("Quality"));
+            Assert.AreEqual(merged_action.properties_to["Quality"], "Low");
+            Assert.IsTrue(merged_action.properties_to.ContainsKey("foo"));
+            Assert.AreEqual(merged_action.properties_to["foo"], "bar");
+            Assert.IsTrue(merged_action.set_value_override);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemset_itemadj_partial() {
+            Guid item_guid = Guid.NewGuid();
+            Dictionary<string, string> from_props = new Dictionary<string, string>(), to_props = new Dictionary<string, string>() {
+                ["Quality"] = "Low",
+            };
+            ActionSingleItemSet set_action = new ActionSingleItemSet(item_guid, true, null, from_props, false, null, to_props, false);
+            List<EntryAction> actions = new List<EntryAction>() { set_action };
+
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, 5, null, new Dictionary<string, string>() { ["foo"] = "bar" });
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 2);
+            ActionSingleItemSet merged_set_action = actions[0] as ActionSingleItemSet;
+            Assert.IsNotNull(merged_set_action);
+            Assert.AreEqual(merged_set_action.guid, item_guid);
+            Assert.IsNotNull(merged_set_action.unidentified_from);
+            Assert.IsTrue(merged_set_action.unidentified_from.Value);
+            Assert.IsNull(merged_set_action.value_override_from);
+            Assert.IsNotNull(merged_set_action.properties_from);
+            Assert.AreEqual(merged_set_action.properties_from.Count, 0);
+            Assert.IsNotNull(merged_set_action.unidentified_to);
+            Assert.IsFalse(merged_set_action.unidentified_to.Value);
+            Assert.IsNull(merged_set_action.value_override_to);
+            Assert.IsNotNull(merged_set_action.properties_to);
+            Assert.AreEqual(merged_set_action.properties_to.Count, 2);
+            Assert.IsTrue(merged_set_action.properties_to.ContainsKey("Quality"));
+            Assert.AreEqual(merged_set_action.properties_to["Quality"], "Low");
+            Assert.IsTrue(merged_set_action.properties_to.ContainsKey("foo"));
+            Assert.AreEqual(merged_set_action.properties_to["foo"], "bar");
+            Assert.IsFalse(merged_set_action.set_value_override);
+            ActionSingleItemAdjust merged_adj_action = actions[1] as ActionSingleItemAdjust;
+            Assert.IsNotNull(merged_adj_action);
+            Assert.AreEqual(merged_adj_action.guid, item_guid);
+            Assert.AreEqual(merged_adj_action.value_override, 5);
+            Assert.IsNull(merged_adj_action.properties_subtract);
+            Assert.IsNull(merged_adj_action.properties_add);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemset_itemadj_itemset() {
+            Guid item_guid = Guid.NewGuid();
+            ActionSingleItemSet set_action1 = new ActionSingleItemSet(item_guid, null, 70, null, null, 75, null, true);
+            List<EntryAction> actions = new List<EntryAction>() { set_action1 };
+
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, 5, null, new Dictionary<string, string>() { ["foo"] = "bar" });
+            adjust_action.merge_to(actions);
+            Dictionary<string, string> from_props = new Dictionary<string, string>() { ["foo"] = "bar" }, to_props = new Dictionary<string, string>() {
+                ["Quality"] = "Low",
+            };
+            ActionSingleItemSet set_action2 = new ActionSingleItemSet(item_guid, true, null, from_props, false, null, to_props, false);
+            set_action2.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionSingleItemSet merged_action = actions[0] as ActionSingleItemSet;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            Assert.IsNotNull(merged_action.unidentified_from);
+            Assert.IsTrue(merged_action.unidentified_from.Value);
+            Assert.AreEqual(merged_action.value_override_from, 70);
+            Assert.IsNotNull(merged_action.properties_from);
+            Assert.AreEqual(merged_action.properties_from.Count, 0);
+            Assert.IsNotNull(merged_action.unidentified_to);
+            Assert.IsFalse(merged_action.unidentified_to.Value);
+            Assert.AreEqual(merged_action.value_override_to, 80);
+            Assert.IsNotNull(merged_action.properties_to);
+            Assert.AreEqual(merged_action.properties_to.Count, 1);
+            Assert.IsTrue(merged_action.properties_to.ContainsKey("Quality"));
+            Assert.AreEqual(merged_action.properties_to["Quality"], "Low");
+            Assert.IsTrue(merged_action.set_value_override);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemadj_itemadj_full() {
+            Guid item_guid = Guid.NewGuid();
+            Dictionary<string, string> existing_sub = new Dictionary<string, string>() { ["sub1"] = "sub_val1" },
+                existing_add = new Dictionary<string, string>() { ["add1"] = "add_val1" };
+            ActionSingleItemAdjust existing_action = new ActionSingleItemAdjust(item_guid, 5, existing_sub, existing_add);
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            Dictionary<string, string> new_sub = new Dictionary<string, string>() { ["sub2"] = "sub_val2" },
+                new_add = new Dictionary<string, string>() { ["add2"] = "add_val2" };
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, 7, new_sub, new_add);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionSingleItemAdjust merged_action = actions[0] as ActionSingleItemAdjust;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            Assert.AreEqual(merged_action.value_override, 12);
+            Assert.IsNotNull(merged_action.properties_subtract);
+            Assert.AreEqual(merged_action.properties_subtract.Count, 2);
+            Assert.IsTrue(merged_action.properties_subtract.ContainsKey("sub1"));
+            Assert.AreEqual(merged_action.properties_subtract["sub1"], "sub_val1");
+            Assert.IsTrue(merged_action.properties_subtract.ContainsKey("sub2"));
+            Assert.AreEqual(merged_action.properties_subtract["sub2"], "sub_val2");
+            Assert.IsNotNull(merged_action.properties_add);
+            Assert.AreEqual(merged_action.properties_add.Count, 2);
+            Assert.IsTrue(merged_action.properties_add.ContainsKey("add1"));
+            Assert.AreEqual(merged_action.properties_add["add1"], "add_val1");
+            Assert.IsTrue(merged_action.properties_add.ContainsKey("add2"));
+            Assert.AreEqual(merged_action.properties_add["add2"], "add_val2");
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemadj_itemadj_partial() {
+            Guid item_guid = Guid.NewGuid();
+            ActionSingleItemAdjust existing_action = new ActionSingleItemAdjust(item_guid, 5, null, new Dictionary<string, string>() { ["foo"] = "bar" });
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, null, null, new Dictionary<string, string>() { ["one"] = "two" });
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionSingleItemAdjust merged_action = actions[0] as ActionSingleItemAdjust;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            Assert.AreEqual(merged_action.value_override, 5);
+            Assert.IsNull(merged_action.properties_subtract);
+            Assert.IsNotNull(merged_action.properties_add);
+            Assert.AreEqual(merged_action.properties_add.Count, 2);
+            Assert.IsTrue(merged_action.properties_add.ContainsKey("foo"));
+            Assert.AreEqual(merged_action.properties_add["foo"], "bar");
+            Assert.IsTrue(merged_action.properties_add.ContainsKey("one"));
+            Assert.AreEqual(merged_action.properties_add["one"], "two");
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemadj_itemadj_trim_properties() {
+            Guid item_guid = Guid.NewGuid();
+            ActionSingleItemAdjust existing_action = new ActionSingleItemAdjust(item_guid, 5, null, new Dictionary<string, string>() { ["foo"] = "bar" });
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, null, new Dictionary<string, string>() { ["foo"] = "bar" }, null);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionSingleItemAdjust merged_action = actions[0] as ActionSingleItemAdjust;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            Assert.AreEqual(merged_action.value_override, 5);
+            Assert.IsNull(merged_action.properties_subtract);
+            Assert.IsNull(merged_action.properties_add);
+        }
+
+        [TestMethod]
+        public void test_merge_to_itemadj_itemadj_trim_all() {
+            Guid item_guid = Guid.NewGuid();
+            ActionSingleItemAdjust existing_action = new ActionSingleItemAdjust(item_guid, null, null, new Dictionary<string, string>() { ["foo"] = "bar" });
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionSingleItemAdjust adjust_action = new ActionSingleItemAdjust(item_guid, null, new Dictionary<string, string>() { ["foo"] = "bar" }, null);
+            adjust_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
         }
     }
 

@@ -537,6 +537,85 @@ namespace CampLog {
                 foreach (string key in this.properties_from.Keys) { itm.properties[key] = this.properties_from[key]; }
             }
         }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionInventoryEntryAdd ext_entry_add) {
+                    if ((ext_entry_add.guid == this.guid) && (ext_entry_add.entry is SingleItem itm)) {
+                        // existing ActionInventoryEntryAdd with this guid; update its "entry" field based on our values and we're done
+                        if (this.unidentified_to is not null) { itm.unidentified = this.unidentified_to.Value; }
+                        if (this.set_value_override) { itm.value_override = this.value_override_to; }
+                        if (this.properties_to is not null) {
+                            itm.properties.Clear();
+                            foreach (string key in this.properties_to.Keys) { itm.properties[key] = this.properties_to[key]; }
+                        }
+                        return;
+                    }
+                }
+                if (actions[i] is ActionSingleItemSet ext_item_set) {
+                    if (ext_item_set.guid == this.guid) {
+                        // existing ActionSingleItemSet with this guid; replace it with a new single item set action with its "from" and our "to" and we're done
+                        actions.RemoveAt(i);
+                        new ActionSingleItemSet(
+                            this.guid,
+                            ext_item_set.unidentified_from ?? this.unidentified_from,
+                            (ext_item_set.set_value_override ? ext_item_set.value_override_from : this.value_override_from),
+                            ext_item_set.properties_from ?? this.properties_from,
+                            this.unidentified_to ?? ext_item_set.unidentified_to,
+                            (this.set_value_override ? this.value_override_to : ext_item_set.value_override_to),
+                            this.properties_to ?? ext_item_set.properties_to,
+                            ext_item_set.set_value_override || this.set_value_override
+                        ).merge_to(actions);
+                        return;
+                    }
+                }
+                if (actions[i] is ActionSingleItemAdjust ext_item_adj) {
+                    if (ext_item_adj.guid == this.guid) {
+                        // existing ActionSingleItemAdjust with this guid; replace as much of it as possible with a new single item set action
+                        decimal? new_adj_value_override = ext_item_adj.value_override, new_value_override_from = this.value_override_from;
+                        Dictionary<string, string> new_adj_props_subtract = ext_item_adj.properties_subtract,
+                            new_adj_props_add = ext_item_adj.properties_add, new_props_from = this.properties_from;
+                        bool can_generate_new_actions = false;
+                        if ((new_adj_value_override is not null) && (new_value_override_from is not null)) {
+                            new_value_override_from -= new_adj_value_override;
+                            new_adj_value_override = null;
+                            can_generate_new_actions = true;
+                        }
+                        if (((new_adj_props_subtract is not null) || (new_adj_props_add is not null)) && (new_props_from is not null)) {
+                            new_props_from = new Dictionary<string, string>(this.properties_from);
+                            if (new_adj_props_add is not null) {
+                                foreach (string key in new_adj_props_add.Keys) { new_props_from.Remove(key); }
+                            }
+                            if (new_adj_props_subtract is not null) {
+                                foreach (string key in new_adj_props_subtract.Keys) { new_props_from[key] = new_adj_props_subtract[key]; }
+                            }
+                            new_adj_props_subtract = null;
+                            new_adj_props_add = null;
+                            can_generate_new_actions = true;
+                        }
+                        if (can_generate_new_actions) {
+                            actions.RemoveAt(i);
+                            if ((new_adj_value_override is not null) || (new_adj_props_subtract is not null) || (new_adj_props_add is not null)) {
+                                new ActionSingleItemAdjust(this.guid, new_adj_value_override, new_adj_props_subtract, new_adj_props_add).merge_to(actions);
+                            }
+                            new ActionSingleItemSet(
+                                this.guid,
+                                this.unidentified_from,
+                                new_value_override_from,
+                                new_props_from,
+                                this.unidentified_to,
+                                this.value_override_to,
+                                this.properties_to,
+                                this.set_value_override
+                            ).merge_to(actions);
+                            return;
+                        }
+                        continue;
+                    }
+                }
+            }
+            actions.Add(this);
+        }
     }
 
 
@@ -598,6 +677,104 @@ namespace CampLog {
             if (this.properties_subtract is not null) {
                 foreach (string key in this.properties_subtract.Keys) { itm.properties[key] = this.properties_subtract[key]; }
             }
+        }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionInventoryEntryAdd ext_entry_add) {
+                    if ((ext_entry_add.guid == this.guid) && (ext_entry_add.entry is SingleItem itm)) {
+                        // existing ActionInventoryEntryAdd with this guid; update its "entry" field based on our values and we're done
+                        if ((this.value_override is not null) && (itm.value_override is not null)) {
+                            itm.value_override += this.value_override;
+                        }
+                        if (this.properties_subtract is not null) {
+                            foreach (string key in this.properties_subtract.Keys) { itm.properties.Remove(key); }
+                        }
+                        if (this.properties_add is not null) {
+                            foreach (string key in this.properties_add.Keys) { itm.properties[key] = this.properties_add[key]; }
+                        }
+                        return;
+                    }
+                }
+                if (actions[i] is ActionSingleItemSet ext_item_set) {
+                    if (ext_item_set.guid == this.guid) {
+                        // existing ActionSingleItemSet with this guid; update its "to" as much as possible
+                        decimal? new_value_override_to = ext_item_set.value_override_to, new_value_override = this.value_override;
+                        Dictionary<string, string> new_props_to = ext_item_set.properties_to,
+                            new_props_subtract = this.properties_subtract, new_props_add = this.properties_add;
+                        bool can_generate_new_actions = false;
+                        if ((new_value_override_to is not null) && (new_value_override is not null)) {
+                            new_value_override_to += new_value_override;
+                            new_value_override = null;
+                            can_generate_new_actions = true;
+                        }
+                        if ((new_props_to is not null) && ((new_props_subtract is not null) || (new_props_add is not null))) {
+                            new_props_to = new Dictionary<string, string>(ext_item_set.properties_to);
+                            if (new_props_subtract is not null) {
+                                foreach (string key in new_props_subtract.Keys) { new_props_to.Remove(key); }
+                            }
+                            if (new_props_add is not null) {
+                                foreach (string key in new_props_add.Keys) { new_props_to[key] = new_props_add[key]; }
+                            }
+                            new_props_subtract = null;
+                            new_props_add = null;
+                            can_generate_new_actions = true;
+                        }
+                        if (can_generate_new_actions) {
+                            actions.RemoveAt(i);
+                            new ActionSingleItemSet(
+                                this.guid,
+                                ext_item_set.unidentified_from,
+                                ext_item_set.value_override_from,
+                                ext_item_set.properties_from,
+                                ext_item_set.unidentified_to,
+                                new_value_override_to,
+                                new_props_to,
+                                ext_item_set.set_value_override
+                            ).merge_to(actions);
+                            if ((new_value_override is not null) || (new_props_subtract is not null) || (new_props_add is not null)) {
+                                new ActionSingleItemAdjust(this.guid, new_value_override, new_props_subtract, new_props_add).merge_to(actions);
+                            }
+                            return;
+                        }
+                        continue;
+                    }
+                }
+                if (actions[i] is ActionSingleItemAdjust ext_item_adj) {
+                    if (ext_item_adj.guid == this.guid) {
+                        // existing ActionSingleItemAdjust with this guid; replace with a new adjust action with the sum of both adjustments
+                        decimal? new_value_override = (ext_item_adj.value_override ?? 0) + (this.value_override ?? 0);
+                        Dictionary<string, string> new_props_subtract, new_props_add;
+                        if (ext_item_adj.properties_subtract is null) { new_props_subtract = new Dictionary<string, string>(); }
+                        else { new_props_subtract = new Dictionary<string, string>(ext_item_adj.properties_subtract); }
+                        if (ext_item_adj.properties_add is null) { new_props_add = new Dictionary<string, string>(); }
+                        else { new_props_add = new Dictionary<string, string>(ext_item_adj.properties_add); }
+                        if (this.properties_subtract is not null) {
+                            foreach (string key in this.properties_subtract.Keys) {
+                                if (new_props_add.ContainsKey(key)) { new_props_add.Remove(key); }
+                                else { new_props_subtract[key] = this.properties_subtract[key]; }
+                            }
+                        }
+                        if (this.properties_add is not null) {
+                            foreach (string key in this.properties_add.Keys) {
+                                if ((new_props_subtract.ContainsKey(key)) && (new_props_subtract[key] == this.properties_add[key])) {
+                                    new_props_subtract.Remove(key);
+                                }
+                                else { new_props_add[key] = this.properties_add[key]; }
+                            }
+                        }
+                        if (new_value_override == 0) { new_value_override = null; }
+                        if (new_props_subtract.Count == 0) { new_props_subtract = null; }
+                        if (new_props_add.Count == 0) { new_props_add = null; }
+                        actions.RemoveAt(i);
+                        if ((new_value_override is not null) || (new_props_subtract is not null) || (new_props_add is not null)) {
+                            new ActionSingleItemAdjust(this.guid, new_value_override, new_props_subtract, new_props_add).merge_to(actions);
+                        }
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
         }
     }
 
