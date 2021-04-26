@@ -804,6 +804,26 @@ namespace CampLog {
         public override void revert(CampaignState state, Entry ent) {
             state.inventories.move_entry(this.guid, this.to_guid, this.to_idx, this.from_guid, this.from_idx);
         }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionInventoryEntryAdd ext_entry_add) {
+                    if (ext_entry_add.guid == this.guid) {
+                        // existing ActionInventoryEntryAdd with this guid; update its "inv" fields based on our "to" fields and we're done
+                        actions[i] = new ActionInventoryEntryAdd(this.to_guid, this.to_idx, this.guid, ext_entry_add.entry);
+                        return;
+                    }
+                }
+                if (actions[i] is ActionInventoryEntryMove ext_entry_move) {
+                    if (ext_entry_move.guid == this.guid) {
+                        // existing ActionInventoryEntryMove with this guid; update its "to" fields to ours and we're done
+                        actions[i] = new ActionInventoryEntryMove(this.guid, ext_entry_move.from_guid, ext_entry_move.from_idx, this.to_guid, this.to_idx);
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
+        }
     }
 
 
@@ -872,6 +892,48 @@ namespace CampLog {
                 state.inventories.restore_entry(this.ent1, this.inv_guid, this.inv_idx);
                 state.inventories.restore_entry(this.ent2, this.inv_guid, this.inv_idx);
             }
+        }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionInventoryEntryAdd ext_entry_add) {
+                    if (((ext_entry_add.guid == this.ent1) && (this.ent2 == this.guid)) || ((ext_entry_add.guid == this.ent2) && (this.ent1 == this.guid))) {
+                        // existing ActionInventoryEntryAdd with one "ent" guid and the other is a stack; replace with a stack adjust and we're done
+                        if (ext_entry_add.entry is ItemStack ent_stack) {
+                            actions[i] = new ActionItemStackAdjust(this.guid, ent_stack.count, ent_stack.unidentified);
+                            return;
+                        }
+                        if (ext_entry_add.entry is SingleItem ent_item) {
+                            actions[i] = new ActionItemStackAdjust(this.guid, 1, (ent_item.unidentified ? 1 : 0));
+                            return;
+                        }
+                    }
+                }
+                if (actions[i] is ActionInventoryEntryUnstack ext_entry_unstack) {
+                    if ((ext_entry_unstack.guid == this.ent1) || (ext_entry_unstack.guid == this.ent2)) {
+                        // existing ActionInventoryEntryUnstack with one "ent" guid; remove it and replace our "ent" with its "guid" field
+                        actions.RemoveAt(i);
+                        Guid new_ent1 = this.ent1, new_ent2 = this.ent2;
+                        if (ext_entry_unstack.guid == ent1) {
+                            new_ent1 = ext_entry_unstack.ent;
+                        }
+                        else {
+                            new_ent2 = ext_entry_unstack.ent;
+                        }
+                        new ActionInventoryEntryMerge(this.inv_guid, this.inv_idx, new_ent1, new_ent2, this.guid).merge_to(actions);
+                        return;
+                    }
+                }
+                if (actions[i] is ActionInventoryEntrySplit ext_entry_split) {
+                    Guid split1 = ext_entry_split.ent, split2 = ext_entry_split.guid;
+                    if (((split1 == this.ent1) && (split2 == this.ent2)) || ((split1 == this.ent2) && (split2 == this.ent1))) {
+                        // existing ActionInventoryEntrySplit with both of our "ent" guids; remove it and we're done
+                        actions.RemoveAt(i);
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
         }
     }
 
