@@ -2137,6 +2137,30 @@ namespace CampLogTest {
             Assert.AreEqual(state.inventories.entries.Count, 1);
             Assert.IsTrue(state.inventories.entries.ContainsKey(stack_guid));
         }
+
+        [TestMethod]
+        public void test_merge_to_add_unstack() {
+            Guid inv_guid = Guid.NewGuid(), stack_guid = Guid.NewGuid(), item_guid = Guid.NewGuid();
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 1, 1);
+            ActionInventoryEntryAdd add_action = new ActionInventoryEntryAdd(inv_guid, 2, stack_guid, gem_stack);
+            List<EntryAction> actions = new List<EntryAction>() { add_action };
+
+            ActionInventoryEntryUnstack unstack_action = new ActionInventoryEntryUnstack(inv_guid, 2, stack_guid, item_guid);
+            unstack_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionInventoryEntryAdd merged_action = actions[0] as ActionInventoryEntryAdd;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.inv_guid, inv_guid);
+            Assert.AreEqual(merged_action.inv_idx, 2);
+            Assert.AreEqual(merged_action.guid, item_guid);
+            SingleItem unstacked_item = merged_action.entry as SingleItem;
+            Assert.IsNotNull(unstacked_item);
+            Assert.AreEqual(unstacked_item.item, gem);
+            Assert.IsTrue(unstacked_item.unidentified);
+        }
     }
 
 
@@ -2212,6 +2236,41 @@ namespace CampLogTest {
             Assert.IsTrue(state.inventories.entries.ContainsKey(stack1_guid));
             Assert.AreEqual(gem_stack1.count, 5);
             Assert.AreEqual(gem_stack1.unidentified, 3);
+        }
+
+        [TestMethod]
+        public void test_merge_to_add_split() {
+            Guid inv_guid = Guid.NewGuid(), stack1_guid = Guid.NewGuid(), stack2_guid = Guid.NewGuid();
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gem_stack = new ItemStack(gem, 3, 1);
+            ActionInventoryEntryAdd add_action = new ActionInventoryEntryAdd(inv_guid, 2, stack1_guid, gem_stack);
+            List<EntryAction> actions = new List<EntryAction>() { add_action };
+
+            ActionInventoryEntrySplit split_action = new ActionInventoryEntrySplit(inv_guid, 2, stack1_guid, 1, 1, stack2_guid);
+            split_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 2);
+            ActionInventoryEntryAdd merged_action1 = actions[0] as ActionInventoryEntryAdd;
+            Assert.IsNotNull(merged_action1);
+            Assert.AreEqual(merged_action1.inv_guid, inv_guid);
+            Assert.AreEqual(merged_action1.inv_idx, 2);
+            Assert.AreEqual(merged_action1.guid, stack1_guid);
+            ItemStack split_stack1 = merged_action1.entry as ItemStack;
+            Assert.IsNotNull(split_stack1);
+            Assert.AreEqual(split_stack1.item, gem);
+            Assert.AreEqual(split_stack1.count, 2);
+            Assert.AreEqual(split_stack1.unidentified, 0);
+            ActionInventoryEntryAdd merged_action2 = actions[1] as ActionInventoryEntryAdd;
+            Assert.IsNotNull(merged_action2);
+            Assert.AreEqual(merged_action2.inv_guid, inv_guid);
+            Assert.AreEqual(merged_action2.inv_idx, 2);
+            Assert.AreEqual(merged_action2.guid, stack2_guid);
+            ItemStack split_stack2 = merged_action2.entry as ItemStack;
+            Assert.IsNotNull(split_stack2);
+            Assert.AreEqual(split_stack2.item, gem);
+            Assert.AreEqual(split_stack2.count, 1);
+            Assert.AreEqual(split_stack2.unidentified, 1);
         }
     }
 }

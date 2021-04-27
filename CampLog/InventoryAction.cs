@@ -977,6 +977,20 @@ namespace CampLog {
             state.inventories.entries.Remove(this.guid);
             state.inventories.restore_entry(this.ent, this.inv_guid, this.inv_idx);
         }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionInventoryEntryAdd ext_entry_add) {
+                    if ((ext_entry_add.guid == this.ent) && (ext_entry_add.entry is ItemStack add_stack)) {
+                        // existing ActionInventoryEntryAdd with this guid; replace its "entry" field with a single item and we're done
+                        SingleItem unstacked_item = new SingleItem(add_stack.item, add_stack.unidentified > 0);
+                        actions[i] = new ActionInventoryEntryAdd(ext_entry_add.inv_guid, ext_entry_add.inv_idx, this.guid, unstacked_item);
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
+        }
     }
 
 
@@ -1010,6 +1024,34 @@ namespace CampLog {
         public override void revert(CampaignState state, Entry ent) {
             state.inventories.merge_entries(this.inv_guid, this.inv_idx, this.ent, this.guid, this.ent);
             state.inventories.entries.Remove(this.guid);
+        }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionInventoryEntryAdd ext_entry_add) {
+                    if ((ext_entry_add.guid == this.ent) && (ext_entry_add.entry is ItemStack add_stack)) {
+                        // existing ActionInventoryEntryAdd with this guid; split it into two adds and we're done
+                        add_stack.count -= this.count;
+                        add_stack.unidentified -= this.unidentified;
+                        ItemStack split_stack = new ItemStack(add_stack.item, this.count, this.unidentified);
+                        actions.Insert(i + 1, new ActionInventoryEntryAdd(ext_entry_add.inv_guid, ext_entry_add.inv_idx, this.guid, split_stack));
+                        return;
+                    }
+                }
+                if (actions[i] is ActionInventoryEntryMerge ext_entry_merge) {
+                    if (ext_entry_merge.guid == this.ent) {
+                        // existing ActionInventoryEntryMerge with this guid; stop trying to merge further
+                        break;
+                    }
+                }
+                if (actions[i] is ActionInventoryEntrySplit ext_entry_split) {
+                    if ((ext_entry_split.ent == this.ent) || (ext_entry_split.guid == this.ent)) {
+                        // existing ActionInventoryEntrySplit with this guid; stop trying to merge further
+                        break;
+                    }
+                }
+            }
+            actions.Add(this);
         }
     }
 }
