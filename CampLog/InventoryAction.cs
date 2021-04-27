@@ -895,22 +895,31 @@ namespace CampLog {
         }
 
         public override void merge_to(List<EntryAction> actions) {
+            Guid? input1 = this.ent1, input2 = this.ent2;
             for (int i = actions.Count - 1; i >= 0; i--) {
                 if (actions[i] is ActionInventoryEntryAdd ext_entry_add) {
-                    if (((ext_entry_add.guid == this.ent1) && (this.ent2 == this.guid)) || ((ext_entry_add.guid == this.ent2) && (this.ent1 == this.guid))) {
+                    if (((ext_entry_add.guid == input1) && (input2 == this.guid)) || ((ext_entry_add.guid == input2) && (input1 == this.guid))) {
                         // existing ActionInventoryEntryAdd with one "ent" guid and the other is a stack; replace with a stack adjust and we're done
                         if (ext_entry_add.entry is ItemStack ent_stack) {
-                            actions[i] = new ActionItemStackAdjust(this.guid, ent_stack.count, ent_stack.unidentified);
+                            actions.RemoveAt(i);
+                            new ActionItemStackAdjust(this.guid, ent_stack.count, ent_stack.unidentified).merge_to(actions);
                             return;
                         }
                         if (ext_entry_add.entry is SingleItem ent_item) {
-                            actions[i] = new ActionItemStackAdjust(this.guid, 1, (ent_item.unidentified ? 1 : 0));
+                            actions.RemoveAt(i);
+                            new ActionItemStackAdjust(this.guid, 1, (ent_item.unidentified ? 1 : 0)).merge_to(actions);
                             return;
                         }
                     }
                 }
+                if (actions[i] is ActionInventoryEntryMerge ext_entry_merge) {
+                    // if existing ActionInventoryEntryMerge matches an "ent" guid, stop trying to merge that input guid
+                    if (ext_entry_merge.guid == input1) { input1 = null; }
+                    if (ext_entry_merge.guid == input2) { input2 = null; }
+                    if ((input1 is null) && (input2 is null)) { break; }
+                }
                 if (actions[i] is ActionInventoryEntryUnstack ext_entry_unstack) {
-                    if ((ext_entry_unstack.guid == this.ent1) || (ext_entry_unstack.guid == this.ent2)) {
+                    if ((ext_entry_unstack.guid == input1) || (ext_entry_unstack.guid == input2)) {
                         // existing ActionInventoryEntryUnstack with one "ent" guid; remove it and replace our "ent" with its "guid" field
                         actions.RemoveAt(i);
                         Guid new_ent1 = this.ent1, new_ent2 = this.ent2;
@@ -926,11 +935,15 @@ namespace CampLog {
                 }
                 if (actions[i] is ActionInventoryEntrySplit ext_entry_split) {
                     Guid split1 = ext_entry_split.ent, split2 = ext_entry_split.guid;
-                    if (((split1 == this.ent1) && (split2 == this.ent2)) || ((split1 == this.ent2) && (split2 == this.ent1))) {
+                    if (((split1 == input1) && (split2 == input2)) || ((split1 == input2) && (split2 == input1))) {
                         // existing ActionInventoryEntrySplit with both of our "ent" guids; remove it and we're done
                         actions.RemoveAt(i);
                         return;
                     }
+                    // if existing ActionInventoryEntrySplit matches an "ent" guid, stop trying to merge that input guid
+                    if ((split1 == input1) || (split2 == input1)) { input1 = null; }
+                    if ((split1 == input2) || (split2 == input2)) { input2 = null; }
+                    if ((input1 is null) && (input2 is null)) { break; }
                 }
             }
             actions.Add(this);
