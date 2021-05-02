@@ -30,5 +30,158 @@ namespace CampLogTest {
             Assert.AreEqual(foo.show_past_events, bar.show_past_events);
             Assert.AreEqual(foo.show_inactive_tasks, bar.show_inactive_tasks);
         }
+
+        [TestMethod]
+        public void test_add_reference() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gp = new ItemSpec("GP", cat, 1, 0), gem = new ItemSpec("Gem", cat, 100, 1);
+            CampaignSave state = new CampaignSave(new Calendar(), new CharacterSheet());
+
+            state.add_reference(gp);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 1);
+            Assert.AreEqual(state.items.Count, 1);
+            Assert.IsTrue(state.items.ContainsKey("GP"));
+            Assert.AreEqual(state.items["GP"].element, gp);
+            Assert.AreEqual(state.items["GP"].ref_count, 1);
+
+            state.add_reference(gem);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 2);
+            Assert.AreEqual(state.items.Count, 2);
+            Assert.IsTrue(state.items.ContainsKey("GP"));
+            Assert.AreEqual(state.items["GP"].element, gp);
+            Assert.AreEqual(state.items["GP"].ref_count, 1);
+            Assert.IsTrue(state.items.ContainsKey("Gem"));
+            Assert.AreEqual(state.items["Gem"].element, gem);
+            Assert.AreEqual(state.items["Gem"].ref_count, 1);
+
+            state.add_reference(gp);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 3);
+            Assert.AreEqual(state.items.Count, 2);
+            Assert.IsTrue(state.items.ContainsKey("GP"));
+            Assert.AreEqual(state.items["GP"].element, gp);
+            Assert.AreEqual(state.items["GP"].ref_count, 2);
+            Assert.IsTrue(state.items.ContainsKey("Gem"));
+            Assert.AreEqual(state.items["Gem"].element, gem);
+            Assert.AreEqual(state.items["Gem"].ref_count, 1);
+        }
+
+        [TestMethod]
+        public void test_add_references() {
+            Guid inv_guid = Guid.NewGuid();
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gp = new ItemSpec("GP", cat, 1, 0), gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gp_stack = new ItemStack(gp, 350), gem_stack = new ItemStack(gem, 3), big_stack = new ItemStack(gp, 700);
+            List<EntryAction> actions = new List<EntryAction>() {
+                new ActionInventoryCreate(inv_guid, "Some Inventory"),
+                new ActionInventoryEntryAdd(inv_guid, null, Guid.NewGuid(), gp_stack),
+                new ActionInventoryEntryAdd(inv_guid, null, Guid.NewGuid(), gem_stack),
+                new ActionInventoryEntryAdd(inv_guid, null, Guid.NewGuid(), big_stack),
+            };
+            CampaignSave state = new CampaignSave(new Calendar(), new CharacterSheet());
+
+            state.add_references(actions);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 3);
+            Assert.AreEqual(state.items.Count, 2);
+            Assert.IsTrue(state.items.ContainsKey("GP"));
+            Assert.AreEqual(state.items["GP"].element, gp);
+            Assert.AreEqual(state.items["GP"].ref_count, 2);
+            Assert.IsTrue(state.items.ContainsKey("Gem"));
+            Assert.AreEqual(state.items["Gem"].element, gem);
+            Assert.AreEqual(state.items["Gem"].ref_count, 1);
+        }
+
+        [TestMethod]
+        public void test_remove_reference() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gp = new ItemSpec("GP", cat, 1, 0), gem = new ItemSpec("Gem", cat, 100, 1);
+            CampaignSave state = new CampaignSave(new Calendar(), new CharacterSheet());
+
+            state.categories["Wealth"] = new ElementReference<ItemCategory>(cat) { ref_count = 5 };
+            state.items["GP"] = new ElementReference<ItemSpec>(gp) { ref_count = 10 };
+            state.items["Gem"] = new ElementReference<ItemSpec>(gem) { ref_count = 7 };
+
+            state.remove_reference(gp);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 4);
+            Assert.AreEqual(state.items.Count, 2);
+            Assert.IsTrue(state.items.ContainsKey("GP"));
+            Assert.AreEqual(state.items["GP"].element, gp);
+            Assert.AreEqual(state.items["GP"].ref_count, 9);
+            Assert.IsTrue(state.items.ContainsKey("Gem"));
+            Assert.AreEqual(state.items["Gem"].element, gem);
+            Assert.AreEqual(state.items["Gem"].ref_count, 7);
+
+            state.remove_reference(gem);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 3);
+            Assert.AreEqual(state.items.Count, 2);
+            Assert.IsTrue(state.items.ContainsKey("GP"));
+            Assert.AreEqual(state.items["GP"].element, gp);
+            Assert.AreEqual(state.items["GP"].ref_count, 9);
+            Assert.IsTrue(state.items.ContainsKey("Gem"));
+            Assert.AreEqual(state.items["Gem"].element, gem);
+            Assert.AreEqual(state.items["Gem"].ref_count, 6);
+
+            state.remove_reference(gp);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 2);
+            Assert.AreEqual(state.items.Count, 2);
+            Assert.IsTrue(state.items.ContainsKey("GP"));
+            Assert.AreEqual(state.items["GP"].element, gp);
+            Assert.AreEqual(state.items["GP"].ref_count, 8);
+            Assert.IsTrue(state.items.ContainsKey("Gem"));
+            Assert.AreEqual(state.items["Gem"].element, gem);
+            Assert.AreEqual(state.items["Gem"].ref_count, 6);
+        }
+
+        [TestMethod]
+        public void test_remove_references() {
+            Guid inv_guid = Guid.NewGuid();
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gp = new ItemSpec("GP", cat, 1, 0), gem = new ItemSpec("Gem", cat, 100, 1);
+            ItemStack gp_stack = new ItemStack(gp, 350), gem_stack = new ItemStack(gem, 3), big_stack = new ItemStack(gp, 700);
+            List<EntryAction> actions = new List<EntryAction>() {
+                new ActionInventoryCreate(inv_guid, "Some Inventory"),
+                new ActionInventoryEntryAdd(inv_guid, null, Guid.NewGuid(), gp_stack),
+                new ActionInventoryEntryAdd(inv_guid, null, Guid.NewGuid(), gem_stack),
+                new ActionInventoryEntryAdd(inv_guid, null, Guid.NewGuid(), big_stack),
+            };
+            CampaignSave state = new CampaignSave(new Calendar(), new CharacterSheet());
+
+            state.categories["Wealth"] = new ElementReference<ItemCategory>(cat) { ref_count = 5 };
+            state.items["GP"] = new ElementReference<ItemSpec>(gp) { ref_count = 10 };
+            state.items["Gem"] = new ElementReference<ItemSpec>(gem) { ref_count = 7 };
+
+            state.remove_references(actions);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 2);
+            Assert.AreEqual(state.items.Count, 2);
+            Assert.IsTrue(state.items.ContainsKey("GP"));
+            Assert.AreEqual(state.items["GP"].element, gp);
+            Assert.AreEqual(state.items["GP"].ref_count, 8);
+            Assert.IsTrue(state.items.ContainsKey("Gem"));
+            Assert.AreEqual(state.items["Gem"].element, gem);
+            Assert.AreEqual(state.items["Gem"].ref_count, 6);
+        }
     }
 }

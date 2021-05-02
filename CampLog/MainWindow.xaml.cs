@@ -142,6 +142,7 @@ namespace CampLog {
             Entry ent = new Entry(timestamp, created, description, session, new List<EntryAction>(entry_window.actions));
             this.state_dirty = true;
             int idx = this.state.domain.add_entry(ent);
+            this.state.add_references(ent.actions);
             int valid_idx = this.state.domain.valid_entries - 1;
             if (valid_idx < 0) { valid_idx = this.state.domain.entries.Count - 1; }
             this.session_num_box.Content = (this.state.domain.entries[valid_idx].session ?? 0).ToString();
@@ -174,6 +175,7 @@ namespace CampLog {
             int row_idx = this.entries_list.SelectedIndex, idx = this.state.domain.entries.Count - row_idx - 1;
             if ((idx < 0) || (idx >= this.state.domain.entries.Count)) { return; }
             this.state_dirty = true;
+            this.state.remove_references(state.domain.entries[idx].actions);
             this.state.domain.remove_entry(idx);
             this.entry_rows.RemoveAt(row_idx);
             this.refresh_lists();
@@ -205,6 +207,8 @@ namespace CampLog {
             this.state_dirty = true;
             this.state.domain.remove_entry(idx, true);
             this.entry_rows.RemoveAt(row_idx);
+            this.state.remove_references(ent.actions);
+            this.state.add_references(entry_window.actions);
             ent.timestamp = timestamp;
             ent.created = created;
             ent.description = description;
