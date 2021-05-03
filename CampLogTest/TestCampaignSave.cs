@@ -64,7 +64,7 @@ namespace CampLogTest {
             Assert.AreEqual(state.categories.Count, 1);
             Assert.IsTrue(state.categories.ContainsKey("Wealth"));
             Assert.AreEqual(state.categories["Wealth"].element, cat);
-            Assert.AreEqual(state.categories["Wealth"].ref_count, 3);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 2);
             Assert.AreEqual(state.items.Count, 2);
             Assert.IsTrue(state.items.ContainsKey("GP"));
             Assert.AreEqual(state.items["GP"].element, gp);
@@ -92,7 +92,7 @@ namespace CampLogTest {
             Assert.AreEqual(state.categories.Count, 1);
             Assert.IsTrue(state.categories.ContainsKey("Wealth"));
             Assert.AreEqual(state.categories["Wealth"].element, cat);
-            Assert.AreEqual(state.categories["Wealth"].ref_count, 3);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 2);
             Assert.AreEqual(state.items.Count, 2);
             Assert.IsTrue(state.items.ContainsKey("GP"));
             Assert.AreEqual(state.items["GP"].element, gp);
@@ -100,56 +100,6 @@ namespace CampLogTest {
             Assert.IsTrue(state.items.ContainsKey("Gem"));
             Assert.AreEqual(state.items["Gem"].element, gem);
             Assert.AreEqual(state.items["Gem"].ref_count, 1);
-        }
-
-        [TestMethod]
-        public void test_remove_reference() {
-            ItemCategory cat = new ItemCategory("Wealth", 1);
-            ItemSpec gp = new ItemSpec("GP", cat, 1, 0), gem = new ItemSpec("Gem", cat, 100, 1);
-            CampaignSave state = new CampaignSave(new Calendar(), new CharacterSheet());
-
-            state.categories["Wealth"] = new ElementReference<ItemCategory>(cat) { ref_count = 5 };
-            state.items["GP"] = new ElementReference<ItemSpec>(gp) { ref_count = 10 };
-            state.items["Gem"] = new ElementReference<ItemSpec>(gem) { ref_count = 7 };
-
-            state.remove_reference(gp);
-            Assert.AreEqual(state.categories.Count, 1);
-            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
-            Assert.AreEqual(state.categories["Wealth"].element, cat);
-            Assert.AreEqual(state.categories["Wealth"].ref_count, 4);
-            Assert.AreEqual(state.items.Count, 2);
-            Assert.IsTrue(state.items.ContainsKey("GP"));
-            Assert.AreEqual(state.items["GP"].element, gp);
-            Assert.AreEqual(state.items["GP"].ref_count, 9);
-            Assert.IsTrue(state.items.ContainsKey("Gem"));
-            Assert.AreEqual(state.items["Gem"].element, gem);
-            Assert.AreEqual(state.items["Gem"].ref_count, 7);
-
-            state.remove_reference(gem);
-            Assert.AreEqual(state.categories.Count, 1);
-            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
-            Assert.AreEqual(state.categories["Wealth"].element, cat);
-            Assert.AreEqual(state.categories["Wealth"].ref_count, 3);
-            Assert.AreEqual(state.items.Count, 2);
-            Assert.IsTrue(state.items.ContainsKey("GP"));
-            Assert.AreEqual(state.items["GP"].element, gp);
-            Assert.AreEqual(state.items["GP"].ref_count, 9);
-            Assert.IsTrue(state.items.ContainsKey("Gem"));
-            Assert.AreEqual(state.items["Gem"].element, gem);
-            Assert.AreEqual(state.items["Gem"].ref_count, 6);
-
-            state.remove_reference(gp);
-            Assert.AreEqual(state.categories.Count, 1);
-            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
-            Assert.AreEqual(state.categories["Wealth"].element, cat);
-            Assert.AreEqual(state.categories["Wealth"].ref_count, 2);
-            Assert.AreEqual(state.items.Count, 2);
-            Assert.IsTrue(state.items.ContainsKey("GP"));
-            Assert.AreEqual(state.items["GP"].element, gp);
-            Assert.AreEqual(state.items["GP"].ref_count, 8);
-            Assert.IsTrue(state.items.ContainsKey("Gem"));
-            Assert.AreEqual(state.items["Gem"].element, gem);
-            Assert.AreEqual(state.items["Gem"].ref_count, 6);
         }
 
         [TestMethod]
@@ -174,7 +124,7 @@ namespace CampLogTest {
             Assert.AreEqual(state.categories.Count, 1);
             Assert.IsTrue(state.categories.ContainsKey("Wealth"));
             Assert.AreEqual(state.categories["Wealth"].element, cat);
-            Assert.AreEqual(state.categories["Wealth"].ref_count, 2);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 5);
             Assert.AreEqual(state.items.Count, 2);
             Assert.IsTrue(state.items.ContainsKey("GP"));
             Assert.AreEqual(state.items["GP"].element, gp);

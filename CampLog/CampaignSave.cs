@@ -35,12 +35,13 @@ namespace CampLog {
         }
 
         public void add_reference(ItemSpec item) {
-            if (!this.categories.ContainsKey(item.category.name)) {
-                this.categories[item.category.name] = new ElementReference<ItemCategory>(item.category);
-            }
-            this.categories[item.category.name].ref_count += 1;
             if (!this.items.ContainsKey(item.name)) {
                 this.items[item.name] = new ElementReference<ItemSpec>(item);
+                // we weren't tracking this item before, so add a category reference
+                if (!this.categories.ContainsKey(item.category.name)) {
+                    this.categories[item.category.name] = new ElementReference<ItemCategory>(item.category);
+                }
+                this.categories[item.category.name].ref_count += 1;
             }
             this.items[item.name].ref_count += 1;
         }
@@ -54,16 +55,11 @@ namespace CampLog {
             }
         }
 
-        public void remove_reference(ItemSpec item) {
-            if (this.categories.ContainsKey(item.category.name)) { this.categories[item.category.name].ref_count -= 1; }
-            if (this.items.ContainsKey(item.name)) { this.items[item.name].ref_count -= 1; }
-        }
-
         public void remove_references(List<EntryAction> actions) {
             foreach (EntryAction action in actions) {
                 if (action is ActionInventoryEntryAdd add_action) {
                     ItemSpec item = add_action.entry.item;
-                    this.remove_reference(item);
+                    if (this.items.ContainsKey(item.name)) { this.items[item.name].ref_count -= 1; }
                 }
             }
         }
