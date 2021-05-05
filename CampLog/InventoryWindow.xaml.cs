@@ -235,7 +235,7 @@ namespace CampLog {
             this.item_merge_but.IsEnabled = can_merge;
             this.item_split_but.Content = ((is_stack && (stack.count == 1)) ? "Unstack" : "Split...");
             this.item_split_but.IsEnabled = is_stack;
-            this.item_name_box.Text = entry?.item?.name ?? sel_row?.name ?? "";
+            this.item_name_box.Text = sel?.category ?? container_spec?.name ?? entry?.item?.name ?? sel_row?.name ?? "";
             if (is_stack) {
                 this.count_grid.Visibility = Visibility.Visible;
                 this.count_box.Value = stack.count;
@@ -278,7 +278,7 @@ namespace CampLog {
                 this.value_cont_box.Visibility = Visibility.Collapsed;
             }
             this.weight_total_box.Text = sel_row?.weight ?? "";
-            if ((container_spec is not null) && (container_spec.weight_capacity is not null)) {
+            if ((sel?.category is null) && (container_spec is not null) && (container_spec.weight_capacity is not null)) {
                 this.weight_item_label.Content = "Capacity:";
                 this.weight_item_label.Visibility = Visibility.Visible;
                 this.weight_item_box.Text = container_spec.weight_capacity.Value.ToString();

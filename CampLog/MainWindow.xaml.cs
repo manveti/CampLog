@@ -267,16 +267,16 @@ namespace CampLog {
             Guid bp_id = state.domain.state.inventories.add_entry(guid, new SingleItem(backpack));
             state.domain.state.inventories.add_entry(bp_id, 0, new ItemStack(new ItemSpec("Ration", adv, 2, 1), 7));
             state.domain.state.inventories.add_entry(bp_id, 0, new ItemStack(new ItemSpec("Bedroll", adv, 2, 2)));
-            //this.inventory_list.set_state(state.domain.state);
-            //InventoryWindow iw = new InventoryWindow(state.domain.state, guid);
-            //iw.ShowDialog();
-            foreach (InventoryEntry ent in state.domain.state.inventories.entries.Values) {
-                state.add_reference(ent.item);
-            }
-            ItemCategory armor = new ItemCategory("Armor", .5m);
-            state.categories["Armor"] = new ElementReference<ItemCategory>(armor);
-            ItemLibraryWindow ilw = new ItemLibraryWindow(state, true, "Sword") { Owner = this };
-            ilw.ShowDialog();
+            this.inventory_list.set_state(state.domain.state);
+            InventoryWindow iw = new InventoryWindow(state.domain.state, guid);
+            iw.ShowDialog();
+            //foreach (InventoryEntry ent in state.domain.state.inventories.entries.Values) {
+            //    state.add_reference(ent.item);
+            //}
+            //ItemCategory armor = new ItemCategory("Armor", .5m);
+            //state.categories["Armor"] = new ElementReference<ItemCategory>(armor);
+            //ItemLibraryWindow ilw = new ItemLibraryWindow(state, true, "Sword") { Owner = this };
+            //ilw.ShowDialog();
 #if false
             if (!iw.valid) { return; }
             List<string> action_types = new List<string>();
