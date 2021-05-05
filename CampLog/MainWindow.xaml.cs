@@ -126,6 +126,9 @@ namespace CampLog {
         private void item_library(object sender, RoutedEventArgs e) {
             ItemLibraryWindow item_library_window = new ItemLibraryWindow(this.state) { Owner = this };
             item_library_window.ShowDialog();
+            if (item_library_window.need_refresh) {
+                this.inventory_list.set_state(this.state.domain.state);
+            }
         }
 
         private void refresh_lists() {
