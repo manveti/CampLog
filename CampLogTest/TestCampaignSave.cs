@@ -32,6 +32,31 @@ namespace CampLogTest {
         }
 
         [TestMethod]
+        public void test_add_remove_category_reference() {
+            ItemCategory cat = new ItemCategory("Wealth", 1);
+            ItemSpec gp = new ItemSpec("GP", cat, 1, 0), gem = new ItemSpec("Gem", cat, 100, 1);
+            CampaignSave state = new CampaignSave(new Calendar(), new CharacterSheet());
+
+            state.add_category_reference(gp);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 1);
+
+            state.add_category_reference(gem);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 2);
+
+            state.remove_category_reference(gp);
+            Assert.AreEqual(state.categories.Count, 1);
+            Assert.IsTrue(state.categories.ContainsKey("Wealth"));
+            Assert.AreEqual(state.categories["Wealth"].element, cat);
+            Assert.AreEqual(state.categories["Wealth"].ref_count, 1);
+        }
+
+        [TestMethod]
         public void test_add_reference() {
             ItemCategory cat = new ItemCategory("Wealth", 1);
             ItemSpec gp = new ItemSpec("GP", cat, 1, 0), gem = new ItemSpec("Gem", cat, 100, 1);

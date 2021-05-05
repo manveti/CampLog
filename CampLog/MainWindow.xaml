@@ -33,9 +33,7 @@
                 <MenuItem Header="Configure _Calendar..." Name="calendar_cfg_opt" IsEnabled="False"/>
                 <MenuItem Header="Configure Character _Sheet..." Name="charsheet_cfg_opt" IsEnabled="False"/>
                 <Separator/>
-                <MenuItem Header="_Item Library" Name="item_library_opt" IsEnabled="False"/>
-                <Separator/>
-                <MenuItem Header="_Revert to Timestamp..." Name="revert_opt" IsEnabled="False"/>
+                <MenuItem Header="_Item Library" Name="item_library_opt" IsEnabled="False" Click="item_library"/>
             </MenuItem>
             <!--TODO: remove-->
             <MenuItem Header="_Testing">

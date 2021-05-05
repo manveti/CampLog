@@ -106,7 +106,6 @@ namespace CampLog {
             this.calendar_cfg_opt.IsEnabled = true;
             this.charsheet_cfg_opt.IsEnabled = true;
             this.item_library_opt.IsEnabled = true;
-            this.revert_opt.IsEnabled = true;
             this.character_list.set_char_sheet(char_sheet);
             this.character_list.set_state(this.state.domain.state);
             this.inventory_list.set_state(this.state.domain.state);
@@ -123,6 +122,11 @@ namespace CampLog {
         }
 
         //TODO: ...
+
+        private void item_library(object sender, RoutedEventArgs e) {
+            ItemLibraryWindow item_library_window = new ItemLibraryWindow(this.state) { Owner = this };
+            item_library_window.ShowDialog();
+        }
 
         private void refresh_lists() {
             this.character_list.set_state(this.state.domain.state);
@@ -261,9 +265,16 @@ namespace CampLog {
             state.domain.state.inventories.add_entry(bp_id, 0, new ItemStack(new ItemSpec("Ration", adv, 2, 1), 7));
             state.domain.state.inventories.add_entry(bp_id, 0, new ItemStack(new ItemSpec("Bedroll", adv, 2, 2)));
             //this.inventory_list.set_state(state.domain.state);
-            InventoryWindow iw = new InventoryWindow(state.domain.state, guid);
-            iw.ShowDialog();
-#if true
+            //InventoryWindow iw = new InventoryWindow(state.domain.state, guid);
+            //iw.ShowDialog();
+            foreach (InventoryEntry ent in state.domain.state.inventories.entries.Values) {
+                state.add_reference(ent.item);
+            }
+            ItemCategory armor = new ItemCategory("Armor", .5m);
+            state.categories["Armor"] = new ElementReference<ItemCategory>(armor);
+            ItemLibraryWindow ilw = new ItemLibraryWindow(state, true, "Sword") { Owner = this };
+            ilw.ShowDialog();
+#if false
             if (!iw.valid) { return; }
             List<string> action_types = new List<string>();
             foreach (EntryAction action in iw.get_actions()) { action_types.Add(action.GetType().ToString()); }

@@ -1,0 +1,195 @@
+﻿<Window x:Class="CampLog.ItemLibraryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CampLog"
+        xmlns:GUIx="clr-namespace:GUIx;assembly=GUIx"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterOwner"
+        Title="Item Library" Width="800" Height="450">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Grid.Column="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TreeView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="1" Name="item_list"
+                      SelectedValuePath="self" SelectedItemChanged="item_list_sel_changed">
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate DataType="{x:Type local:ItemLibraryItemRow}" ItemsSource="{Binding items}">
+                        <TextBlock Text="{Binding name}"/>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="IsExpanded" Value="{Binding is_expanded}"/>
+                        <Setter Property="IsSelected" Value="{Binding is_selected}"/>
+                    </Style>
+                </TreeView.ItemContainerStyle>
+            </TreeView>
+
+            <Button Grid.Row="1" Grid.Column="0" Margin="1" Content="Add Category..." Click="add_category"/>
+            <Button Grid.Row="1" Grid.Column="1" Margin="1" Content="Add Item..." Click="add_item"/>
+            <Button Grid.Row="1" Grid.Column="3" Margin="1" Name="item_rem_but" Content="Remove" IsEnabled="False" Click="remove_item"/>
+        </Grid>
+
+        <GridSplitter Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
+
+        <Grid Grid.Row="0" Grid.Column="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Name:"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="5" Margin="1" Name="name_box" TextChanged="set_dirty"/>
+
+            <Label Grid.Row="1" Grid.Column="0" Margin="1" Name="cat_label" Content="Category:" Visibility="Collapsed"/>
+            <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5" Margin="1" Name="cat_box" SelectionChanged="cat_box_sel_changed" Visibility="Collapsed"/>
+
+            <Label Grid.Row="2" Grid.Column="0" Margin="1" Name="cost_label" Content="Value Factor:"/>
+            <GUIx:SpinBox Grid.Row="2" Grid.Column="1" Margin="1" Name="cost_box" ValueChanged="cost_changed"/>
+            <Label Grid.Row="2" Grid.Column="2" Margin="1" Name="value_label" Content="Value:" Visibility="Collapsed"/>
+            <GUIx:SpinBox Grid.Row="2" Grid.Column="3" Margin="1" Name="value_box" Visibility="Collapsed" ValueChanged="set_dirty"/>
+            <Label Grid.Row="2" Grid.Column="4" Margin="1" Name="weight_label" Content="Weight:" Visibility="Collapsed"/>
+            <GUIx:SpinBox Grid.Row="2" Grid.Column="5" Margin="1" Name="weight_box" Visibility="Collapsed" ValueChanged="set_dirty"/>
+
+            <Grid Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Button Grid.Row="0" Grid.Column="0" Margin="1" Name="cat_apply_but" Content="Apply" IsEnabled="False" Click="apply_changes"/>
+                <Button Grid.Row="0" Grid.Column="1" Margin="1" Name="cat_revert_but" Content="Revert" IsEnabled="False" Click="revert_changes"/>
+            </Grid>
+
+            <GroupBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6" Name="container_group" Header="Containers:" Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="7" Margin="1" Name="container_list">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Name" DisplayMemberBinding="{Binding name}"/>
+                                <GridViewColumn Header="Weight Factor" DisplayMemberBinding="{Binding weight_factor}"/>
+                                <GridViewColumn Header="Weight Capacity" DisplayMemberBinding="{Binding weight_capacity}"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Name="container_add_but" Content="Add..." Click="container_add"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Name="container_edit_but" Content="Edit..." Click="container_edit"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Name="container_up_but" Content="Up" Click="container_up"/>
+                    <Button Grid.Row="1" Grid.Column="4" Margin="1" Name="container_down_but" Content="Down" Click="container_down"/>
+                    <Button Grid.Row="1" Grid.Column="6" Margin="1" Name="container_rem_but" Content="Remove" Click="container_rem"/>
+                </Grid>
+            </GroupBox>
+
+            <GroupBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="6" Name="prop_group" Header="Properties:" Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="1" Name="prop_list">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Name" DisplayMemberBinding="{Binding name}"/>
+                                <GridViewColumn Header="Value" DisplayMemberBinding="{Binding value}"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Content="Add..." Click="prop_add"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Content="Edit..." Click="prop_edit"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Content="Remove" Click="prop_rem"/>
+                </Grid>
+            </GroupBox>
+
+            <Grid Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Button Grid.Row="0" Grid.Column="1" Margin="1" Name="item_apply_but" Content="Apply"
+                        IsEnabled="False" Visibility="Collapsed" Click="apply_changes"/>
+                <Button Grid.Row="0" Grid.Column="2" Margin="1" Name="item_revert_but" Content="Revert"
+                        IsEnabled="False" Visibility="Collapsed" Click="revert_changes"/>
+            </Grid>
+        </Grid>
+
+        <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Button Grid.Row="0" Grid.Column="1" Margin="1" Padding="1" Name="ok_but" Content="OK" Visibility="Collapsed" Click="do_ok"/>
+            <Button Grid.Row="0" Grid.Column="2" Margin="1" Padding="1" Name="cancel_but" Content="Done" IsCancel="True" Click="do_cancel"/>
+        </Grid>
+    </Grid>
+</Window>

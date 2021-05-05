@@ -34,14 +34,23 @@ namespace CampLog {
             this.show_inactive_tasks = false;
         }
 
+        public void add_category_reference(ItemSpec item) {
+            if (!this.categories.ContainsKey(item.category.name)) {
+                this.categories[item.category.name] = new ElementReference<ItemCategory>(item.category);
+            }
+            this.categories[item.category.name].ref_count += 1;
+        }
+
+        public void remove_category_reference(ItemSpec item) {
+            if (!this.categories.ContainsKey(item.category.name)) { return; }
+            this.categories[item.category.name].ref_count -= 1;
+        }
+
         public void add_reference(ItemSpec item) {
             if (!this.items.ContainsKey(item.name)) {
                 this.items[item.name] = new ElementReference<ItemSpec>(item);
                 // we weren't tracking this item before, so add a category reference
-                if (!this.categories.ContainsKey(item.category.name)) {
-                    this.categories[item.category.name] = new ElementReference<ItemCategory>(item.category);
-                }
-                this.categories[item.category.name].ref_count += 1;
+                this.add_category_reference(item);
             }
             this.items[item.name].ref_count += 1;
         }
