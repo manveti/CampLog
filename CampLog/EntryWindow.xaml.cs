@@ -100,7 +100,7 @@ namespace CampLog {
             this.character_list.set_state(this.state);
             this.character_group.Content = this.character_list;
             this.inventory_list = new InventoryListControl(this.entry_action_callback);
-            this.inventory_list.set_state(this.state);
+            this.inventory_list.set_state(this.save_state, this.state);
             this.inventory_group.Content = this.inventory_list;
             //TODO: topics, tasks
         }
@@ -175,7 +175,7 @@ namespace CampLog {
             }
             //TODO: update events list
             this.character_list.set_state(this.state);
-            this.inventory_list.set_state(this.state);
+            this.inventory_list.set_state(this.save_state, this.state);
             //TODO: update topics and tasks lists
         }
 

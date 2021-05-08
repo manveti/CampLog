@@ -27,11 +27,13 @@ namespace CampLog {
 
     public partial class InventoryListControl : UserControl {
         private Action<List<EntryAction>> change_callback;
+        private CampaignSave save_state;
         private CampaignState state;
         private ObservableCollection<InventoryRow> inventory_rows;
 
         public InventoryListControl(Action<List<EntryAction>> change_callback) {
             this.change_callback = change_callback;
+            this.save_state = null;
             this.state = null;
             this.inventory_rows = null;
             InitializeComponent();
@@ -58,7 +60,8 @@ namespace CampLog {
             this.inventory_list.ItemsSource = this.inventory_rows;
         }
 
-        public void set_state(CampaignState state) {
+        public void set_state(CampaignSave save_state, CampaignState state) {
+            this.save_state = save_state;
             this.state = state;
             if (this.state is null) {
                 this.add_but.IsEnabled = false;
@@ -84,7 +87,7 @@ namespace CampLog {
 
         private void do_add(object sender, RoutedEventArgs e) {
             if (this.state is null) { return; }
-            InventoryWindow dialog_window = new InventoryWindow(this.state) { Owner = Window.GetWindow(this) };
+            InventoryWindow dialog_window = new InventoryWindow(this.save_state, this.state) { Owner = Window.GetWindow(this) };
             dialog_window.ShowDialog();
             if (this.change_callback is null) { return; }
             List<EntryAction> actions = dialog_window.get_actions();
@@ -105,7 +108,7 @@ namespace CampLog {
             if (this.state is null) { return; }
             Guid? guid = this.inventory_list.SelectedValue as Guid?;
             if ((guid is null) || (!this.state.inventories.inventories.ContainsKey(guid.Value))) { return; }
-            InventoryWindow dialog_window = new InventoryWindow(this.state, guid.Value) { Owner = Window.GetWindow(this) };
+            InventoryWindow dialog_window = new InventoryWindow(this.save_state, this.state, guid.Value) { Owner = Window.GetWindow(this) };
             dialog_window.Owner = Window.GetWindow(this);
             dialog_window.ShowDialog();
             if (this.change_callback is null) { return; }

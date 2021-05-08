@@ -364,7 +364,7 @@ namespace CampLog {
             this.value_box.Value = (double)(((decimal)(this.cost_box.Value)) * this.state.categories[cat_name].element.sale_value);
         }
 
-        private void apply_changes(object sender, RoutedEventArgs e) {
+        private void apply_changes(object sender = null, RoutedEventArgs e = null) {
             if (this.selection is null) { return; }
             if (this.selection.is_category) {
                 if (!this.state.categories.ContainsKey(this.selection.name)) { return; }
@@ -402,7 +402,7 @@ namespace CampLog {
                     item_ref.element.sale_value = sale_value;
                 }
                 item_ref.element.weight = (decimal)(this.weight_box.Value);
-                item_ref.element.containers = this.containers.ToArray();
+                item_ref.element.containers = (this.containers.Count > 0 ? this.containers.ToArray() : null);
                 item_ref.element.properties = new Dictionary<string, string>(this.properties);
                 if ((cat_name != old_cat_name) || (item_ref.element.name != this.selection.name)) {
                     if (item_ref.element.name != this.selection.name) {
@@ -636,7 +636,9 @@ namespace CampLog {
 
         private void do_ok(object sender, RoutedEventArgs e) {
             this.valid = true;
-            //TODO: prompt if this.dirty?
+            if (this.dirty) {
+                this.apply_changes();
+            }
             this.Close();
         }
 
@@ -644,6 +646,11 @@ namespace CampLog {
             this.Close();
         }
 
-        //TODO: get_selected_item
+        public ItemSpec get_selected_item() {
+            if ((!this.valid) || (this.selection is null) || (this.selection.is_category) || (!this.state.items.ContainsKey(this.selection.name))) {
+                return null;
+            }
+            return this.state.items[this.selection.name].element;
+        }
     }
 }

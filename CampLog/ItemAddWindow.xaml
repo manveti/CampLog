@@ -1,4 +1,4 @@
-﻿<Window x:Class="CampLog.InventoryWindow"
+﻿<Window x:Class="CampLog.ItemAddWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -7,7 +7,7 @@
         xmlns:GUIx="clr-namespace:GUIx;assembly=GUIx"
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
-        Title="Inventory" Width="800" Height="450">
+        Title="Add Item" Width="400" Height="400">
     <Window.Resources>
         <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Stroke" Color="#FF818181"/>
         <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Fill" Color="#FFFFFFFF"/>
@@ -235,19 +235,22 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="1*"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="1*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
+        <Label Grid.Row="0" Grid.Column="0" Margin="1" Name="item_label" Content="Item:"/>
+        <Grid Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="1*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
@@ -255,32 +258,28 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Inventory Name:"/>
-            <TextBox Grid.Row="0" Grid.Column="1" Margin="1" Name="inv_name_box"/>
+            <TextBox Grid.Row="0" Grid.Column="0" Margin="1" Name="item_box" IsReadOnly="True"/>
+            <Button Grid.Row="0" Grid.Column="1" Margin="1" Name="item_set_but" Content="Select" Click="item_sel"/>
         </Grid>
 
-        <Grid Grid.Row="1" Grid.Column="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="1*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+        <Label Grid.Row="1" Grid.Column="0" Margin="1" Name="count_label" Content="Count:"/>
+        <GUIx:SpinBox Grid.Row="1" Grid.Column="1" Margin="1" Name="count_box" Minimum="1" Value="1" ValueChanged="update_weight_capacity"/>
+        <Label Grid.Row="1" Grid.Column="2" Margin="1" Name="unidentified_label" Content="Unidentified:"/>
+        <GUIx:SpinBox Grid.Row="1" Grid.Column="3" Margin="1" Name="unidentified_box" Minimum="0"/>
 
-            <TreeView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="6" Margin="1" ItemContainerStyle="{StaticResource TreeViewItemStyleStretch}"
-                  HorizontalContentAlignment="Stretch" SelectedValuePath="ident" SelectedItemChanged="inventory_list_sel_changed" Name="inventory_list">
+        <Label Grid.Row="2" Grid.Column="0" Margin="1" Content="Weight:"/>
+        <TextBox Grid.Row="2" Grid.Column="1" Margin="1" Name="weight_box" IsReadOnly="True"/>
+        <Label Grid.Row="2" Grid.Column="2" Margin="1" Content="Capacity:"/>
+        <TextBox Grid.Row="2" Grid.Column="3" Margin="1" Name="capacity_box" IsReadOnly="True"/>
+
+        <GroupBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4" Header="Destination:">
+            <TreeView Margin="1" ItemContainerStyle="{StaticResource TreeViewItemStyleStretch}" HorizontalContentAlignment="Stretch"
+                      SelectedValuePath="ident" SelectedItemChanged="update_weight_capacity" Name="inventory_list">
                 <TreeView.Resources>
                     <DataTemplate DataType="{x:Type local:InventoryItemHeaderRow}">
                         <Grid HorizontalAlignment="Stretch">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="1*"/>
-                                <ColumnDefinition Width="80"/>
                                 <ColumnDefinition Width="80"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -288,8 +287,7 @@
                             </Grid.RowDefinitions>
 
                             <GridViewColumnHeader Grid.Row="0" Grid.Column="0" Style="{DynamicResource GridViewColumnHeaderStyleFixed}" Content="Name"/>
-                            <GridViewColumnHeader Grid.Row="0" Grid.Column="1" Style="{DynamicResource GridViewColumnHeaderStyleFixed}" Content="Value"/>
-                            <GridViewColumnHeader Grid.Row="0" Grid.Column="2" Style="{DynamicResource GridViewColumnHeaderStyleFixed}" Content="Weight"/>
+                            <GridViewColumnHeader Grid.Row="0" Grid.Column="1" Style="{DynamicResource GridViewColumnHeaderStyleFixed}" Content="Capacity"/>
                         </Grid>
                     </DataTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type local:InventoryItemRow}" ItemsSource="{Binding children}">
@@ -304,152 +302,14 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" Grid.Column="0" Margin="2" Text="{Binding name, Mode=OneWay}"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Margin="2" Text="{Binding value, Mode=OneWay}"/>
-                            <TextBlock Grid.Row="0" Grid.Column="2" HorizontalAlignment="Right" Margin="2" Text="{Binding weight, Mode=OneWay}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Margin="2" Text="{Binding weight, Mode=OneWay}"/>
                         </Grid>
                     </HierarchicalDataTemplate>
                 </TreeView.Resources>
             </TreeView>
+        </GroupBox>
 
-            <Button Grid.Row="1" Grid.Column="0" Margin="1" Content="Add..." Click="item_add"/>
-            <Button Grid.Row="1" Grid.Column="1" Margin="1" Name="item_rem_but" Content="Remove" IsEnabled="False" Click="item_rem"/>
-            <Button Grid.Row="1" Grid.Column="3" Margin="1" Name="item_move_but" Content="Move..." IsEnabled="False" Click="item_move"/>
-            <Button Grid.Row="1" Grid.Column="4" Margin="1" Name="item_merge_but" Content="Merge..." IsEnabled="False" Click="item_merge"/>
-            <Button Grid.Row="1" Grid.Column="5" Margin="1" Name="item_split_but" Content="Split..." IsEnabled="False" Click="item_split"/>
-        </Grid>
-
-        <GridSplitter Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
-
-        <Grid Grid.Row="1" Grid.Column="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="1*"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="1*"/>
-            </Grid.RowDefinitions>
-
-            <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="1*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Name:"/>
-                <TextBox Grid.Row="0" Grid.Column="1" Margin="1" Name="item_name_box" IsReadOnly="True"/>
-            </Grid>
-
-            <Grid Grid.Row="1" Grid.Column="0" Name="count_grid" Visibility="Collapsed">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="1*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Count:"/>
-                <GUIx:SpinBox Grid.Row="0" Grid.Column="1" Margin="1" Name="count_box"/><!--ValueChange-->
-            </Grid>
-
-            <Grid Grid.Row="1" Grid.Column="1" Name="unidentified_grid" Visibility="Collapsed">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="1*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Unidentified:"/>
-                <GUIx:SpinBox Grid.Row="0" Grid.Column="1" Margin="1" Name="unidentified_box" Visibility="Hidden"/>
-                <CheckBox Grid.Row="0" Grid.Column="1" Margin="1" Name="unidentified_checkbox" Visibility="Hidden"/>
-            </Grid>
-
-            <GroupBox Grid.Row="2" Grid.Column="0" Header="Value:">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Total:"/>
-                    <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="1" Name="value_total_box" IsReadOnly="True"/>
-
-                    <Label Grid.Row="1" Grid.Column="0" Margin="1" Name="value_item_label" Content="Item:" Visibility="Collapsed"/>
-                    <GUIx:SpinBox Grid.Row="1" Grid.Column="1" Margin="1" Name="value_item_box" IsReadOnly="True" Visibility="Collapsed"/><!--ValueChange-->
-                    <Button Grid.Row="1" Grid.Column="2" Margin="1" Name="value_reset_but" Content="Reset" Visibility="Collapsed"/>
-
-                    <Label Grid.Row="2" Grid.Column="0" Margin="1" Name="value_cont_label" Content="Contents:" Visibility="Collapsed"/>
-                    <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="1" Name="value_cont_box" IsReadOnly="True" Visibility="Collapsed"/>
-                </Grid>
-            </GroupBox>
-
-            <GroupBox Grid.Row="2" Grid.Column="1" Header="Weight:">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="1*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Total:"/>
-                    <TextBox Grid.Row="0" Grid.Column="1"  Margin="1" Name="weight_total_box" IsReadOnly="True"/>
-
-                    <Label Grid.Row="1" Grid.Column="0" Margin="1" Name="weight_item_label" Content="Item:" Visibility="Collapsed"/>
-                    <TextBox Grid.Row="1" Grid.Column="1" Margin="1" Name="weight_item_box" IsReadOnly="True" Visibility="Collapsed"/>
-
-                    <Label Grid.Row="2" Grid.Column="0" Margin="1" Name="weight_cont_label" Content="Contents:" Visibility="Collapsed"/>
-                    <TextBox Grid.Row="2" Grid.Column="1" Margin="1" Name="weight_cont_box" IsReadOnly="True" Visibility="Collapsed"/>
-                </Grid>
-            </GroupBox>
-
-            <GroupBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Name="props_group" Header="Properties:" Visibility="Collapsed">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="1*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="1" Name="prop_list"><!--SelectionChanged="prop_sel_changed"-->
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Header="Property" DisplayMemberBinding="{Binding name}"/>
-                                <GridViewColumn Header="Value" DisplayMemberBinding="{Binding value}"/>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
-
-                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Name="prop_add_but" Content="Add..." Visibility="Collapsed"/><!--Click-->
-                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Name="prop_edit_but" Content="Edit..." IsEnabled="False" Visibility="Collapsed"/><!--Click-->
-                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Name="prop_rem_but" Content="Remove" IsEnabled="False" Visibility="Collapsed"/><!--Click-->
-                </Grid>
-            </GroupBox>
-        </Grid>
-
-        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
+        <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*"/>
                 <ColumnDefinition Width="Auto"/>

@@ -203,7 +203,7 @@ namespace CampLog {
         }
 
         public override void apply(CampaignState state, Entry ent) {
-            state.inventories.add_entry(this.inv_guid, this.inv_idx, this.entry, this.guid);
+            state.inventories.add_entry(this.inv_guid, this.inv_idx, this.entry.copy(), this.guid);
         }
 
         public override void revert(CampaignState state, Entry ent) {

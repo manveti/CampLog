@@ -108,7 +108,7 @@ namespace CampLog {
             this.item_library_opt.IsEnabled = true;
             this.character_list.set_char_sheet(char_sheet);
             this.character_list.set_state(this.state.domain.state);
-            this.inventory_list.set_state(this.state.domain.state);
+            this.inventory_list.set_state(this.state, this.state.domain.state);
             this.session_num_box.Content = "1";
             this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.state.calendar.default_timestamp);
             this.entry_rows.Clear();
@@ -127,13 +127,13 @@ namespace CampLog {
             ItemLibraryWindow item_library_window = new ItemLibraryWindow(this.state) { Owner = this };
             item_library_window.ShowDialog();
             if (item_library_window.need_refresh) {
-                this.inventory_list.set_state(this.state.domain.state);
+                this.inventory_list.set_state(this.state, this.state.domain.state);
             }
         }
 
         private void refresh_lists() {
             this.character_list.set_state(this.state.domain.state);
-            this.inventory_list.set_state(this.state.domain.state);
+            this.inventory_list.set_state(this.state, this.state.domain.state);
             //TODO: set_state for other lists
         }
 
@@ -267,8 +267,8 @@ namespace CampLog {
             Guid bp_id = state.domain.state.inventories.add_entry(guid, new SingleItem(backpack));
             state.domain.state.inventories.add_entry(bp_id, 0, new ItemStack(new ItemSpec("Ration", adv, 2, 1), 7));
             state.domain.state.inventories.add_entry(bp_id, 0, new ItemStack(new ItemSpec("Bedroll", adv, 2, 2)));
-            this.inventory_list.set_state(state.domain.state);
-            InventoryWindow iw = new InventoryWindow(state.domain.state, guid);
+            this.inventory_list.set_state(state, state.domain.state);
+            InventoryWindow iw = new InventoryWindow(state, state.domain.state, guid);
             iw.ShowDialog();
             //foreach (InventoryEntry ent in state.domain.state.inventories.entries.Values) {
             //    state.add_reference(ent.item);

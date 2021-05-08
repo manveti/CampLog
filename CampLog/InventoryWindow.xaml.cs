@@ -42,7 +42,12 @@ namespace CampLog {
     }
 
 
-    public class InventoryItemBaseRow { }
+    public class InventoryItemBaseRow {
+        public bool _is_expanded = false;
+        public bool _is_selected = false;
+        public bool is_expanded { get => this._is_expanded; set => this._is_expanded = value; }
+        public bool is_selected { get => this._is_selected; set => this._is_selected = value; }
+    }
     public class InventoryItemHeaderRow : InventoryItemBaseRow { }
     public class InventoryItemRow : InventoryItemBaseRow, INotifyPropertyChanged {
         public InventoryItemIdent parent;
@@ -84,6 +89,8 @@ namespace CampLog {
 
     public partial class InventoryWindow : Window {
         public bool valid;
+        public bool need_refresh;
+        private CampaignSave save_state;
         private CampaignState state;
         private Guid guid;
         private List<EntryAction> actions;
@@ -145,8 +152,27 @@ namespace CampLog {
             }
         }
 
-        public InventoryWindow(CampaignState state, Guid? guid = null) {
+        public void repopulate_inventory_rows() {
+            InventoryItemIdent sel = this.selected;
+            this.inventory_rows.Clear();
+            this.inventory_row_index.Clear();
+            this.populate_inventory_rows(this.inventory_rows, null, this.inventory);
+            if ((sel is not null) && (this.inventory_row_index.ContainsKey(sel))) {
+                this.inventory_row_index[sel]._is_selected = true;
+                InventoryItemIdent par = this.inventory_row_index[sel].parent;
+                while (par is not null) {
+                    if (!this.inventory_row_index.ContainsKey(par)) { break; }
+                    InventoryItemRow par_row = this.inventory_row_index[par];
+                    par_row._is_expanded = true;
+                    par = par_row.parent;
+                }
+            }
+        }
+
+        public InventoryWindow(CampaignSave save_state, CampaignState state, Guid? guid = null) {
             this.valid = false;
+            this.need_refresh = false;
+            this.save_state = save_state;
             this.state = state.copy();
             this.actions = new List<EntryAction>();
             if (guid is null) {
@@ -260,6 +286,7 @@ namespace CampLog {
             if (is_entry) {
                 this.value_item_label.Visibility = Visibility.Visible;
                 this.value_item_box.Value = (double)(entry.item.value);
+                this.value_item_box.IsReadOnly = !is_item;
                 this.value_item_box.Visibility = Visibility.Visible;
             }
             else {
@@ -327,7 +354,31 @@ namespace CampLog {
         }
 
         private void item_add(object sender, RoutedEventArgs e) {
-            //TODO: add new item
+            if (this.inv_name_box.Text != this.inventory.name) {
+                ActionInventoryRename action = new ActionInventoryRename(this.guid, this.inventory.name, this.inv_name_box.Text);
+                this.actions.Add(action);
+                this.inventory.name = this.inv_name_box.Text;
+            }
+            ItemAddWindow item_add_window = new ItemAddWindow(this.save_state, this.state, this.guid) { Owner = this };
+            item_add_window.ShowDialog();
+            this.need_refresh = this.need_refresh || item_add_window.need_refresh;
+            if (!item_add_window.valid) {
+                if (item_add_window.need_refresh) { this.repopulate_inventory_rows(); }
+                return;
+            }
+            InventoryItemIdent destination = item_add_window.get_destination();
+            if ((destination is null) || (destination.guid is null)) {
+                if (item_add_window.need_refresh) { this.repopulate_inventory_rows(); }
+                return;
+            }
+            InventoryEntry entry = item_add_window.get_entry();
+            if (entry is null) {
+                if (item_add_window.need_refresh) { this.repopulate_inventory_rows(); }
+                return;
+            }
+            Guid guid = this.state.inventories.add_entry(destination.guid.Value, destination.idx, entry.copy());
+            this.actions.Add(new ActionInventoryEntryAdd(destination.guid.Value, destination.idx, guid, entry));
+            this.repopulate_inventory_rows();
         }
 
         private void item_rem(object sender, RoutedEventArgs e) {
