@@ -97,6 +97,7 @@ namespace CampLog {
         private Inventory inventory;
         private ObservableCollection<InventoryItemBaseRow> inventory_rows;
         private Dictionary<InventoryItemIdent, InventoryItemRow> inventory_row_index;
+        private SortedDictionary<string, string> item_props;
         private ObservableCollection<InventoryItemPropRow> item_prop_rows;
         private InventoryItemIdent selected;
 
@@ -189,6 +190,7 @@ namespace CampLog {
             this.inventory_rows = new ObservableCollection<InventoryItemBaseRow>();
             this.inventory_row_index = new Dictionary<InventoryItemIdent, InventoryItemRow>();
             this.populate_inventory_rows(this.inventory_rows, null, this.inventory);
+            this.item_props = new SortedDictionary<string, string>();
             this.item_prop_rows = new ObservableCollection<InventoryItemPropRow>();
             this.selected = null;
             InitializeComponent();
@@ -207,10 +209,78 @@ namespace CampLog {
             return true;
         }
 
+        private void apply_changes() {
+            if ((this.selected?.guid is not null) && (this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) {
+                if (this.state.inventories.entries[this.selected.guid.Value] is SingleItem prev_item) {
+                    bool? new_unidentified = null;
+                    decimal? new_value = (decimal)(this.value_item_box.Value);
+                    Dictionary<string, string> new_props = null, prev_props = new Dictionary<string, string>(prev_item.item.properties);
+                    bool set_value = false, set_properties = false;
+                    if (this.unidentified_checkbox.IsChecked != prev_item.unidentified) {
+                        new_unidentified = this.unidentified_checkbox.IsChecked;
+                    }
+                    if (new_value == prev_item.item.value) {
+                        new_value = null;
+                        if (prev_item.value_override is not null) { set_value = true; }
+                    }
+                    else if (new_value != prev_item.value_override) { set_value = true; }
+                    foreach (string key in prev_item.properties.Keys) {
+                        prev_props[key] = prev_item.properties[key];
+                    }
+                    if (this.item_props.Count != prev_props.Count) { set_properties = true; }
+                    else {
+                        foreach (string key in this.item_props.Keys) {
+                            if ((!prev_props.ContainsKey(key)) || (this.item_props[key] != prev_props[key])) {
+                                set_properties = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (set_properties) {
+                        new_props = new Dictionary<string, string>();
+                        foreach (string key in this.item_props.Keys) {
+                            if ((!prev_item.item.properties.ContainsKey(key)) || (this.item_props[key] != prev_item.item.properties[key])) {
+                                new_props[key] = this.item_props[key];
+                            }
+                        }
+                    }
+                    if ((new_unidentified is not null) || (set_value) || (set_properties)) {
+                        bool? unidentified_from = (new_unidentified is null ? null : prev_item.unidentified);
+                        decimal? value_from = (set_value ? prev_item.value_override : null);
+                        Dictionary<string, string> props_from = (set_properties ? prev_item.properties : null);
+                        ActionSingleItemSet action = new ActionSingleItemSet(
+                            this.selected.guid.Value, unidentified_from, value_from, props_from, new_unidentified, new_value, new_props, set_value
+                        );
+                        if (new_unidentified is not null) { prev_item.unidentified = new_unidentified.Value; }
+                        if (set_value) { prev_item.value_override = new_value; }
+                        if (set_properties) { prev_item.properties = new Dictionary<string, string>(this.item_props); }
+                        if (this.inventory_row_index.ContainsKey(this.selected)) {
+                            this.inventory_row_index[this.selected]._value = prev_item.value.ToString();
+                        }
+                        this.actions.Add(action);
+                    }
+                }
+                else if (this.state.inventories.entries[this.selected.guid.Value] is ItemStack prev_stack) {
+                    long count_diff = (long)(this.count_box.Value - prev_stack.count),
+                        unidentified_diff = (long)(this.unidentified_box.Value - prev_stack.unidentified);
+                    if ((count_diff != 0) || (unidentified_diff != 0)) {
+                        ActionItemStackAdjust action = new ActionItemStackAdjust(this.selected.guid.Value, count_diff, unidentified_diff);
+                        prev_stack.count += count_diff;
+                        prev_stack.unidentified += unidentified_diff;
+                        if (this.inventory_row_index.ContainsKey(this.selected)) {
+                            this.inventory_row_index[this.selected]._value = prev_stack.value.ToString();
+                            this.inventory_row_index[this.selected]._weight = prev_stack.weight.ToString();
+                        }
+                        this.actions.Add(action);
+                    }
+                }
+            }
+        }
+
         private void inventory_list_sel_changed(object sender, RoutedEventArgs e) {
             InventoryItemIdent sel = this.inventory_list.SelectedValue as InventoryItemIdent;
             if (sel == this.selected) { return; }
-            //TODO: check for changes; update (and add actions if necessary) if so
+            this.apply_changes();
 
             this.selected = sel;
             InventoryEntry entry = null;
@@ -285,7 +355,12 @@ namespace CampLog {
             this.value_total_box.Text = sel_row?.value ?? "";
             if (is_entry) {
                 this.value_item_label.Visibility = Visibility.Visible;
-                this.value_item_box.Value = (double)(entry.item.value);
+                if ((is_item) && (item.value_override is not null)) {
+                    this.value_item_box.Value = (double)(item.value_override.Value);
+                }
+                else {
+                    this.value_item_box.Value = (double)(entry.item.value);
+                }
                 this.value_item_box.IsReadOnly = !is_item;
                 this.value_item_box.Visibility = Visibility.Visible;
             }
@@ -336,15 +411,15 @@ namespace CampLog {
                 this.prop_edit_but.Visibility = (is_item ? Visibility.Visible : Visibility.Collapsed);
                 this.prop_rem_but.IsEnabled = false;
                 this.prop_rem_but.Visibility = (is_item ? Visibility.Visible : Visibility.Collapsed);
-                SortedDictionary<string, string> props = new SortedDictionary<string, string>(entry.item.properties);
+                this.item_props = new SortedDictionary<string, string>(entry.item.properties);
                 if (item is not null) {
                     foreach (string key in item.properties.Keys) {
-                        props[key] = item.properties[key];
+                        this.item_props[key] = item.properties[key];
                     }
                 }
                 this.item_prop_rows.Clear();
-                foreach (string key in props.Keys) {
-                    this.item_prop_rows.Add(new InventoryItemPropRow(key, props[key]));
+                foreach (string key in this.item_props.Keys) {
+                    this.item_prop_rows.Add(new InventoryItemPropRow(key, this.item_props[key]));
                 }
                 this.props_group.Visibility = Visibility.Visible;
             }
@@ -397,11 +472,14 @@ namespace CampLog {
             //TODO: split: { prompt for count & unidentified; split selected stack } unstack: { unstack selected stack }
         }
 
+        //TODO: ...
+
         private void do_ok(object sender, RoutedEventArgs e) {
             if (this.inv_name_box.Text != this.inventory.name) {
                 ActionInventoryRename action = new ActionInventoryRename(this.guid, this.inventory.name, this.inv_name_box.Text);
                 this.actions.Add(action);
             }
+            this.apply_changes();
             this.valid = true;
             this.Close();
         }
