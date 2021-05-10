@@ -121,7 +121,7 @@ namespace CampLog {
         }
 
         private void update_weight_capacity(object sender = null, RoutedEventArgs e = null) {
-            if (this.item is null) { return; }
+            if ((this.item is null) || (this.weight_box is null)) { return; }
             decimal weight = this.item.weight * (decimal)(this.count_box.Value);
             this.weight_box.Text = weight.ToString();
             InventoryItemIdent inv_sel = this.inventory_list.SelectedValue as InventoryItemIdent;

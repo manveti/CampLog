@@ -5,6 +5,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 
+using GUIx;
+
 namespace CampLog {
     public class InventoryItemPropRow {
         public string _name;
@@ -45,8 +47,8 @@ namespace CampLog {
     public class InventoryItemBaseRow {
         public bool _is_expanded = false;
         public bool _is_selected = false;
-        public bool is_expanded { get => this._is_expanded; set => this._is_expanded = value; }
-        public bool is_selected { get => this._is_selected; set => this._is_selected = value; }
+        public virtual bool is_expanded { get => this._is_expanded; set => this._is_expanded = value; }
+        public virtual bool is_selected { get => this._is_selected; set => this._is_selected = value; }
     }
     public class InventoryItemHeaderRow : InventoryItemBaseRow { }
     public class InventoryItemRow : InventoryItemBaseRow, INotifyPropertyChanged {
@@ -59,10 +61,42 @@ namespace CampLog {
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public override bool is_expanded {
+            get => base.is_expanded;
+            set {
+                base.is_expanded = value;
+                this.NotifyPropertyChanged();
+            }
+        }
+        public override bool is_selected {
+            get => base.is_selected;
+            set {
+                base.is_selected = value;
+                this.NotifyPropertyChanged();
+            }
+        }
         public InventoryItemIdent ident { get => this._ident; }
-        public string name { get => this._name; }
-        public string value { get => this._value; }
-        public string weight { get => this._weight; }
+        public string name {
+            get => this._name;
+            set {
+                this._name = value;
+                this.NotifyPropertyChanged();
+            }
+        }
+        public string value {
+            get => this._value;
+            set {
+                this._value = value;
+                this.NotifyPropertyChanged();
+            }
+        }
+        public string weight {
+            get => this._weight;
+            set {
+                this._weight = value;
+                this.NotifyPropertyChanged();
+            }
+        }
         public ObservableCollection<InventoryItemBaseRow> children { get => this._children; }
 
         public InventoryItemRow(
@@ -90,6 +124,7 @@ namespace CampLog {
     public partial class InventoryWindow : Window {
         public bool valid;
         public bool need_refresh;
+        private bool suppress_change_apply;
         private CampaignSave save_state;
         private CampaignState state;
         private Guid guid;
@@ -173,6 +208,7 @@ namespace CampLog {
         public InventoryWindow(CampaignSave save_state, CampaignState state, Guid? guid = null) {
             this.valid = false;
             this.need_refresh = false;
+            this.suppress_change_apply = false;
             this.save_state = save_state;
             this.state = state.copy();
             this.actions = new List<EntryAction>();
@@ -210,6 +246,7 @@ namespace CampLog {
         }
 
         private void apply_changes() {
+            if (this.suppress_change_apply) { return; }
             if ((this.selected?.guid is not null) && (this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) {
                 if (this.state.inventories.entries[this.selected.guid.Value] is SingleItem prev_item) {
                     bool? new_unidentified = null;
@@ -255,7 +292,7 @@ namespace CampLog {
                         if (set_value) { prev_item.value_override = new_value; }
                         if (set_properties) { prev_item.properties = new Dictionary<string, string>(this.item_props); }
                         if (this.inventory_row_index.ContainsKey(this.selected)) {
-                            this.inventory_row_index[this.selected]._value = prev_item.value.ToString();
+                            this.inventory_row_index[this.selected].value = prev_item.value.ToString();
                         }
                         this.actions.Add(action);
                     }
@@ -268,8 +305,9 @@ namespace CampLog {
                         prev_stack.count += count_diff;
                         prev_stack.unidentified += unidentified_diff;
                         if (this.inventory_row_index.ContainsKey(this.selected)) {
-                            this.inventory_row_index[this.selected]._value = prev_stack.value.ToString();
-                            this.inventory_row_index[this.selected]._weight = prev_stack.weight.ToString();
+                            this.inventory_row_index[this.selected]._name = prev_stack.name;
+                            this.inventory_row_index[this.selected].value = prev_stack.value.ToString();
+                            this.inventory_row_index[this.selected].weight = prev_stack.weight.ToString();
                         }
                         this.actions.Add(action);
                     }
@@ -312,11 +350,13 @@ namespace CampLog {
                             }
                         }
                         if (parent_inv is not null) {
-                            foreach (Guid guid in parent_inv.contents.Keys) {
-                                if (guid == sel.guid) { continue; }
-                                if (is_merge_target(parent_inv.contents[guid], entry.item)) {
-                                    can_merge = true;
-                                    break;
+                            if ((item is null) || ((item.containers is null) && (item.properties.Count == 0))) {
+                                foreach (Guid guid in parent_inv.contents.Keys) {
+                                    if (guid == sel.guid) { continue; }
+                                    if (is_merge_target(parent_inv.contents[guid], entry.item)) {
+                                        can_merge = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -457,19 +497,91 @@ namespace CampLog {
         }
 
         private void item_rem(object sender, RoutedEventArgs e) {
-            //TODO: remove selected item
+            if ((this.selected?.guid is null) || (!this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) { return; }
+            if (!this.inventory_row_index.ContainsKey(this.selected)) { return; }
+            InventoryItemRow sel_row = this.inventory_row_index[this.selected];
+            if ((sel_row.parent is null) || (sel_row.parent.guid is null)) { return; }
+            this.state.inventories.remove_entry(this.selected.guid.Value, sel_row.parent.guid.Value, sel_row.parent.idx);
+            this.actions.Add(new ActionInventoryEntryRemove(sel_row.parent.guid.Value, sel_row.parent.idx, this.selected.guid.Value));
+            this.repopulate_inventory_rows();
         }
 
         private void item_move(object sender, RoutedEventArgs e) {
-            //TODO: prompt for destination; move selected item
+            if ((this.selected?.guid is null) || (!this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) { return; }
+            if (!this.inventory_row_index.ContainsKey(this.selected)) { return; }
+            InventoryItemRow sel_row = this.inventory_row_index[this.selected];
+            if ((sel_row.parent is null) || (sel_row.parent.guid is null)) { return; }
+            this.apply_changes();
+            InventoryEntry entry = this.state.inventories.entries[this.selected.guid.Value];
+            ItemAddWindow item_add_window = new ItemAddWindow(this.save_state, this.state, selected: sel_row.parent, entry: entry) { Owner = this };
+            item_add_window.ShowDialog();
+            if (!item_add_window.valid) { return; }
+            InventoryItemIdent dest = item_add_window.get_destination();
+            if ((dest is null) || (dest.guid is null) || (dest == sel_row.parent)) { return; }
+            this.state.inventories.move_entry(this.selected.guid.Value, sel_row.parent.guid.Value, sel_row.parent.idx, dest.guid.Value, dest.idx);
+            this.actions.Add(new ActionInventoryEntryMove(this.selected.guid.Value, sel_row.parent.guid.Value, sel_row.parent.idx, dest.guid.Value, dest.idx));
+            this.repopulate_inventory_rows();
         }
 
         private void item_merge(object sender, RoutedEventArgs e) {
-            //TODO: prompt for merge target; merge selected items
+            if ((this.selected?.guid is null) || (!this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) { return; }
+            if (!this.inventory_row_index.ContainsKey(this.selected)) { return; }
+            InventoryItemRow sel_row = this.inventory_row_index[this.selected];
+            if ((sel_row.parent is null) || (sel_row.parent.guid is null) || (!this.inventory_row_index.ContainsKey(sel_row.parent))) { return; }
+            this.apply_changes();
+            InventoryItemRow parent_row = this.inventory_row_index[sel_row.parent];
+            InventoryEntry entry = this.state.inventories.entries[this.selected.guid.Value];
+            List<InventoryItemRow> targets = new List<InventoryItemRow>();
+            foreach (InventoryItemRow row in parent_row.children) {
+                if (row.ident == this.selected) { continue; }
+                if ((row.ident?.guid is null) && (!this.state.inventories.entries.ContainsKey(row.ident.guid.Value))) { continue; }
+                InventoryEntry target_ent = this.state.inventories.entries[row.ident.guid.Value];
+                if (is_merge_target(target_ent, entry.item)) {
+                    targets.Add(row);
+                }
+            }
+            if (targets.Count <= 0) { return; }
+            ItemMergeWindow item_merge_window = new ItemMergeWindow(targets) { Owner = this };
+            item_merge_window.ShowDialog();
+            if (!item_merge_window.valid) { return; }
+            InventoryItemIdent dest = item_merge_window.get_item();
+            if ((dest is null) || (dest.guid is null)) { return; }
+            Guid guid = this.state.inventories.merge_entries(sel_row.parent.guid.Value, sel_row.parent.idx, this.selected.guid.Value, dest.guid.Value);
+            this.actions.Add(new ActionInventoryEntryMerge(sel_row.parent.guid.Value, sel_row.parent.idx, this.selected.guid.Value, dest.guid.Value, guid));
+            this.suppress_change_apply = true;
+            this.repopulate_inventory_rows();
+            this.suppress_change_apply = false;
         }
 
         private void item_split(object sender, RoutedEventArgs e) {
-            //TODO: split: { prompt for count & unidentified; split selected stack } unstack: { unstack selected stack }
+            if ((this.selected?.guid is null) || (!this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) { return; }
+            if (!this.inventory_row_index.ContainsKey(this.selected)) { return; }
+            InventoryItemRow sel_row = this.inventory_row_index[this.selected];
+            if ((sel_row.parent is null) || (sel_row.parent.guid is null)) { return; }
+            ItemStack stack = this.state.inventories.entries[this.selected.guid.Value] as ItemStack;
+            if ((stack is null) || (stack.count < 1)) { return; }
+            if (stack.count > 1) {
+                QueryPrompt[] prompts = new QueryPrompt[] {
+                    new QueryPrompt("Count:", QueryType.INT, min: 1, max: stack.count - 1),
+                    new QueryPrompt("Unidentified:", QueryType.INT, min: 0, max: stack.unidentified),
+                };
+                object[] results = SimpleDialog.askCompound("New Stack", prompts, this);
+                if (results is null) { return; }
+                int? count = results[0] as int?, unidentified = results[1] as int?;
+                Guid guid = this.state.inventories.split_entry(
+                    sel_row.parent.guid.Value, sel_row.parent.idx, this.selected.guid.Value, count.Value, unidentified.Value
+                );
+                this.actions.Add(new ActionInventoryEntrySplit(
+                    sel_row.parent.guid.Value, sel_row.parent.idx, this.selected.guid.Value, count.Value, unidentified.Value, guid
+                ));
+            }
+            else {
+                Guid guid = this.state.inventories.unstack_entry(sel_row.parent.guid.Value, sel_row.parent.idx, this.selected.guid.Value);
+                this.actions.Add(new ActionInventoryEntryUnstack(sel_row.parent.guid.Value, sel_row.parent.idx, this.selected.guid.Value, guid));
+            }
+            this.suppress_change_apply = true;
+            this.repopulate_inventory_rows();
+            this.suppress_change_apply = false;
         }
 
         //TODO: ...
