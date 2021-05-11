@@ -355,7 +355,7 @@
                 </Grid.RowDefinitions>
 
                 <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Count:"/>
-                <GUIx:SpinBox Grid.Row="0" Grid.Column="1" Margin="1" Name="count_box"/><!--ValueChange-->
+                <GUIx:SpinBox Grid.Row="0" Grid.Column="1" Margin="1" Name="count_box" Minimum="1" ValueChanged="count_box_changed"/>
             </Grid>
 
             <Grid Grid.Row="1" Grid.Column="1" Name="unidentified_grid" Visibility="Collapsed">
@@ -368,7 +368,7 @@
                 </Grid.RowDefinitions>
 
                 <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Unidentified:"/>
-                <GUIx:SpinBox Grid.Row="0" Grid.Column="1" Margin="1" Name="unidentified_box" Visibility="Hidden"/>
+                <GUIx:SpinBox Grid.Row="0" Grid.Column="1" Margin="1" Name="unidentified_box" Minimum="0" Visibility="Hidden"/>
                 <CheckBox Grid.Row="0" Grid.Column="1" Margin="1" Name="unidentified_checkbox" Visibility="Hidden"/>
             </Grid>
 
@@ -389,8 +389,9 @@
                     <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="1" Name="value_total_box" IsReadOnly="True"/>
 
                     <Label Grid.Row="1" Grid.Column="0" Margin="1" Name="value_item_label" Content="Item:" Visibility="Collapsed"/>
-                    <GUIx:SpinBox Grid.Row="1" Grid.Column="1" Margin="1" Name="value_item_box" IsReadOnly="True" Visibility="Collapsed"/><!--ValueChange-->
-                    <Button Grid.Row="1" Grid.Column="2" Margin="1" Name="value_reset_but" Content="Reset" Visibility="Collapsed"/>
+                    <GUIx:SpinBox Grid.Row="1" Grid.Column="1" Margin="1" Name="value_item_box"
+                                  ValueChanged="value_item_box_changed" IsReadOnly="True" Visibility="Collapsed"/>
+                    <Button Grid.Row="1" Grid.Column="2" Margin="1" Name="value_reset_but" Content="Reset" Click="value_reset" Visibility="Collapsed"/>
 
                     <Label Grid.Row="2" Grid.Column="0" Margin="1" Name="value_cont_label" Content="Contents:" Visibility="Collapsed"/>
                     <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="1" Name="value_cont_box" IsReadOnly="True" Visibility="Collapsed"/>
@@ -433,7 +434,8 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="1" Name="prop_list"><!--SelectionChanged="prop_sel_changed"-->
+                    <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="1" Name="prop_list"
+                              SelectedValuePath="self" SelectionChanged="prop_sel_changed">
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn Header="Property" DisplayMemberBinding="{Binding name}"/>
@@ -442,9 +444,11 @@
                         </ListView.View>
                     </ListView>
 
-                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Name="prop_add_but" Content="Add..." Visibility="Collapsed"/><!--Click-->
-                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Name="prop_edit_but" Content="Edit..." IsEnabled="False" Visibility="Collapsed"/><!--Click-->
-                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Name="prop_rem_but" Content="Remove" IsEnabled="False" Visibility="Collapsed"/><!--Click-->
+                    <Button Grid.Row="1" Grid.Column="0" Margin="1" Name="prop_add_but" Content="Add..." Visibility="Collapsed" Click="prop_add"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="1" Name="prop_edit_but" Content="Edit..."
+                            IsEnabled="False" Visibility="Collapsed" Click="prop_edit"/>
+                    <Button Grid.Row="1" Grid.Column="3" Margin="1" Name="prop_rem_but" Content="Remove"
+                            IsEnabled="False" Visibility="Collapsed" Click="prop_rem"/>
                 </Grid>
             </GroupBox>
         </Grid>

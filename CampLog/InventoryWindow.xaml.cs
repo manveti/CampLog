@@ -4,20 +4,30 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Controls;
 
 using GUIx;
 
 namespace CampLog {
     public class InventoryItemPropRow {
+        public enum RemoveAction {
+            NONE,
+            RESET,
+            REMOVE,
+        }
+
         public string _name;
         public string _value;
+        public RemoveAction remove_action;
 
+        public InventoryItemPropRow self { get => this; }
         public string name { get => this._name; }
         public string value { get => this._value; }
 
-        public InventoryItemPropRow(string name, string value) {
+        public InventoryItemPropRow(string name, string value, RemoveAction remove_action) {
             this._name = name;
             this._value = value;
+            this.remove_action = remove_action;
         }
     }
 
@@ -133,7 +143,7 @@ namespace CampLog {
         private ObservableCollection<InventoryItemBaseRow> inventory_rows;
         private Dictionary<InventoryItemIdent, InventoryItemRow> inventory_row_index;
         private SortedDictionary<string, string> item_props;
-        private ObservableCollection<InventoryItemPropRow> item_prop_rows;
+        private List<InventoryItemPropRow> item_prop_rows;
         private InventoryItemIdent selected;
 
         private void populate_inventory_rows(ObservableCollection<InventoryItemBaseRow> inv_rows, InventoryItemIdent parent, Inventory inv) {
@@ -205,6 +215,15 @@ namespace CampLog {
             }
         }
 
+        private void fix_listview_column_widths(ListView list_view) {
+            GridView grid_view = list_view.View as GridView;
+            if (grid_view is null) { return; }
+            foreach (GridViewColumn col in grid_view.Columns) {
+                col.Width = col.ActualWidth;
+                col.Width = double.NaN;
+            }
+        }
+
         public InventoryWindow(CampaignSave save_state, CampaignState state, Guid? guid = null) {
             this.valid = false;
             this.need_refresh = false;
@@ -227,7 +246,7 @@ namespace CampLog {
             this.inventory_row_index = new Dictionary<InventoryItemIdent, InventoryItemRow>();
             this.populate_inventory_rows(this.inventory_rows, null, this.inventory);
             this.item_props = new SortedDictionary<string, string>();
-            this.item_prop_rows = new ObservableCollection<InventoryItemPropRow>();
+            this.item_prop_rows = new List<InventoryItemPropRow>();
             this.selected = null;
             InitializeComponent();
             this.inv_name_box.Text = this.inventory.name;
@@ -376,8 +395,9 @@ namespace CampLog {
                 this.count_grid.Visibility = Visibility.Visible;
                 this.count_box.Value = stack.count;
                 this.unidentified_grid.Visibility = Visibility.Visible;
-                this.unidentified_box.Visibility = Visibility.Visible;
+                this.unidentified_box.Maximum = stack.count;
                 this.unidentified_box.Value = stack.unidentified;
+                this.unidentified_box.Visibility = Visibility.Visible;
                 this.unidentified_checkbox.Visibility = Visibility.Hidden;
             }
             else {
@@ -459,8 +479,15 @@ namespace CampLog {
                 }
                 this.item_prop_rows.Clear();
                 foreach (string key in this.item_props.Keys) {
-                    this.item_prop_rows.Add(new InventoryItemPropRow(key, this.item_props[key]));
+                    InventoryItemPropRow.RemoveAction remove_action = InventoryItemPropRow.RemoveAction.NONE;
+                    if (!entry.item.properties.ContainsKey(key)) { remove_action = InventoryItemPropRow.RemoveAction.REMOVE; }
+                    else if ((item is not null) && (item.properties.ContainsKey(key)) && (entry.item.properties[key] != item.properties[key])) {
+                        remove_action = InventoryItemPropRow.RemoveAction.RESET;
+                    }
+                    this.item_prop_rows.Add(new InventoryItemPropRow(key, this.item_props[key], remove_action));
                 }
+                this.prop_list.Items.Refresh();
+                this.fix_listview_column_widths(this.prop_list);
                 this.props_group.Visibility = Visibility.Visible;
             }
             else {
@@ -584,7 +611,140 @@ namespace CampLog {
             this.suppress_change_apply = false;
         }
 
-        //TODO: ...
+        private void count_box_changed(object sender, RoutedEventArgs e) {
+            if ((this.selected?.guid is null) || (!this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) { return; }
+            if (!this.inventory_row_index.ContainsKey(this.selected)) { return; }
+            InventoryItemRow sel_row = this.inventory_row_index[this.selected];
+            if ((sel_row.parent is null) || (sel_row.parent.guid is null)) { return; }
+            ItemStack stack = this.state.inventories.entries[this.selected.guid.Value] as ItemStack;
+            if (stack is null) { return; }
+            long count = (long)(this.count_box.Value);
+            this.unidentified_box.Maximum = count;
+            if (this.unidentified_box.Value > count) { this.unidentified_box.Value = count; }
+            this.value_total_box.Text = (stack.item.value * count).ToString();
+            this.weight_total_box.Text = (stack.item.weight * count).ToString();
+        }
+
+        private void value_item_box_changed(object sender, RoutedEventArgs e) {
+            if ((this.selected?.guid is null) || (!this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) { return; }
+            if (!this.inventory_row_index.ContainsKey(this.selected)) { return; }
+            InventoryItemRow sel_row = this.inventory_row_index[this.selected];
+            if ((sel_row.parent is null) || (sel_row.parent.guid is null)) { return; }
+            SingleItem item = this.state.inventories.entries[this.selected.guid.Value] as SingleItem;
+            if (item is null) { return; }
+            decimal value = (decimal)(this.value_item_box.Value);
+            this.value_total_box.Text = (value + item.contents_value).ToString();
+            this.value_reset_but.IsEnabled = (value != item.item.value);
+        }
+
+        private void value_reset(object sender, RoutedEventArgs e) {
+            if ((this.selected?.guid is null) || (!this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) { return; }
+            if (!this.inventory_row_index.ContainsKey(this.selected)) { return; }
+            InventoryItemRow sel_row = this.inventory_row_index[this.selected];
+            if ((sel_row.parent is null) || (sel_row.parent.guid is null)) { return; }
+            SingleItem item = this.state.inventories.entries[this.selected.guid.Value] as SingleItem;
+            if (item is null) { return; }
+            this.value_item_box.Value = (double)(item.item.value);
+            this.value_total_box.Text = (item.item.value + item.contents_value).ToString();
+            this.value_reset_but.IsEnabled = false;
+        }
+
+        private void prop_sel_changed(object sender, RoutedEventArgs e) {
+            InventoryItemPropRow sel = this.prop_list.SelectedValue as InventoryItemPropRow;
+            if (sel is null) {
+                this.prop_edit_but.IsEnabled = false;
+                this.prop_rem_but.Content = "Remove";
+                this.prop_rem_but.IsEnabled = false;
+                return;
+            }
+            this.prop_edit_but.IsEnabled = true;
+            this.prop_rem_but.Content = (sel.remove_action == InventoryItemPropRow.RemoveAction.RESET ? "Reset" : "Remove");
+            this.prop_rem_but.IsEnabled = (sel.remove_action != InventoryItemPropRow.RemoveAction.NONE);
+        }
+
+        private void prop_add(object sender, RoutedEventArgs e) {
+            if ((this.selected?.guid is null) || (!this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) { return; }
+            if (!this.inventory_row_index.ContainsKey(this.selected)) { return; }
+            InventoryItemRow sel_row = this.inventory_row_index[this.selected];
+            if ((sel_row.parent is null) || (sel_row.parent.guid is null)) { return; }
+            SingleItem item = this.state.inventories.entries[this.selected.guid.Value] as SingleItem;
+            if (item is null) { return; }
+            QueryPrompt[] prompts = new QueryPrompt[] {
+                new QueryPrompt("Property:", QueryType.STRING),
+                new QueryPrompt("Value:", QueryType.STRING),
+            };
+            object[] results = SimpleDialog.askCompound("Add Property", prompts, this);
+            if (results is null) { return; }
+            string prop = results[0] as string, value = results[1] as string;
+            if ((prop is null) || (value is null)) { return; }
+            if (this.item_props.ContainsKey(prop)) {
+                string prompt = "Property \"" + prop + "\" already exists. Replace it?";
+                MessageBoxResult result = MessageBox.Show(prompt, "Duplicate Property", MessageBoxButton.YesNo);
+                if (result != MessageBoxResult.Yes) { return; }
+                for (int i = this.item_prop_rows.Count - 1; i >= 0; i--) {
+                    if (this.item_prop_rows[i].name == prop) {
+                        this.item_prop_rows.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+            this.item_props[prop] = value;
+            InventoryItemPropRow.RemoveAction remove_action = InventoryItemPropRow.RemoveAction.REMOVE;
+            if (item.item.properties.ContainsKey(prop)) { remove_action = InventoryItemPropRow.RemoveAction.RESET; }
+            this.item_prop_rows.Add(new InventoryItemPropRow(prop, value, remove_action));
+            this.item_prop_rows.Sort((x, y) => x.name.CompareTo(y.name));
+            this.prop_list.Items.Refresh();
+            this.fix_listview_column_widths(this.prop_list);
+        }
+
+        private void prop_edit(object sender, RoutedEventArgs e) {
+            InventoryItemPropRow sel = this.prop_list.SelectedValue as InventoryItemPropRow;
+            if ((sel is null) || (!this.item_props.ContainsKey(sel.name))) { return; }
+            if ((this.selected?.guid is null) || (!this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) { return; }
+            if (!this.inventory_row_index.ContainsKey(this.selected)) { return; }
+            InventoryItemRow sel_row = this.inventory_row_index[this.selected];
+            if ((sel_row.parent is null) || (sel_row.parent.guid is null)) { return; }
+            SingleItem item = this.state.inventories.entries[this.selected.guid.Value] as SingleItem;
+            if (item is null) { return; }
+            string value = SimpleDialog.askString(sel.name, "Value:", sel.value, this);
+            if (value is null) { return; }
+            this.item_props[sel.name] = value;
+            sel._value = value;
+            InventoryItemPropRow.RemoveAction remove_action = InventoryItemPropRow.RemoveAction.REMOVE;
+            if (item.item.properties.ContainsKey(sel.name)) {
+                if (value == item.item.properties[sel.name]) { remove_action = InventoryItemPropRow.RemoveAction.NONE; }
+                else { remove_action = InventoryItemPropRow.RemoveAction.RESET; }
+            }
+            sel.remove_action = remove_action;
+            this.prop_list.Items.Refresh();
+            this.fix_listview_column_widths(this.prop_list);
+            this.prop_rem_but.Content = (remove_action == InventoryItemPropRow.RemoveAction.RESET ? "Reset" : "Remove");
+            this.prop_rem_but.IsEnabled = (remove_action != InventoryItemPropRow.RemoveAction.NONE);
+        }
+
+        private void prop_rem(object sender, RoutedEventArgs e) {
+            InventoryItemPropRow sel = this.prop_list.SelectedValue as InventoryItemPropRow;
+            if ((sel is null) || (!this.item_props.ContainsKey(sel.name))) { return; }
+            if ((this.selected?.guid is null) || (!this.state.inventories.entries.ContainsKey(this.selected.guid.Value))) { return; }
+            if (!this.inventory_row_index.ContainsKey(this.selected)) { return; }
+            InventoryItemRow sel_row = this.inventory_row_index[this.selected];
+            if ((sel_row.parent is null) || (sel_row.parent.guid is null)) { return; }
+            SingleItem item = this.state.inventories.entries[this.selected.guid.Value] as SingleItem;
+            if (item is null) { return; }
+            if (item.item.properties.ContainsKey(sel.name)) {
+                sel._value = item.item.properties[sel.name];
+                this.item_props[sel.name] = sel.value;
+                sel.remove_action = InventoryItemPropRow.RemoveAction.NONE;
+                this.prop_rem_but.Content = "Remove";
+                this.prop_rem_but.IsEnabled = false;
+            }
+            else {
+                this.item_props.Remove(sel.name);
+                this.item_prop_rows.Remove(sel);
+            }
+            this.prop_list.Items.Refresh();
+            this.fix_listview_column_widths(this.prop_list);
+        }
 
         private void do_ok(object sender, RoutedEventArgs e) {
             if (this.inv_name_box.Text != this.inventory.name) {
