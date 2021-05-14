@@ -17,6 +17,9 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace CampLog {
+    public delegate void ActionCallback(List<EntryAction> actions, Guid? entry_guid = null);
+
+
     public class EntryRow : INotifyPropertyChanged {
         public string _timestamp;
         public string _invalid;
@@ -57,9 +60,11 @@ namespace CampLog {
         private CampaignSave state;
         private bool state_dirty;
         private string save_path;
+        private decimal current_timestamp = 0;
         public ObservableCollection<EntryRow> entry_rows;
         private CharacterListControl character_list;
         private InventoryListControl inventory_list;
+        private CalendarEventListControl calendar_event_list;
 
         public MainWindow() {
             this.save_path = null;
@@ -68,9 +73,11 @@ namespace CampLog {
             this.entry_rows = new ObservableCollection<EntryRow>();
             this.character_list = new CharacterListControl(this.entry_action_callback);
             this.inventory_list = new InventoryListControl(this.entry_action_callback);
+            this.calendar_event_list = new CalendarEventListControl(this.entry_action_callback);
             InitializeComponent();
             this.character_group.Content = this.character_list;
             this.inventory_group.Content = this.inventory_list;
+            this.calendar_event_group.Content = this.calendar_event_list;
             this.entries_list.ItemsSource = this.entry_rows;
         }
 
@@ -100,6 +107,7 @@ namespace CampLog {
             this.state = new CampaignSave(cal, char_sheet);
             this.state_dirty = false;
             this.save_path = null;
+            this.current_timestamp = this.state.calendar.default_timestamp;
 
             this.save_opt.IsEnabled = true;
             this.save_as_opt.IsEnabled = true;
@@ -110,15 +118,16 @@ namespace CampLog {
             this.character_list.set_state(this.state.domain.state);
             this.inventory_list.set_state(this.state, this.state.domain.state);
             this.session_num_box.Content = "1";
-            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.state.calendar.default_timestamp);
+            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp);
             this.entry_rows.Clear();
             this.ent_add_but.IsEnabled = true;
             //TODO: ent_rem_but, ent_view_but
-            this.show_past_events_box.IsChecked = this.state.show_past_events;
-            //TODO: events_list, event_add_but, event_rem_but, event_view_but
-            this.show_inactive_tasks_box.IsChecked = this.state.show_inactive_tasks;
-            //TODO: tasks_list, task_add_but, task_rem_but, task_resolve_but, task_view_but
-            //TODO: topics_list, topic_add_but, topic_rem_but, topic_view_but
+            this.calendar_event_list.show_past = this.state.show_past_events;
+            this.calendar_event_list.set_calendar(cal);
+            this.calendar_event_list.set_state(this.state.domain.state, this.current_timestamp);
+            this.show_inactive_tasks_box.IsChecked = this.state.show_inactive_tasks; //TODO: use task_list property
+            //TODO: task_list, task_add_but, task_rem_but, task_resolve_but, task_view_but
+            //TODO: topic_list, topic_add_but, topic_rem_but, topic_view_but
         }
 
         //TODO: ...
@@ -134,10 +143,11 @@ namespace CampLog {
         private void refresh_lists() {
             this.character_list.set_state(this.state.domain.state);
             this.inventory_list.set_state(this.state, this.state.domain.state);
+            this.calendar_event_list.set_state(this.state.domain.state, this.current_timestamp);
             //TODO: set_state for other lists
         }
 
-        private void entry_action_callback(List<EntryAction> actions) {
+        private void entry_action_callback(List<EntryAction> actions, Guid? entry_guid = null) {
             EntryWindow entry_window = new EntryWindow(this.state, actions: actions) { Owner = this };
             entry_window.ShowDialog();
             if (!entry_window.valid) { return; }
@@ -146,14 +156,15 @@ namespace CampLog {
             DateTime created = entry_window.get_created();
             string description = entry_window.description_box.Text;
             int session = (int)(entry_window.session_box.Value);
-            Entry ent = new Entry(timestamp, created, description, session, new List<EntryAction>(entry_window.actions));
+            Entry ent = new Entry(timestamp, created, description, session, new List<EntryAction>(entry_window.actions), entry_guid);
             this.state_dirty = true;
             int idx = this.state.domain.add_entry(ent);
             this.state.add_references(ent.actions);
             int valid_idx = this.state.domain.valid_entries - 1;
             if (valid_idx < 0) { valid_idx = this.state.domain.entries.Count - 1; }
             this.session_num_box.Content = (this.state.domain.entries[valid_idx].session ?? 0).ToString();
-            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.state.domain.entries[valid_idx].timestamp);
+            this.current_timestamp = this.state.domain.entries[valid_idx].timestamp;
+            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp);
             EntryRow row = new EntryRow(
                 this.state.calendar.format_timestamp(ent.timestamp),
                 idx >= this.state.domain.valid_entries,
@@ -225,7 +236,8 @@ namespace CampLog {
             int valid_idx = this.state.domain.valid_entries - 1;
             if (valid_idx < 0) { valid_idx = this.state.domain.entries.Count - 1; }
             this.session_num_box.Content = (this.state.domain.entries[valid_idx].session ?? 0).ToString();
-            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.state.domain.entries[valid_idx].timestamp);
+            this.current_timestamp = this.state.domain.entries[valid_idx].timestamp;
+            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp);
             EntryRow row = new EntryRow(
                 this.state.calendar.format_timestamp(ent.timestamp),
                 idx >= this.state.domain.valid_entries,

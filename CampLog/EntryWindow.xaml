@@ -95,9 +95,8 @@
 
         <GridSplitter Grid.Row="3" Grid.Column="5" Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
 
-        <GroupBox Grid.Row="3" Grid.Column="6" Header="Events">
-            <!--TODO: calendar events list and buttons as in main window-->
-        </GroupBox>
+        <GroupBox Grid.Row="3" Grid.Column="6" Header="Events" Name="event_group"/>
+        <!--event_list created in code-->
 
         <GridSplitter Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="7" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5"/>
 

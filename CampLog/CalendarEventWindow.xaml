@@ -1,0 +1,52 @@
+﻿<Window x:Class="CampLog.CalendarEventWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CampLog"
+        xmlns:GUIx="clr-namespace:GUIx;assembly=GUIx"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterOwner"
+        Title="Calendar Event" Width="500" Height="450">
+    <Grid Name="main_grid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Timestamp:"/>
+        <!--timestamp_box created in code-->
+        <CheckBox Grid.Row="0" Grid.Column="3" Margin="1" Name="repeat_box" Content="Repeat every:"/>
+        <!--interval_box created in code-->
+
+        <Label Grid.Row="1" Grid.Column="0" Margin="1" Content="Name:"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Margin="1" Name="name_box"/>
+
+        <GroupBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5" Header="Description">
+            <TextBox AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Name="description_box"/>
+        </GroupBox>
+
+        <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Button Grid.Row="0" Grid.Column="1" Margin="1" Padding="1" Content="OK" Click="do_ok"/>
+            <Button Grid.Row="0" Grid.Column="2" Margin="1" Padding="1" Content="Cancel" IsCancel="True" Click="do_cancel"/>
+        </Grid>
+    </Grid>
+</Window>

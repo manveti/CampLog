@@ -27,6 +27,7 @@ namespace CampLog {
         public List<EntryAction> actions;
         public ICalendarControl timestamp_box;
         private ICalendarControl timestamp_diff_box;
+        private CalendarEventListControl event_list;
         private CharacterListControl character_list;
         private InventoryListControl inventory_list;
 
@@ -94,7 +95,10 @@ namespace CampLog {
             //TODO: previous entry
             this.description_box.Text = current_entry.description;
             this.action_list.ItemsSource = this.actions;
-            //TODO: events
+            this.event_list = new CalendarEventListControl(this.entry_action_callback, current_entry.guid);
+            this.event_list.set_calendar(this.save_state.calendar);
+            this.event_list.set_state(this.state, current_entry.timestamp);
+            this.event_group.Content = this.event_list;
             this.character_list = new CharacterListControl(this.entry_action_callback);
             this.character_list.set_char_sheet(this.save_state.character_sheet);
             this.character_list.set_state(this.state);
@@ -162,7 +166,7 @@ namespace CampLog {
             this.act_edit_but.IsEnabled = true;
         }
 
-        private void entry_action_callback(List<EntryAction> actions) {
+        private void entry_action_callback(List<EntryAction> actions, Guid? entry_guid = null) {
             if ((actions is null) || (actions.Count <= 0)) { return; }
             decimal timestamp = this.timestamp_box.calendar_value;
             DateTime created = this.get_created();
@@ -173,7 +177,7 @@ namespace CampLog {
             foreach (EntryAction action in actions) {
                 action.apply(this.state, ent);
             }
-            //TODO: update events list
+            this.event_list.set_state(this.state, timestamp);
             this.character_list.set_state(this.state);
             this.inventory_list.set_state(this.save_state, this.state);
             //TODO: update topics and tasks lists

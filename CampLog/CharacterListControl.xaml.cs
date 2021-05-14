@@ -20,12 +20,12 @@ namespace CampLog {
 
 
     public partial class CharacterListControl : UserControl {
-        private Action<List<EntryAction>> change_callback;
+        private ActionCallback change_callback;
         private CharacterSheet char_sheet;
         private CampaignState state;
         private ObservableCollection<CharacterRow> character_rows;
 
-        public CharacterListControl(Action<List<EntryAction>> change_callback) {
+        public CharacterListControl(ActionCallback change_callback) {
             this.change_callback = change_callback;
             this.char_sheet = new CharacterSheet();
             this.state = null;
@@ -35,8 +35,8 @@ namespace CampLog {
 
         private void populate_character_rows() {
             List<CharacterRow> rows = new List<CharacterRow>();
-            foreach (Guid guid in state.characters.active_characters) {
-                rows.Add(new CharacterRow(state.characters.characters[guid].name, guid));
+            foreach (Guid guid in this.state.characters.active_characters) {
+                rows.Add(new CharacterRow(this.state.characters.characters[guid].name, guid));
             }
             rows.Sort((CharacterRow r1, CharacterRow r2) => r1.name.CompareTo(r2.name));
             this.character_rows = new ObservableCollection<CharacterRow>(rows);

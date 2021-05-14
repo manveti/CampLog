@@ -26,12 +26,12 @@ namespace CampLog {
 
 
     public partial class InventoryListControl : UserControl {
-        private Action<List<EntryAction>> change_callback;
+        private ActionCallback change_callback;
         private CampaignSave save_state;
         private CampaignState state;
         private ObservableCollection<InventoryRow> inventory_rows;
 
-        public InventoryListControl(Action<List<EntryAction>> change_callback) {
+        public InventoryListControl(ActionCallback change_callback) {
             this.change_callback = change_callback;
             this.save_state = null;
             this.state = null;

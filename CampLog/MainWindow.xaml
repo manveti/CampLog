@@ -168,36 +168,8 @@
                 <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
 
-            <GroupBox Grid.Row="0" Grid.Column="0" Header="Events">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="1*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="1" Name="show_past_events_box" Content="Show Past Events"/>
-
-                    <ListView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Name="events_list">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Header="Timestamp"/>
-                                <GridViewColumn Header="Name"/>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
-
-                    <Button Grid.Row="2" Grid.Column="0" Margin="1" Padding="1" Name="event_add_but" Content="Add..." IsEnabled="False"/>
-                    <Button Grid.Row="2" Grid.Column="1" Margin="1" Padding="1" Name="event_rem_but" Content="Remove" IsEnabled="False"/>
-                    <Button Grid.Row="2" Grid.Column="3" Margin="1" Padding="1" Name="event_view_but" Content="View" IsEnabled="False"/>
-                </Grid>
-            </GroupBox>
+            <GroupBox Grid.Row="0" Grid.Column="0" Header="Events" Name="calendar_event_group"/>
+            <!--calendar_event_list created in code-->
 
             <GridSplitter Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5"/>
 
