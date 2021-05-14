@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace CampLog {
     [Serializable]
@@ -22,6 +23,19 @@ namespace CampLog {
             state.events.remove_event(this.guid);
             state.events.events.Remove(this.guid);
         }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionCalendarEventRemove ext_evt_remove) {
+                    if (ext_evt_remove.guid == this.guid) {
+                        // existing ActionCalendarEventRemove with this guid; remove it and we're done
+                        actions.RemoveAt(i);
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
+        }
     }
 
 
@@ -42,6 +56,33 @@ namespace CampLog {
         public override void revert(CampaignState state, Entry ent) {
             state.events.restore_event(this.guid);
         }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionCalendarEventCreate ext_evt_create) {
+                    if (ext_evt_create.guid == this.guid) {
+                        // existing ActionCalendarEventCreate with this guid; remove it and we're done
+                        actions.RemoveAt(i);
+                        return;
+                    }
+                }
+                if (actions[i] is ActionCalendarEventRestore ext_evt_restore) {
+                    if (ext_evt_restore.guid == this.guid) {
+                        // existing ActionCalendarEventRestore with this guid; remove it and we're done
+                        actions.RemoveAt(i);
+                        return;
+                    }
+                }
+                if (actions[i] is ActionCalendarEventUpdate ext_evt_update) {
+                    if (ext_evt_update.guid == this.guid) {
+                        // existing ActionCalendarEventUpdate with this guid; remove it
+                        actions.RemoveAt(i);
+                        continue;
+                    }
+                }
+            }
+            actions.Add(this);
+        }
     }
 
 
@@ -61,6 +102,19 @@ namespace CampLog {
 
         public override void revert(CampaignState state, Entry ent) {
             state.events.remove_event(this.guid);
+        }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionCalendarEventRemove ext_evt_remove) {
+                    if (ext_evt_remove.guid == this.guid) {
+                        // existing ActionCalendarEventRemove with this guid; remove it and we're done
+                        actions.RemoveAt(i);
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
         }
     }
 
@@ -115,6 +169,72 @@ namespace CampLog {
             if (this.set_name) { evt.name = this.from.name; }
             if (this.set_desc) { evt.description = this.from.description; }
             if (this.set_interval) { evt.interval = this.from.interval; }
+        }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionCalendarEventCreate ext_evt_create) {
+                    if (ext_evt_create.guid == this.guid) {
+                        // existing ActionCalendarEventCreate with this guid; update its "evt" field based on our "to" field and we're done
+                        if (this.set_timestamp) { ext_evt_create.evt.timestamp = this.to.timestamp; }
+                        if (this.set_name) { ext_evt_create.evt.name = this.to.name; }
+                        if (this.set_desc) { ext_evt_create.evt.description = this.to.description; }
+                        if (this.set_interval) { ext_evt_create.evt.interval = this.to.interval; }
+                        return;
+                    }
+                }
+                if (actions[i] is ActionCalendarEventUpdate ext_evt_update) {
+                    if (ext_evt_update.guid == this.guid) {
+                        // existing ActionCalendarEventUpdate with this guid; replace with a new adjust action with the sum of both adjustments
+                        decimal from_timestamp = ext_evt_update.from.timestamp, to_timestamp = ext_evt_update.to.timestamp;
+                        string from_name = ext_evt_update.from.name, to_name = ext_evt_update.to.name;
+                        string from_description = ext_evt_update.from.description, to_description = ext_evt_update.to.description;
+                        decimal? from_interval = ext_evt_update.from.interval, to_interval = ext_evt_update.to.interval;
+                        bool set_timestamp = ext_evt_update.set_timestamp || this.set_timestamp, set_name = ext_evt_update.set_name || this.set_name,
+                            set_desc = ext_evt_update.set_desc || this.set_desc, set_interval = ext_evt_update.set_interval || this.set_interval;
+                        if (this.set_timestamp) {
+                            if (!ext_evt_update.set_timestamp) { from_timestamp = this.from.timestamp; }
+                            to_timestamp = this.to.timestamp;
+                        }
+                        if (this.set_name) {
+                            if (!ext_evt_update.set_name) { from_name = this.from.name; }
+                            to_name = this.to.name;
+                        }
+                        if (this.set_desc) {
+                            if (!ext_evt_update.set_desc) { from_description = this.from.description; }
+                            to_description = this.to.description;
+                        }
+                        if (this.set_interval) {
+                            if (!ext_evt_update.set_interval) { from_interval = this.from.interval; }
+                            to_interval = this.to.interval;
+                        }
+                        if ((set_timestamp) && (from_timestamp == to_timestamp)) { set_timestamp = false; }
+                        if ((set_name) && (from_name == to_name)) {
+                            set_name = false;
+                            from_name = null;
+                            to_name = null;
+                        }
+                        if ((set_desc) && (from_description == to_description)) {
+                            set_desc = false;
+                            from_description = null;
+                            to_description = null;
+                        }
+                        if ((set_interval) && (from_interval == to_interval)) {
+                            set_interval = false;
+                            from_interval = null;
+                            to_interval = null;
+                        }
+                        actions.RemoveAt(i);
+                        if ((set_timestamp) || (set_name) || (set_desc) || (set_interval)) {
+                            CalendarEvent from = new CalendarEvent(ext_evt_update.from.entry_guid, from_timestamp, from_name, from_description, from_interval),
+                                to = new CalendarEvent(this.to.entry_guid, to_timestamp, to_name, to_description, to_interval);
+                            new ActionCalendarEventUpdate(this.guid, from, to, set_timestamp, set_name, set_desc, set_interval).merge_to(actions);
+                        }
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
         }
     }
 }

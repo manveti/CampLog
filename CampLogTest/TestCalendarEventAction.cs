@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 using CampLog;
@@ -52,6 +53,19 @@ namespace CampLogTest {
             Assert.AreEqual(state.events.events.Count, 0);
             Assert.AreEqual(state.events.active_events.Count, 0);
         }
+
+        [TestMethod]
+        public void test_merge_to_remove_create() {
+            Guid event_guid = Guid.NewGuid();
+            ActionCalendarEventRemove remove_action = new ActionCalendarEventRemove(event_guid);
+            List<EntryAction> actions = new List<EntryAction>() { remove_action };
+
+            CalendarEvent evt = new CalendarEvent(Guid.NewGuid(), 42, "Some event");
+            ActionCalendarEventCreate create_action = new ActionCalendarEventCreate(event_guid, evt);
+            create_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
+        }
     }
 
 
@@ -100,6 +114,45 @@ namespace CampLogTest {
             Assert.AreEqual(state.events.events[event_guid].name, "Some event");
             Assert.AreEqual(state.events.active_events.Count, 1);
             Assert.IsTrue(state.events.active_events.Contains(event_guid));
+        }
+
+        [TestMethod]
+        public void test_merge_to_create_remove() {
+            Guid event_guid = Guid.NewGuid();
+            CalendarEvent evt = new CalendarEvent(Guid.NewGuid(), 42, "Some event");
+            ActionCalendarEventCreate create_action = new ActionCalendarEventCreate(event_guid, evt);
+            List<EntryAction> actions = new List<EntryAction>() { create_action };
+
+            ActionCalendarEventRemove remove_action = new ActionCalendarEventRemove(event_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_restore_remove() {
+            Guid event_guid = Guid.NewGuid();
+            ActionCalendarEventRestore restore_action = new ActionCalendarEventRestore(event_guid);
+            List<EntryAction> actions = new List<EntryAction>() { restore_action };
+
+            ActionCalendarEventRemove remove_action = new ActionCalendarEventRemove(event_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_update_remove() {
+            Guid event_guid = Guid.NewGuid();
+            CalendarEvent from = new CalendarEvent(Guid.NewGuid(), 42, "Some event"), to = new CalendarEvent(Guid.NewGuid(), 42, "Some updated event");
+            ActionCalendarEventUpdate update_action = new ActionCalendarEventUpdate(event_guid, from, to, false, true, false, false);
+            List<EntryAction> actions = new List<EntryAction>() { update_action };
+
+            ActionCalendarEventRemove remove_action = new ActionCalendarEventRemove(event_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            Assert.IsTrue(ReferenceEquals(actions[0], remove_action));
         }
     }
 
@@ -153,6 +206,18 @@ namespace CampLogTest {
             Assert.IsTrue(state.events.events.ContainsKey(event_guid));
             Assert.AreEqual(state.events.events[event_guid].name, "Some event");
             Assert.AreEqual(state.events.active_events.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_remove_restore() {
+            Guid event_guid = Guid.NewGuid();
+            ActionCalendarEventRemove remove_action = new ActionCalendarEventRemove(event_guid);
+            List<EntryAction> actions = new List<EntryAction>() { remove_action };
+
+            ActionCalendarEventRestore restore_action = new ActionCalendarEventRestore(event_guid);
+            restore_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
         }
     }
 
@@ -262,6 +327,57 @@ namespace CampLogTest {
             Assert.AreEqual(evt.name, "Some event");
             Assert.IsNull(evt.description);
             Assert.IsNull(evt.interval);
+        }
+
+        [TestMethod]
+        public void test_merge_to_create_update() {
+            Guid event_guid = Guid.NewGuid();
+            CalendarEvent from = new CalendarEvent(Guid.NewGuid(), 42, "Some event"), to = new CalendarEvent(Guid.NewGuid(), 42, "Some updated event");
+            ActionCalendarEventCreate create_action = new ActionCalendarEventCreate(event_guid, from);
+            List<EntryAction> actions = new List<EntryAction>() { create_action };
+
+            ActionCalendarEventUpdate update_action = new ActionCalendarEventUpdate(event_guid, from, to, false, true, false, false);
+            update_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionCalendarEventCreate merged_action = actions[0] as ActionCalendarEventCreate;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, event_guid);
+            Assert.AreEqual(merged_action.evt.entry_guid, from.entry_guid);
+            Assert.AreEqual(merged_action.evt.timestamp, 42);
+            Assert.AreEqual(merged_action.evt.name, "Some updated event");
+        }
+
+        [TestMethod]
+        public void test_merge_to_update_update() {
+            Guid event_guid = Guid.NewGuid();
+            CalendarEvent from1 = new CalendarEvent(Guid.NewGuid(), 42, "Some event", "Something happened"),
+                to1 = new CalendarEvent(Guid.NewGuid(), 42, "Some updated event", "Something updated happened"),
+                from2 = new CalendarEvent(Guid.NewGuid(), 42, "", "Something updated happened"),
+                to2 = new CalendarEvent(Guid.NewGuid(), 84, "", "Something happens every day", 86400);
+            ActionCalendarEventUpdate existing_action = new ActionCalendarEventUpdate(event_guid, from1, to1, false, true, true, false);
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionCalendarEventUpdate update_action = new ActionCalendarEventUpdate(event_guid, from2, to2, true, false, true, true);
+            update_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionCalendarEventUpdate merged_action = actions[0] as ActionCalendarEventUpdate;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, event_guid);
+            Assert.IsTrue(merged_action.set_timestamp);
+            Assert.AreEqual(merged_action.from.timestamp, 42);
+            Assert.AreEqual(merged_action.to.timestamp, 84);
+            Assert.IsTrue(merged_action.set_name);
+            Assert.AreEqual(merged_action.from.name, "Some event");
+            Assert.AreEqual(merged_action.to.name, "Some updated event");
+            Assert.IsTrue(merged_action.set_desc);
+            Assert.AreEqual(merged_action.from.description, "Something happened");
+            Assert.AreEqual(merged_action.to.description, "Something happens every day");
+            Assert.IsTrue(merged_action.set_interval);
+            Assert.IsNull(merged_action.from.interval);
+            Assert.IsNotNull(merged_action.to.interval);
+            Assert.AreEqual(merged_action.to.interval.Value, 86400);
         }
     }
 }
