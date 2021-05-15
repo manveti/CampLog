@@ -130,7 +130,7 @@ namespace CampLogTest {
 
         [TestMethod]
         public void test_copy() {
-            CharSetProperty foo = new CharSetProperty(), bar, baz;
+            CharSetProperty foo = new CharSetProperty(), bar;
             foo.value.Add("blah");
             foo.value.Add("bloh");
 

@@ -7,7 +7,7 @@ namespace CampLog {
         public Guid entry_guid;
         public string name;
         public string description;
-        public bool completed;
+        public Guid? completed_guid;
         public bool failed;
         public decimal? due;
 
@@ -16,14 +16,14 @@ namespace CampLog {
             this.entry_guid = entry_guid;
             this.name = name;
             this.description = description;
-            this.completed = false;
+            this.completed_guid = null;
             this.failed = false;
             this.due = due;
         }
 
         public Task copy() {
             return new Task(this.entry_guid, this.name, this.description, this.due) {
-                completed = this.completed,
+                completed_guid = this.completed_guid,
                 failed = this.failed,
             };
         }

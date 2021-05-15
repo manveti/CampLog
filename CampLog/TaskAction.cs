@@ -97,7 +97,7 @@ namespace CampLog {
             Task task = state.tasks.tasks[this.guid];
             if (this.set_name) { this.from.name = task.name; }
             if (this.set_desc) { this.from.description = task.description; }
-            if (this.set_completed) { this.from.completed = task.completed; }
+            if (this.set_completed) { this.from.completed_guid = task.completed_guid; }
             if (this.set_failed) { this.from.failed = task.failed; }
             if (this.set_due) { this.from.due = task.due; }
         }
@@ -107,7 +107,7 @@ namespace CampLog {
             Task task = state.tasks.tasks[this.guid];
             if (this.set_name) { task.name = this.to.name; }
             if (this.set_desc) { task.description = this.to.description; }
-            if (this.set_completed) { task.completed = this.to.completed; }
+            if (this.set_completed) { task.completed_guid = this.to.completed_guid; }
             if (this.set_failed) { task.failed = this.to.failed; }
             if (this.set_due) { task.due = this.to.due; }
         }
@@ -117,7 +117,7 @@ namespace CampLog {
             Task task = state.tasks.tasks[this.guid];
             if (this.set_name) { task.name = this.from.name; }
             if (this.set_desc) { task.description = this.from.description; }
-            if (this.set_completed) { task.completed = this.from.completed; }
+            if (this.set_completed) { task.completed_guid = this.from.completed_guid; }
             if (this.set_failed) { task.failed = this.from.failed; }
             if (this.set_due) { task.due = this.from.due; }
         }

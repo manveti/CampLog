@@ -11,7 +11,7 @@ namespace CampLogTest {
         public void test_serialization() {
             Task foo = new Task(Guid.NewGuid(), "Do a thing", "Go to a place and do a thing for a person", 42), bar;
 
-            foo.completed = true;
+            foo.completed_guid = Guid.NewGuid();
 
             DataContractSerializer fmt = new DataContractSerializer(typeof(Task));
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
@@ -23,7 +23,7 @@ namespace CampLogTest {
             Assert.AreEqual(foo.entry_guid, bar.entry_guid);
             Assert.AreEqual(foo.name, bar.name);
             Assert.AreEqual(foo.description, bar.description);
-            Assert.AreEqual(foo.completed, bar.completed);
+            Assert.AreEqual(foo.completed_guid, bar.completed_guid);
             Assert.AreEqual(foo.failed, bar.failed);
             Assert.AreEqual(foo.due, bar.due);
         }
@@ -32,14 +32,14 @@ namespace CampLogTest {
         public void test_copy() {
             Task foo = new Task(Guid.NewGuid(), "Do a thing", "Go to a place and do a thing for a person", 42), bar;
 
-            foo.completed = true;
+            foo.completed_guid = Guid.NewGuid();
 
             bar = foo.copy();
             Assert.IsFalse(ReferenceEquals(foo, bar));
             Assert.AreEqual(foo.entry_guid, bar.entry_guid);
             Assert.AreEqual(foo.name, bar.name);
             Assert.AreEqual(foo.description, bar.description);
-            Assert.AreEqual(foo.completed, bar.completed);
+            Assert.AreEqual(foo.completed_guid, bar.completed_guid);
             Assert.AreEqual(foo.failed, bar.failed);
             Assert.AreEqual(foo.due, bar.due);
         }

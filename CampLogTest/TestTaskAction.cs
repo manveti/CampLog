@@ -184,7 +184,7 @@ namespace CampLogTest {
         public void test_rebase() {
             Task task = new Task(Guid.NewGuid(), "Some task", "Do a thing", 42), new_task = new Task(task.entry_guid, "Some updated task", "Do an updated thing", 84);
             task.failed = true;
-            new_task.completed = true;
+            new_task.completed_guid = Guid.NewGuid();
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskUpdate action = new ActionTaskUpdate(task_guid, task, new_task, true, true, true, true, true);
@@ -199,7 +199,7 @@ namespace CampLogTest {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Task task = new Task(Guid.NewGuid(), "Some task", "Do a thing", 42), new_task = new Task(task.entry_guid, "Some updated task", "Do an updated thing", 84);
             task.failed = true;
-            new_task.completed = true;
+            new_task.completed_guid = Guid.NewGuid();
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskUpdate action = new ActionTaskUpdate(task_guid, task, new_task, true, true, true, true, true);
@@ -207,7 +207,8 @@ namespace CampLogTest {
             action.apply(state, ent);
             Assert.AreEqual(task.name, "Some updated task");
             Assert.AreEqual(task.description, "Do an updated thing");
-            Assert.IsTrue(task.completed);
+            Assert.IsNotNull(task.completed_guid);
+            Assert.AreEqual(task.completed_guid, new_task.completed_guid);
             Assert.IsFalse(task.failed);
             Assert.AreEqual(task.due, 84);
         }
@@ -230,7 +231,7 @@ namespace CampLogTest {
             Entry ent = new Entry(42, DateTime.Now, "Some Entry");
             Task task = new Task(Guid.NewGuid(), "Some task", "Do a thing", 42), new_task = new Task(task.entry_guid, "Some updated task", "Do an updated thing", 84);
             task.failed = true;
-            new_task.completed = true;
+            new_task.completed_guid = Guid.NewGuid();
             CampaignState state = new CampaignState();
             Guid task_guid = state.tasks.add_task(task);
             ActionTaskUpdate action = new ActionTaskUpdate(task_guid, task, new_task, true, true, true, true, true);
@@ -239,7 +240,7 @@ namespace CampLogTest {
             action.revert(state, ent);
             Assert.AreEqual(task.name, "Some task");
             Assert.AreEqual(task.description, "Do a thing");
-            Assert.IsFalse(task.completed);
+            Assert.IsNull(task.completed_guid);
             Assert.IsTrue(task.failed);
             Assert.AreEqual(task.due, 42);
         }
