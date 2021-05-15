@@ -26,7 +26,7 @@ namespace CampLog {
     public partial class CalendarEventListControl : UserControl {
         private ActionCallback change_callback;
         private Calendar calendar;
-        private Guid? event_guid;
+        private Guid? entry_guid;
         private CampaignState state;
         private decimal now;
         private List<CalendarEventRow> event_rows;
@@ -45,10 +45,10 @@ namespace CampLog {
             }
         }
 
-        public CalendarEventListControl(ActionCallback change_callback, Guid? event_guid = null) {
+        public CalendarEventListControl(ActionCallback change_callback, Guid? entry_guid = null) {
             this.change_callback = change_callback;
             this.calendar = new Calendar();
-            this.event_guid = event_guid;
+            this.entry_guid = entry_guid;
             this.state = null;
             this.now = 0;
             this.event_rows = new List<CalendarEventRow>();
@@ -88,6 +88,7 @@ namespace CampLog {
                 row._timestamp = calendar.format_timestamp(row.raw_timestamp);
             }
             this.event_list.Items.Refresh();
+            this.fix_listview_column_widths(this.event_list);
         }
 
         public void set_state(CampaignState state, decimal timestamp) {
@@ -129,13 +130,13 @@ namespace CampLog {
 
         private void do_add(object sender, RoutedEventArgs e) {
             if (this.state is null) { return; }
-            Guid evt_guid = this.event_guid ?? Guid.NewGuid();
-            CalendarEventWindow dialog_window = new CalendarEventWindow(this.state, this.calendar, this.now, evt_guid) { Owner = Window.GetWindow(this) };
+            Guid ent_guid = this.entry_guid ?? Guid.NewGuid();
+            CalendarEventWindow dialog_window = new CalendarEventWindow(this.state, this.calendar, this.now, ent_guid) { Owner = Window.GetWindow(this) };
             dialog_window.ShowDialog();
             if (this.change_callback is null) { return; }
             List<EntryAction> actions = dialog_window.get_actions();
             if ((actions is null) || (actions.Count <= 0)) { return; }
-            this.change_callback(actions, evt_guid);
+            this.change_callback(actions, ent_guid);
         }
 
         private void do_rem(object sender, RoutedEventArgs e) {

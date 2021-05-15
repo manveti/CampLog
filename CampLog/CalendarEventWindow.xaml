@@ -7,9 +7,14 @@
         xmlns:GUIx="clr-namespace:GUIx;assembly=GUIx"
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
-        Title="Calendar Event" Width="500" Height="450">
+        Title="Calendar Event" Width="700" Height="500">
     <Grid Name="main_grid">
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="1*"/>
@@ -25,17 +30,23 @@
 
         <Label Grid.Row="0" Grid.Column="0" Margin="1" Content="Timestamp:"/>
         <!--timestamp_box created in code-->
-        <CheckBox Grid.Row="0" Grid.Column="3" Margin="1" Name="repeat_box" Content="Repeat every:"/>
+        <Label Grid.Row="0" Grid.Column="2" Margin="1" Content="("/>
+        <!--timestamp_diff_box created in code-->
+        <Label Grid.Row="0" Grid.Column="4" Margin="1" Name="timestamp_diff_label" Content="after"/>
+        <TextBox Grid.Row="0" Grid.Column="5" Margin="1" Padding="2" Name="current_timestamp_box"
+                 IsReadOnly="True" MinWidth="150" VerticalAlignment="Center"/>
+        <Label Grid.Row="0" Grid.Column="6" Margin="1" Content=")"/>
+        <CheckBox Grid.Row="0" Grid.Column="8" Margin="1" Name="repeat_box" Content="Repeat every:" VerticalAlignment="Center"/>
         <!--interval_box created in code-->
 
         <Label Grid.Row="1" Grid.Column="0" Margin="1" Content="Name:"/>
-        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Margin="1" Name="name_box"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="9" Margin="1" Name="name_box"/>
 
-        <GroupBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5" Header="Description">
+        <GroupBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="10" Header="Description">
             <TextBox AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Name="description_box"/>
         </GroupBox>
 
-        <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="5">
+        <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*"/>
                 <ColumnDefinition Width="Auto"/>

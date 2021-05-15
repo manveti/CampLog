@@ -7,20 +7,23 @@ namespace CampLog {
     public partial class CalendarEventWindow : Window {
         public bool valid;
         private CampaignState state;
+        private decimal now;
         private Guid guid;
         private List<EntryAction> actions;
         private CalendarEvent evt;
         private ICalendarControl timestamp_box;
+        private ICalendarControl timestamp_diff_box;
         private ICalendarControl interval_box;
 
-        public CalendarEventWindow(CampaignState state, Calendar calendar, decimal now, Guid? event_guid = null, Guid? guid = null) {
+        public CalendarEventWindow(CampaignState state, Calendar calendar, decimal now, Guid? entry_guid = null, Guid? guid = null) {
             this.valid = false;
             this.state = state.copy();
+            this.now = now;
             this.actions = new List<EntryAction>();
             if (guid is null) {
-                if (event_guid is null) { throw new ArgumentNullException(nameof(event_guid)); }
+                if (entry_guid is null) { throw new ArgumentNullException(nameof(entry_guid)); }
                 this.guid = Guid.NewGuid();
-                ActionCalendarEventCreate add_action = new ActionCalendarEventCreate(this.guid, new CalendarEvent(event_guid.Value, now, ""));
+                ActionCalendarEventCreate add_action = new ActionCalendarEventCreate(this.guid, new CalendarEvent(entry_guid.Value, now, ""));
                 this.actions.Add(add_action);
                 this.evt = add_action.evt;
             }
@@ -36,16 +39,54 @@ namespace CampLog {
             this.timestamp_box = timestamp_box as ICalendarControl;
             if (this.timestamp_box is null) { throw new InvalidOperationException(); }
             this.timestamp_box.calendar_value = this.evt.timestamp;
+            FrameworkElement timestamp_diff_box = calendar.interval_control();
+            Grid.SetRow(timestamp_diff_box, 0);
+            Grid.SetColumn(timestamp_diff_box, 3);
+            this.main_grid.Children.Add(timestamp_diff_box);
+            this.timestamp_diff_box = timestamp_diff_box as ICalendarControl;
+            if (this.timestamp_diff_box is null) { throw new InvalidOperationException(); }
+            decimal timestamp_diff = this.evt.timestamp - now;
+            if (timestamp_diff < 0) {
+                this.timestamp_diff_label.Content = "before";
+                timestamp_diff = -timestamp_diff;
+            }
+            else {
+                this.timestamp_diff_label.Content = "after";
+            }
+            this.timestamp_diff_box.calendar_value = timestamp_diff;
+            this.current_timestamp_box.Text = calendar.format_timestamp(now);
+            this.timestamp_box.value_changed = this.timestamp_changed;
+            this.timestamp_diff_box.value_changed = this.timestamp_diff_changed;
             this.repeat_box.IsChecked = (this.evt.interval is not null);
             FrameworkElement interval_box = calendar.interval_control();
             Grid.SetRow(interval_box, 0);
-            Grid.SetColumn(interval_box, 4);
+            Grid.SetColumn(interval_box, 9);
             this.main_grid.Children.Add(interval_box);
             this.interval_box = interval_box as ICalendarControl;
             if (this.interval_box is null) { throw new InvalidOperationException(); }
             this.interval_box.calendar_value = (this.evt.interval ?? 0);
             this.name_box.Text = this.evt.name;
             this.description_box.Text = this.evt.description;
+        }
+
+        private void timestamp_changed() {
+            decimal timestamp_diff = this.timestamp_box.calendar_value - this.now;
+            if (timestamp_diff < 0) {
+                this.timestamp_diff_label.Content = "before";
+                timestamp_diff = -timestamp_diff;
+            }
+            else {
+                this.timestamp_diff_label.Content = "after";
+            }
+            this.timestamp_diff_box.calendar_value = timestamp_diff;
+        }
+
+        private void timestamp_diff_changed() {
+            decimal timestamp = this.timestamp_box.calendar_value, timestamp_diff = this.timestamp_diff_box.calendar_value;
+            if (timestamp < this.now) {
+                timestamp_diff = -timestamp_diff;
+            }
+            this.timestamp_box.calendar_value = this.now + timestamp_diff;
         }
 
         private void do_ok(object sender, RoutedEventArgs e) {
