@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 using CampLog;
@@ -52,6 +53,19 @@ namespace CampLogTest {
             Assert.AreEqual(state.tasks.tasks.Count, 0);
             Assert.AreEqual(state.tasks.active_tasks.Count, 0);
         }
+
+        [TestMethod]
+        public void test_merge_to_remove_create() {
+            Guid task_guid = Guid.NewGuid();
+            ActionTaskRemove remove_action = new ActionTaskRemove(task_guid);
+            List<EntryAction> actions = new List<EntryAction>() { remove_action };
+
+            Task task = new Task(Guid.NewGuid(), "Some task");
+            ActionTaskCreate create_action = new ActionTaskCreate(task_guid, task);
+            create_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
+        }
     }
 
 
@@ -100,6 +114,45 @@ namespace CampLogTest {
             Assert.AreEqual(state.tasks.tasks[task_guid].name, "Some task");
             Assert.AreEqual(state.tasks.active_tasks.Count, 1);
             Assert.IsTrue(state.tasks.active_tasks.Contains(task_guid));
+        }
+
+        [TestMethod]
+        public void test_merge_to_create_remove() {
+            Guid task_guid = Guid.NewGuid();
+            Task task = new Task(Guid.NewGuid(), "Some task");
+            ActionTaskCreate create_action = new ActionTaskCreate(task_guid, task);
+            List<EntryAction> actions = new List<EntryAction>() { create_action };
+
+            ActionTaskRemove remove_action = new ActionTaskRemove(task_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_restore_remove() {
+            Guid task_guid = Guid.NewGuid();
+            ActionTaskRestore restore_action = new ActionTaskRestore(task_guid);
+            List<EntryAction> actions = new List<EntryAction>() { restore_action };
+
+            ActionTaskRemove remove_action = new ActionTaskRemove(task_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_update_remove() {
+            Guid task_guid = Guid.NewGuid();
+            Task from = new Task(Guid.NewGuid(), "Some task"), to = new Task(Guid.NewGuid(), "Some updated task");
+            ActionTaskUpdate update_action = new ActionTaskUpdate(task_guid, from, to, true, false, false, false, false);
+            List<EntryAction> actions = new List<EntryAction>() { update_action };
+
+            ActionTaskRemove remove_action = new ActionTaskRemove(task_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            Assert.IsTrue(ReferenceEquals(actions[0], remove_action));
         }
     }
 
@@ -153,6 +206,18 @@ namespace CampLogTest {
             Assert.IsTrue(state.tasks.tasks.ContainsKey(task_guid));
             Assert.AreEqual(state.tasks.tasks[task_guid].name, "Some task");
             Assert.AreEqual(state.tasks.active_tasks.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_remove_restore() {
+            Guid task_guid = Guid.NewGuid();
+            ActionTaskRemove remove_action = new ActionTaskRemove(task_guid);
+            List<EntryAction> actions = new List<EntryAction>() { remove_action };
+
+            ActionTaskRestore restore_action = new ActionTaskRestore(task_guid);
+            restore_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
         }
     }
 
@@ -257,6 +322,53 @@ namespace CampLogTest {
             action.revert(state, ent);
             Assert.AreEqual(task.name, "Some task");
             Assert.IsNull(task.description);
+        }
+
+        [TestMethod]
+        public void test_merge_to_create_update() {
+            Guid task_guid = Guid.NewGuid();
+            Task from = new Task(Guid.NewGuid(), "Some task"), to = new Task(Guid.NewGuid(), "Some updated task");
+            ActionTaskCreate create_action = new ActionTaskCreate(task_guid, from);
+            List<EntryAction> actions = new List<EntryAction>() { create_action };
+
+            ActionTaskUpdate update_action = new ActionTaskUpdate(task_guid, from, to, true, false, false, false, false);
+            update_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionTaskCreate merged_action = actions[0] as ActionTaskCreate;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, task_guid);
+            Assert.AreEqual(merged_action.task.entry_guid, from.entry_guid);
+            Assert.AreEqual(merged_action.task.name, "Some updated task");
+        }
+
+        [TestMethod]
+        public void test_merge_to_update_update() {
+            Guid task_guid = Guid.NewGuid();
+            Task from1 = new Task(Guid.NewGuid(), "Some task", "Do something"), to1 = new Task(Guid.NewGuid(), "Some updated task", "Do something new"),
+                from2 = new Task(Guid.NewGuid(), "", "Do something new"), to2 = new Task(Guid.NewGuid(), "", "Do something fast", 42);
+            ActionTaskUpdate existing_action = new ActionTaskUpdate(task_guid, from1, to1, true, true, false, false, false);
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionTaskUpdate update_action = new ActionTaskUpdate(task_guid, from2, to2, false, true, false, false, true);
+            update_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionTaskUpdate merged_action = actions[0] as ActionTaskUpdate;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, task_guid);
+            Assert.IsTrue(merged_action.set_name);
+            Assert.AreEqual(merged_action.from.name, "Some task");
+            Assert.AreEqual(merged_action.to.name, "Some updated task");
+            Assert.IsTrue(merged_action.set_desc);
+            Assert.AreEqual(merged_action.from.description, "Do something");
+            Assert.AreEqual(merged_action.to.description, "Do something fast");
+            Assert.IsFalse(merged_action.set_completed);
+            Assert.IsFalse(merged_action.set_failed);
+            Assert.IsTrue(merged_action.set_due);
+            Assert.IsNull(merged_action.from.due);
+            Assert.IsNotNull(merged_action.to.due);
+            Assert.AreEqual(merged_action.to.due, 42);
         }
     }
 }
