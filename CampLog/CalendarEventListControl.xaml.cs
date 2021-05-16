@@ -107,6 +107,7 @@ namespace CampLog {
 
         private void show_past_changed(object sender, RoutedEventArgs e) {
             this.populate_event_rows();
+            if (this.event_rows.Count <= 0) { return; }
             CalendarEventRow next_row = this.event_rows[^1];
             foreach (CalendarEventRow row in this.event_rows) {
                 if (row.raw_timestamp >= this.now) {
