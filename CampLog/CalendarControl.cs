@@ -6,6 +6,7 @@ using GUIx;
 
 namespace CampLog {
     public interface ICalendarControl {
+        public bool IsReadOnly { get; set; }
         public Action value_changed { get; set; }
         public decimal calendar_value { get; set; }
     }

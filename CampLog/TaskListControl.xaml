@@ -1,0 +1,44 @@
+﻿<UserControl x:Class="CampLog.TaskListControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:CampLog"
+             mc:Ignorable="d" 
+             d:DesignWidth="300" d:DesignHeight="450">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="7" Margin="1" Name="show_inactive_box"
+                  Content="Show Inactive Tasks" Click="show_inactive_changed"/>
+
+        <ListView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="7" Name="task_list" SelectedValuePath="self" SelectionChanged="list_sel_changed">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header=" " DisplayMemberBinding="{Binding status}"/>
+                    <GridViewColumn Header="Task" DisplayMemberBinding="{Binding name}"/>
+                    <GridViewColumn Header="Due/Resolved" DisplayMemberBinding="{Binding timestamp}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <Button Grid.Row="2" Grid.Column="0" Margin="1" Padding="1" Name="add_but" Content="Add..." IsEnabled="False" Click="do_add"/>
+        <Button Grid.Row="2" Grid.Column="1" Margin="1" Padding="1" Name="rem_but" Content="Remove" IsEnabled="False" Click="do_rem"/>
+        <Button Grid.Row="2" Grid.Column="3" Margin="1" Padding="1" Name="fail_but" Content="Fail" IsEnabled="False" Click="do_fail"/>
+        <Button Grid.Row="2" Grid.Column="4" Margin="1" Padding="1" Name="complete_but" Content="Complete" IsEnabled="False" Click="do_complete"/>
+        <Button Grid.Row="2" Grid.Column="6" Margin="1" Padding="1" Name="view_but" Content="View" IsEnabled="False" Click="do_view"/>
+    </Grid>
+</UserControl>

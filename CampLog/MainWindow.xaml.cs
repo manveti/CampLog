@@ -65,6 +65,7 @@ namespace CampLog {
         private CharacterListControl character_list;
         private InventoryListControl inventory_list;
         private CalendarEventListControl calendar_event_list;
+        private TaskListControl task_list;
 
         public MainWindow() {
             this.save_path = null;
@@ -74,11 +75,13 @@ namespace CampLog {
             this.character_list = new CharacterListControl(this.entry_action_callback);
             this.inventory_list = new InventoryListControl(this.entry_action_callback);
             this.calendar_event_list = new CalendarEventListControl(this.entry_action_callback);
+            this.task_list = new TaskListControl(this.entry_action_callback);
             InitializeComponent();
             this.character_group.Content = this.character_list;
             this.inventory_group.Content = this.inventory_list;
-            this.calendar_event_group.Content = this.calendar_event_list;
             this.entries_list.ItemsSource = this.entry_rows;
+            this.calendar_event_group.Content = this.calendar_event_list;
+            this.task_group.Content = this.task_list;
         }
 
         private void new_campaign(object sender, RoutedEventArgs e) {
@@ -125,8 +128,9 @@ namespace CampLog {
             this.calendar_event_list.show_past = this.state.show_past_events;
             this.calendar_event_list.set_calendar(cal);
             this.calendar_event_list.set_state(this.state.domain.state, this.current_timestamp);
-            this.show_inactive_tasks_box.IsChecked = this.state.show_inactive_tasks; //TODO: use task_list property
-            //TODO: task_list, task_add_but, task_rem_but, task_resolve_but, task_view_but
+            this.task_list.show_inactive = this.state.show_inactive_tasks;
+            this.task_list.set_calendar(cal);
+            this.task_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
             //TODO: topic_list, topic_add_but, topic_rem_but, topic_view_but
         }
 
@@ -144,6 +148,7 @@ namespace CampLog {
             this.character_list.set_state(this.state.domain.state);
             this.inventory_list.set_state(this.state, this.state.domain.state);
             this.calendar_event_list.set_state(this.state.domain.state, this.current_timestamp);
+            this.task_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
             //TODO: set_state for other lists
         }
 

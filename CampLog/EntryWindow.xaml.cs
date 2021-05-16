@@ -30,6 +30,7 @@ namespace CampLog {
         private CalendarEventListControl event_list;
         private CharacterListControl character_list;
         private InventoryListControl inventory_list;
+        private TaskListControl task_list;
 
         public EntryWindow(CampaignSave save_state, int entry = -1, List<EntryAction> actions = null) {
             this.valid = false;
@@ -106,7 +107,10 @@ namespace CampLog {
             this.inventory_list = new InventoryListControl(this.entry_action_callback);
             this.inventory_list.set_state(this.save_state, this.state);
             this.inventory_group.Content = this.inventory_list;
-            //TODO: topics, tasks
+            //TODO: topics
+            this.task_list = new TaskListControl(this.entry_action_callback, current_entry.guid);
+            this.task_list.set_state(this.save_state, this.state, current_entry.timestamp);
+            this.task_group.Content = this.task_list;
         }
 
         private void add_actions(List<EntryAction> actions, bool refresh = true) {
@@ -180,7 +184,8 @@ namespace CampLog {
             this.event_list.set_state(this.state, timestamp);
             this.character_list.set_state(this.state);
             this.inventory_list.set_state(this.save_state, this.state);
-            //TODO: update topics and tasks lists
+            //TODO: update topics list
+            this.task_list.set_state(this.save_state, this.state, timestamp);
         }
 
         private void do_ok(object sender, RoutedEventArgs e) {

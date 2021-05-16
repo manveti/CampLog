@@ -116,9 +116,8 @@
 
         <GridSplitter Grid.Row="5" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
 
-        <GroupBox Grid.Row="5" Grid.Column="6" Header="Tasks">
-            <!--TODO: tasks list and buttons as in main window-->
-        </GroupBox>
+        <GroupBox Grid.Row="5" Grid.Column="6" Header="Tasks" Name="task_group"/>
+        <!--task_list created in code-->
 
         <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="7">
             <Grid.ColumnDefinitions>

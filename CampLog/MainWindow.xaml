@@ -173,39 +173,8 @@
 
             <GridSplitter Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5"/>
 
-            <GroupBox Grid.Row="2" Grid.Column="0" Header="Tasks">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="1*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="1*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Margin="1" Name="show_inactive_tasks_box" Content="Show Inactive Tasks"/>
-
-                    <ListView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Name="tasks_list">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Header="Done"/><!--TODO: '✓' vs '✔'-->
-                                <GridViewColumn Header="Task"/>
-                                <GridViewColumn Header="Due"/>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
-
-                    <Button Grid.Row="2" Grid.Column="0" Margin="1" Padding="1" Name="task_add_but" Content="Add..." IsEnabled="False"/>
-                    <Button Grid.Row="2" Grid.Column="1" Margin="1" Padding="1" Name="task_rem_but" Content="Remove" IsEnabled="False"/>
-                    <Button Grid.Row="2" Grid.Column="3" Margin="1" Padding="1" Name="task_resolve_but" Content="Resolve" IsEnabled="False"/>
-                    <Button Grid.Row="2" Grid.Column="4" Margin="1" Padding="1" Name="task_view_but" Content="View" IsEnabled="False"/>
-                </Grid>
-            </GroupBox>
+            <GroupBox Grid.Row="2" Grid.Column="0" Header="Tasks" Name="task_group"/>
+            <!--task_list created in code-->
 
             <GridSplitter Grid.Row="3" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Center" Height="5"/>
 
