@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CampLog {
     [Serializable]
-    public class BaseNote {
+    public abstract class BaseNote {
         public string contents;
         public RefcountSet<Guid> topics;
 
@@ -12,6 +12,8 @@ namespace CampLog {
             if (topics is null) { this.topics = new RefcountSet<Guid>(); }
             else { this.topics = new RefcountSet<Guid>(topics); }
         }
+
+        public abstract BaseNote copy();
     }
 
 
@@ -23,7 +25,7 @@ namespace CampLog {
             this.entry_guid = entry_guid;
         }
 
-        public Note copy() {
+        public override Note copy() {
             return new Note(this.contents, this.entry_guid) { topics = new RefcountSet<Guid>(this.topics) };
         }
     }
@@ -64,6 +66,10 @@ namespace CampLog {
 
         public ExternalNote(string contents, DateTime timestamp, HashSet<Guid> topics = null) : base(contents, topics) {
             this.timestamp = timestamp;
+        }
+
+        public override BaseNote copy() {
+            return new ExternalNote(this.contents, this.timestamp) { topics = new RefcountSet<Guid>(this.topics) };
         }
     }
 }

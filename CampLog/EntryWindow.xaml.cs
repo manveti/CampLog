@@ -19,6 +19,7 @@ namespace CampLog {
         private static readonly TimeSpan SESSION_DOWNTIME_THRESHOLD = new TimeSpan(12, 0, 0);
 
         public bool valid;
+        private Action state_dirty_callback;
         private CampaignSave save_state;
         private int entry;
         private List<Entry> entries;
@@ -30,10 +31,12 @@ namespace CampLog {
         private CalendarEventListControl event_list;
         private CharacterListControl character_list;
         private InventoryListControl inventory_list;
+        private TopicListControl topic_list;
         private TaskListControl task_list;
 
-        public EntryWindow(CampaignSave save_state, int entry = -1, List<EntryAction> actions = null) {
+        public EntryWindow(Action state_dirty_callback, CampaignSave save_state, int entry = -1, List<EntryAction> actions = null) {
             this.valid = false;
+            this.state_dirty_callback = state_dirty_callback;
             this.save_state = save_state;
             this.entry = entry;
             this.entries = new List<Entry>();
@@ -107,7 +110,9 @@ namespace CampLog {
             this.inventory_list = new InventoryListControl(this.entry_action_callback);
             this.inventory_list.set_state(this.save_state, this.state);
             this.inventory_group.Content = this.inventory_list;
-            //TODO: topics
+            this.topic_list = new TopicListControl(this.entry_action_callback, this.state_dirty_callback, current_entry.guid);
+            this.topic_list.set_state(this.save_state, this.state, current_entry.timestamp);
+            this.topic_group.Content = this.topic_list;
             this.task_list = new TaskListControl(this.entry_action_callback, current_entry.guid);
             this.task_list.set_state(this.save_state, this.state, current_entry.timestamp);
             this.task_group.Content = this.task_list;
@@ -184,7 +189,7 @@ namespace CampLog {
             this.event_list.set_state(this.state, timestamp);
             this.character_list.set_state(this.state);
             this.inventory_list.set_state(this.save_state, this.state);
-            //TODO: update topics list
+            this.topic_list.set_state(this.save_state, this.state, timestamp);
             this.task_list.set_state(this.save_state, this.state, timestamp);
         }
 

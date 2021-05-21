@@ -118,7 +118,8 @@ namespace CampLogTest {
             foo.valid_entries = 1;
             Guid topic_guid = Guid.NewGuid();
             foo.topics[topic_guid] = topic;
-            foo.notes.Add(oog_note);
+            Guid oog_note_guid = Guid.NewGuid();
+            foo.notes[oog_note_guid] = oog_note;
 
             DataContractSerializer fmt = new DataContractSerializer(typeof(CampaignDomain));
             using (System.IO.MemoryStream ms = new System.IO.MemoryStream()) {
@@ -154,8 +155,8 @@ namespace CampLogTest {
             Assert.IsTrue(bar.topics.ContainsKey(topic_guid));
             Assert.AreEqual(bar.topics[topic_guid].name, "Some topic");
             Assert.AreEqual(foo.notes.Count, bar.notes.Count);
-            for (int i = 0; i < foo.notes.Count; i++) {
-                Assert.AreEqual(foo.notes[i].contents, bar.notes[i].contents);
+            foreach (Guid guid in foo.notes.Keys) {
+                Assert.AreEqual(foo.notes[guid].contents, bar.notes[guid].contents);
             }
         }
 

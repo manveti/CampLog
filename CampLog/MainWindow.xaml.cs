@@ -66,6 +66,7 @@ namespace CampLog {
         private InventoryListControl inventory_list;
         private CalendarEventListControl calendar_event_list;
         private TaskListControl task_list;
+        private TopicListControl topic_list;
 
         public MainWindow() {
             this.save_path = null;
@@ -76,12 +77,14 @@ namespace CampLog {
             this.inventory_list = new InventoryListControl(this.entry_action_callback);
             this.calendar_event_list = new CalendarEventListControl(this.entry_action_callback);
             this.task_list = new TaskListControl(this.entry_action_callback);
+            this.topic_list = new TopicListControl(this.entry_action_callback, this.state_dirty_callback);
             InitializeComponent();
             this.character_group.Content = this.character_list;
             this.inventory_group.Content = this.inventory_list;
             this.entries_list.ItemsSource = this.entry_rows;
             this.calendar_event_group.Content = this.calendar_event_list;
             this.task_group.Content = this.task_list;
+            this.topic_group.Content = this.topic_list;
         }
 
         private void new_campaign(object sender, RoutedEventArgs e) {
@@ -131,7 +134,7 @@ namespace CampLog {
             this.task_list.show_inactive = this.state.show_inactive_tasks;
             this.task_list.set_calendar(cal);
             this.task_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
-            //TODO: topic_list, topic_add_but, topic_rem_but, topic_view_but
+            this.topic_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
         }
 
         //TODO: ...
@@ -149,11 +152,15 @@ namespace CampLog {
             this.inventory_list.set_state(this.state, this.state.domain.state);
             this.calendar_event_list.set_state(this.state.domain.state, this.current_timestamp);
             this.task_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
-            //TODO: set_state for other lists
+            this.topic_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
+        }
+
+        private void state_dirty_callback() {
+            this.state_dirty = true;
         }
 
         private void entry_action_callback(List<EntryAction> actions, Guid? entry_guid = null) {
-            EntryWindow entry_window = new EntryWindow(this.state, actions: actions) { Owner = this };
+            EntryWindow entry_window = new EntryWindow(this.state_dirty_callback, this.state, actions: actions) { Owner = this };
             entry_window.ShowDialog();
             if (!entry_window.valid) { return; }
 
@@ -207,7 +214,7 @@ namespace CampLog {
         private void view_entry(object sender, RoutedEventArgs e) {
             int row_idx = this.entries_list.SelectedIndex, idx = this.state.domain.entries.Count - row_idx - 1;
             if ((idx < 0) || (idx >= this.state.domain.entries.Count)) { return; }
-            EntryWindow entry_window = new EntryWindow(this.state, idx) { Owner = this };
+            EntryWindow entry_window = new EntryWindow(this.state_dirty_callback, this.state, idx) { Owner = this };
             entry_window.ShowDialog();
             if (!entry_window.valid) { return; }
 

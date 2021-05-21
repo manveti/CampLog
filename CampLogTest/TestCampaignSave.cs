@@ -62,7 +62,7 @@ namespace CampLogTest {
             ItemSpec gp = new ItemSpec("GP", cat, 1, 0), gem = new ItemSpec("Gem", cat, 100, 1);
             CampaignSave state = new CampaignSave(new Calendar(), new CharacterSheet());
 
-            state.add_reference(gp);
+            state.add_item_reference(gp);
             Assert.AreEqual(state.categories.Count, 1);
             Assert.IsTrue(state.categories.ContainsKey("Wealth"));
             Assert.AreEqual(state.categories["Wealth"].element, cat);
@@ -72,7 +72,7 @@ namespace CampLogTest {
             Assert.AreEqual(state.items["GP"].element, gp);
             Assert.AreEqual(state.items["GP"].ref_count, 1);
 
-            state.add_reference(gem);
+            state.add_item_reference(gem);
             Assert.AreEqual(state.categories.Count, 1);
             Assert.IsTrue(state.categories.ContainsKey("Wealth"));
             Assert.AreEqual(state.categories["Wealth"].element, cat);
@@ -85,7 +85,7 @@ namespace CampLogTest {
             Assert.AreEqual(state.items["Gem"].element, gem);
             Assert.AreEqual(state.items["Gem"].ref_count, 1);
 
-            state.add_reference(gp);
+            state.add_item_reference(gp);
             Assert.AreEqual(state.categories.Count, 1);
             Assert.IsTrue(state.categories.ContainsKey("Wealth"));
             Assert.AreEqual(state.categories["Wealth"].element, cat);

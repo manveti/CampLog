@@ -110,9 +110,8 @@
 
         <GridSplitter Grid.Row="5" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
 
-        <GroupBox Grid.Row="5" Grid.Column="4" Header="Topics">
-            <!--TODO: topics list and buttons as in main window-->
-        </GroupBox>
+        <GroupBox Grid.Row="5" Grid.Column="4" Header="Topics" Name="topic_group"/>
+        <!--topic_list created in code-->
 
         <GridSplitter Grid.Row="5" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="5"/>
 
