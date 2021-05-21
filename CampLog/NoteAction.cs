@@ -43,6 +43,33 @@ namespace CampLog {
         public override void revert(CampaignState state, Entry ent) {
             state.notes.restore_note(this.guid);
         }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionNoteCreate ext_note_create) {
+                    if (ext_note_create.guid == this.guid) {
+                        // existing ActionNoteCreate with this guid; remove it and we're done
+                        actions.RemoveAt(i);
+                        return;
+                    }
+                }
+                if (actions[i] is ActionNoteRestore ext_note_restore) {
+                    if (ext_note_restore.guid == this.guid) {
+                        // existing ActionNoteRestore with this guid; remove it and we're done
+                        actions.RemoveAt(i);
+                        return;
+                    }
+                }
+                if (actions[i] is ActionNoteUpdate ext_note_update) {
+                    if (ext_note_update.guid == this.guid) {
+                        // existing ActionNoteUpdate with this guid; remove it
+                        actions.RemoveAt(i);
+                        continue;
+                    }
+                }
+            }
+            actions.Add(this);
+        }
     }
 
 
@@ -62,6 +89,19 @@ namespace CampLog {
 
         public override void revert(CampaignState state, Entry ent) {
             state.notes.remove_note(this.guid);
+        }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionNoteRemove ext_note_remove) {
+                    if (ext_note_remove.guid == this.guid) {
+                        // existing ActionNoteRemove with this guid; remove it and we're done
+                        actions.RemoveAt(i);
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
         }
     }
 
@@ -136,6 +176,63 @@ namespace CampLog {
                     }
                 }
             }
+        }
+
+        public override void merge_to(List<EntryAction> actions) {
+            for (int i = actions.Count - 1; i >= 0; i--) {
+                if (actions[i] is ActionNoteCreate ext_note_create) {
+                    if (ext_note_create.guid == this.guid) {
+                        // existing ActionNoteCreate with this guid; update its "note" field based on our params and we're done
+                        if (this.contents_to is not null) { ext_note_create.note.contents = this.contents_to; }
+                        if (this.adjust_topics is not null) {
+                            foreach (Guid topic in this.adjust_topics.Keys) {
+                                if (this.adjust_topics[topic] < 0) {
+                                    ext_note_create.note.topics.Remove(topic);
+                                }
+                                else {
+                                    ext_note_create.note.topics.Add(topic);
+                                }
+                            }
+                        }
+                        return;
+                    }
+                }
+                if (actions[i] is ActionNoteUpdate ext_note_update) {
+                    if (ext_note_update.guid == this.guid) {
+                        // existing ActionNoteUpdate with this guid; replace with a new adjust action with the sum of both adjustments
+                        string from_contents = ext_note_update.contents_from, to_contents = ext_note_update.contents_to;
+                        Dictionary<Guid, int> topic_adjustments = new Dictionary<Guid, int>();
+                        if (this.contents_to is not null) {
+                            if (from_contents is null) { from_contents = this.contents_from; }
+                            to_contents = this.contents_to;
+                        }
+                        if (ext_note_update.adjust_topics is not null) {
+                            foreach (Guid guid in ext_note_update.adjust_topics.Keys) {
+                                if (ext_note_update.adjust_topics[guid] == 0) { continue; }
+                                topic_adjustments[guid] = ext_note_update.adjust_topics[guid];
+                            }
+                        }
+                        if (this.adjust_topics is not null) {
+                            foreach (Guid guid in this.adjust_topics.Keys) {
+                                if (!topic_adjustments.ContainsKey(guid)) {
+                                    topic_adjustments[guid] = 0;
+                                }
+                                topic_adjustments[guid] += this.adjust_topics[guid];
+                                if (topic_adjustments[guid] == 0) { topic_adjustments.Remove(guid); }
+                            }
+                        }
+                        if (topic_adjustments.Count <= 0) {
+                            topic_adjustments = null;
+                        }
+                        actions.RemoveAt(i);
+                        if ((to_contents is not null) || (topic_adjustments is not null)) {
+                            new ActionNoteUpdate(this.guid, from_contents, to_contents, topic_adjustments).merge_to(actions);
+                        }
+                        return;
+                    }
+                }
+            }
+            actions.Add(this);
         }
     }
 }

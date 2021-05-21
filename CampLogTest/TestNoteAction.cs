@@ -102,6 +102,44 @@ namespace CampLogTest {
             Assert.AreEqual(state.notes.active_notes.Count, 1);
             Assert.IsTrue(state.notes.active_notes.Contains(note_guid));
         }
+
+        [TestMethod]
+        public void test_merge_to_create_remove() {
+            Guid note_guid = Guid.NewGuid();
+            Note note = new Note("Some note", Guid.NewGuid());
+            ActionNoteCreate create_action = new ActionNoteCreate(note_guid, note);
+            List<EntryAction> actions = new List<EntryAction>() { create_action };
+
+            ActionNoteRemove remove_action = new ActionNoteRemove(note_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_restore_remove() {
+            Guid note_guid = Guid.NewGuid();
+            ActionNoteRestore restore_action = new ActionNoteRestore(note_guid);
+            List<EntryAction> actions = new List<EntryAction>() { restore_action };
+
+            ActionNoteRemove remove_action = new ActionNoteRemove(note_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_update_remove() {
+            Guid note_guid = Guid.NewGuid();
+            ActionNoteUpdate update_action = new ActionNoteUpdate(note_guid, "Some note", "Some updated note", null);
+            List<EntryAction> actions = new List<EntryAction>() { update_action };
+
+            ActionNoteRemove remove_action = new ActionNoteRemove(note_guid);
+            remove_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            Assert.IsTrue(ReferenceEquals(actions[0], remove_action));
+        }
     }
 
 
@@ -154,6 +192,18 @@ namespace CampLogTest {
             Assert.IsTrue(state.notes.notes.ContainsKey(note_guid));
             Assert.AreEqual(state.notes.notes[note_guid].contents, "Some note");
             Assert.AreEqual(state.notes.active_notes.Count, 0);
+        }
+
+        [TestMethod]
+        public void test_merge_to_remove_restore() {
+            Guid note_guid = Guid.NewGuid();
+            ActionNoteRemove remove_action = new ActionNoteRemove(note_guid);
+            List<EntryAction> actions = new List<EntryAction>() { remove_action };
+
+            ActionNoteRestore restore_action = new ActionNoteRestore(note_guid);
+            restore_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 0);
         }
     }
 
@@ -318,6 +368,51 @@ namespace CampLogTest {
             Assert.IsTrue(note.topics.Contains(topic1));
             Assert.IsTrue(note.topics.Contains(topic2));
             Assert.AreEqual(note.topics.contents[topic2], 2);
+        }
+
+        [TestMethod]
+        public void test_merge_to_create_update() {
+            Guid note_guid = Guid.NewGuid(), topic1_guid = Guid.NewGuid(), topic2_guid = Guid.NewGuid();
+            Note note = new Note("Some note", Guid.NewGuid(), new HashSet<Guid>() { topic1_guid });
+            ActionNoteCreate create_action = new ActionNoteCreate(note_guid, note);
+            List<EntryAction> actions = new List<EntryAction>() { create_action };
+
+            Dictionary<Guid, int> adjust_topics = new Dictionary<Guid, int>() { [topic1_guid] = -1, [topic2_guid] = 1 };
+            ActionNoteUpdate update_action = new ActionNoteUpdate(note_guid, "Some note", "Some updated note", adjust_topics);
+            update_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionNoteCreate merged_action = actions[0] as ActionNoteCreate;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, note_guid);
+            Assert.AreEqual(merged_action.note.entry_guid, note.entry_guid);
+            Assert.AreEqual(merged_action.note.contents, "Some updated note");
+            Assert.IsNotNull(merged_action.note.topics);
+            Assert.AreEqual(merged_action.note.topics.Count, 1);
+            Assert.IsTrue(merged_action.note.topics.Contains(topic2_guid));
+        }
+
+        [TestMethod]
+        public void test_merge_to_update_update() {
+            Guid note_guid = Guid.NewGuid(), topic1_guid = Guid.NewGuid(), topic2_guid = Guid.NewGuid();
+            Dictionary<Guid, int> adjust_topics1 = new Dictionary<Guid, int>() { [topic1_guid] = 1 },
+                adjust_topics2 = new Dictionary<Guid, int>() { [topic1_guid] = -1, [topic2_guid] = 1 };
+            ActionNoteUpdate existing_action = new ActionNoteUpdate(note_guid, "Some note", "Some updated note", adjust_topics1);
+            List<EntryAction> actions = new List<EntryAction>() { existing_action };
+
+            ActionNoteUpdate update_action = new ActionNoteUpdate(note_guid, null, null, adjust_topics2);
+            update_action.merge_to(actions);
+
+            Assert.AreEqual(actions.Count, 1);
+            ActionNoteUpdate merged_action = actions[0] as ActionNoteUpdate;
+            Assert.IsNotNull(merged_action);
+            Assert.AreEqual(merged_action.guid, note_guid);
+            Assert.AreEqual(merged_action.contents_from, "Some note");
+            Assert.AreEqual(merged_action.contents_to, "Some updated note");
+            Assert.IsNotNull(merged_action.adjust_topics);
+            Assert.AreEqual(merged_action.adjust_topics.Count, 1);
+            Assert.IsTrue(merged_action.adjust_topics.ContainsKey(topic2_guid));
+            Assert.AreEqual(merged_action.adjust_topics[topic2_guid], 1);
         }
     }
 }
