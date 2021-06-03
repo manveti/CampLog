@@ -1,31 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-
-using GUIx;
 
 namespace CampLog {
     public partial class EntryWindow : Window {
         private static readonly TimeSpan SESSION_DOWNTIME_THRESHOLD = new TimeSpan(12, 0, 0);
 
         public bool valid;
-        private Action state_dirty_callback;
         private CampaignSave save_state;
         private int entry;
         private List<Entry> entries;
         private int previous_entry_idx = -1;
         private CampaignState state;
         public List<EntryAction> actions;
+        private Dictionary<Guid, Topic> topics = null;
+        private Dictionary<Guid, int> topic_refs = null;
+        private Dictionary<Guid, ExternalNote> notes = null;
         public ICalendarControl timestamp_box;
         private ICalendarControl timestamp_diff_box;
         private CalendarEventListControl event_list;
@@ -34,9 +25,8 @@ namespace CampLog {
         private TopicListControl topic_list;
         private TaskListControl task_list;
 
-        public EntryWindow(Action state_dirty_callback, CampaignSave save_state, int entry = -1, List<EntryAction> actions = null) {
+        public EntryWindow(CampaignSave save_state, int entry = -1, List<EntryAction> actions = null) {
             this.valid = false;
-            this.state_dirty_callback = state_dirty_callback;
             this.save_state = save_state;
             this.entry = entry;
             this.entries = new List<Entry>();
@@ -110,7 +100,7 @@ namespace CampLog {
             this.inventory_list = new InventoryListControl(this.entry_action_callback);
             this.inventory_list.set_state(this.save_state, this.state);
             this.inventory_group.Content = this.inventory_list;
-            this.topic_list = new TopicListControl(this.entry_action_callback, this.state_dirty_callback, current_entry.guid);
+            this.topic_list = new TopicListControl(this.entry_action_callback, current_entry.guid);
             this.topic_list.set_state(this.save_state, this.state, current_entry.timestamp);
             this.topic_group.Content = this.topic_list;
             this.task_list = new TaskListControl(this.entry_action_callback, current_entry.guid);
@@ -175,7 +165,13 @@ namespace CampLog {
             this.act_edit_but.IsEnabled = true;
         }
 
-        private void entry_action_callback(List<EntryAction> actions, Guid? entry_guid = null) {
+        private void entry_action_callback(
+            List<EntryAction> actions,
+            Guid? entry_guid = null,
+            Dictionary<Guid, Topic> topics = null,
+            Dictionary<Guid, int> topic_refs = null,
+            Dictionary<Guid, ExternalNote> notes = null
+        ) {
             if ((actions is null) || (actions.Count <= 0)) { return; }
             decimal timestamp = this.timestamp_box.calendar_value;
             DateTime created = this.get_created();
@@ -186,10 +182,13 @@ namespace CampLog {
             foreach (EntryAction action in actions) {
                 action.apply(this.state, ent);
             }
+            if (topics is not null) { this.topics = topics; }
+            if (topic_refs is not null) { this.topic_refs = topic_refs; }
+            if (notes is not null) { this.notes = notes; }
             this.event_list.set_state(this.state, timestamp);
             this.character_list.set_state(this.state);
             this.inventory_list.set_state(this.save_state, this.state);
-            this.topic_list.set_state(this.save_state, this.state, timestamp);
+            this.topic_list.set_state(this.save_state, this.state, timestamp, this.topics, this.topic_refs, this.notes);
             this.task_list.set_state(this.save_state, this.state, timestamp);
         }
 

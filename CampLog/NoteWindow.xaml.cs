@@ -1,16 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 using GUIx;
 
@@ -25,24 +16,32 @@ namespace CampLog {
 
         private void populate_topic_rows() {
             foreach (Guid guid in this.note.topics) {
-                if (!this.state.domain.topics.ContainsKey(guid)) { continue; }
-                this.topic_rows.Add(new TopicRow(guid, this.state.domain.topics[guid].name));
+                if (!this.topics_by_guid.ContainsKey(guid)) { continue; }
+                this.topic_rows.Add(new TopicRow(guid, this.topics_by_guid[guid].name));
             }
             this.topic_rows.Sort((x, y) => x.name.CompareTo(y.name));
         }
 
-        public NoteWindow(CampaignSave state, BaseNote note, decimal timestamp = 0) {
+        public NoteWindow(CampaignSave state, BaseNote note, decimal timestamp = 0, Dictionary<Guid, Topic> topics = null) {
             this.valid = false;
             this.state = state;
             this.note = note.copy();
             this.topic_rows = new List<TopicRow>();
-            this.populate_topic_rows();
-            this.topics_by_guid = new Dictionary<Guid, Topic>();
             this.topics_by_name = new Dictionary<string, Guid>();
-            foreach (Guid guid in state.domain.topics.Keys) {
-                this.topics_by_guid[guid] = state.domain.topics[guid];
-                this.topics_by_name[state.domain.topics[guid].name] = guid;
+            if (topics is null) {
+                this.topics_by_guid = new Dictionary<Guid, Topic>();
+                foreach (Guid guid in state.domain.topics.Keys) {
+                    this.topics_by_guid[guid] = state.domain.topics[guid];
+                    this.topics_by_name[state.domain.topics[guid].name] = guid;
+                }
             }
+            else {
+                this.topics_by_guid = topics;
+                foreach (Guid guid in topics.Keys) {
+                    this.topics_by_name[topics[guid].name] = guid;
+                }
+            }
+            this.populate_topic_rows();
             InitializeComponent();
             if (note is Note internal_note) {
                 foreach (Entry entry in this.state.domain.entries) {
@@ -112,6 +111,7 @@ namespace CampLog {
 
         private void do_ok(object sender, RoutedEventArgs e) {
             this.valid = true;
+            this.note.contents = this.contents_box.Text;
             this.Close();
         }
 

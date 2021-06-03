@@ -17,7 +17,13 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace CampLog {
-    public delegate void ActionCallback(List<EntryAction> actions, Guid? entry_guid = null);
+    public delegate void ActionCallback(
+        List<EntryAction> actions,
+        Guid? entry_guid = null,
+        Dictionary<Guid, Topic> topics = null,
+        Dictionary<Guid, int> topic_refs = null,
+        Dictionary<Guid, ExternalNote> notes = null
+    );
 
 
     public class EntryRow : INotifyPropertyChanged {
@@ -77,7 +83,7 @@ namespace CampLog {
             this.inventory_list = new InventoryListControl(this.entry_action_callback);
             this.calendar_event_list = new CalendarEventListControl(this.entry_action_callback);
             this.task_list = new TaskListControl(this.entry_action_callback);
-            this.topic_list = new TopicListControl(this.entry_action_callback, this.state_dirty_callback);
+            this.topic_list = new TopicListControl(this.entry_action_callback);
             InitializeComponent();
             this.character_group.Content = this.character_list;
             this.inventory_group.Content = this.inventory_list;
@@ -155,39 +161,48 @@ namespace CampLog {
             this.topic_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
         }
 
-        private void state_dirty_callback() {
-            this.state_dirty = true;
-        }
+        private void entry_action_callback(
+            List<EntryAction> actions,
+            Guid? entry_guid = null,
+            Dictionary<Guid, Topic> topics = null,
+            Dictionary<Guid, int> topic_refs = null,
+            Dictionary<Guid, ExternalNote> notes = null
+        ) {
+            if ((actions is not null) && (actions.Count > 0)) {
+                EntryWindow entry_window = new EntryWindow(this.state, actions: actions) { Owner = this };
+                entry_window.ShowDialog();
+                if (!entry_window.valid) { return; }
 
-        private void entry_action_callback(List<EntryAction> actions, Guid? entry_guid = null) {
-            EntryWindow entry_window = new EntryWindow(this.state_dirty_callback, this.state, actions: actions) { Owner = this };
-            entry_window.ShowDialog();
-            if (!entry_window.valid) { return; }
-
-            decimal timestamp = entry_window.timestamp_box.calendar_value;
-            DateTime created = entry_window.get_created();
-            string description = entry_window.description_box.Text;
-            int session = (int)(entry_window.session_box.Value);
-            Entry ent = new Entry(timestamp, created, description, session, new List<EntryAction>(entry_window.actions), entry_guid);
-            this.state_dirty = true;
-            int idx = this.state.domain.add_entry(ent);
-            this.state.add_references(ent.actions);
-            int valid_idx = this.state.domain.valid_entries - 1;
-            if (valid_idx < 0) { valid_idx = this.state.domain.entries.Count - 1; }
-            this.session_num_box.Content = (this.state.domain.entries[valid_idx].session ?? 0).ToString();
-            this.current_timestamp = this.state.domain.entries[valid_idx].timestamp;
-            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp);
-            EntryRow row = new EntryRow(
-                this.state.calendar.format_timestamp(ent.timestamp),
-                idx >= this.state.domain.valid_entries,
-                (ent.session ?? 0).ToString(),
-                ent.created.ToString("G"),
-                ent.description
-            );
-            this.entry_rows.Insert(this.entry_rows.Count - idx, row);
-            for (int i = 0; i < this.entry_rows.Count; i++) {
-                this.entry_rows[i].set_invalid(this.entry_rows.Count - i > this.state.domain.valid_entries);
+                decimal timestamp = entry_window.timestamp_box.calendar_value;
+                DateTime created = entry_window.get_created();
+                string description = entry_window.description_box.Text;
+                int session = (int)(entry_window.session_box.Value);
+                Entry ent = new Entry(timestamp, created, description, session, new List<EntryAction>(entry_window.actions), entry_guid);
+                this.state_dirty = true;
+                int idx = this.state.domain.add_entry(ent);
+                this.state.add_references(ent.actions);
+                int valid_idx = this.state.domain.valid_entries - 1;
+                if (valid_idx < 0) { valid_idx = this.state.domain.entries.Count - 1; }
+                this.session_num_box.Content = (this.state.domain.entries[valid_idx].session ?? 0).ToString();
+                this.current_timestamp = this.state.domain.entries[valid_idx].timestamp;
+                this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp);
+                EntryRow row = new EntryRow(
+                    this.state.calendar.format_timestamp(ent.timestamp),
+                    idx >= this.state.domain.valid_entries,
+                    (ent.session ?? 0).ToString(),
+                    ent.created.ToString("G"),
+                    ent.description
+                );
+                this.entry_rows.Insert(this.entry_rows.Count - idx, row);
+                for (int i = 0; i < this.entry_rows.Count; i++) {
+                    this.entry_rows[i].set_invalid(this.entry_rows.Count - i > this.state.domain.valid_entries);
+                }
             }
+
+            if (topics is not null) { this.state.domain.topics = topics; }
+            if (topic_refs is not null) { this.state.topic_refs = topic_refs; }
+            if (notes is not null) { this.state.domain.notes = notes; }
+
             this.refresh_lists();
         }
 
@@ -214,7 +229,7 @@ namespace CampLog {
         private void view_entry(object sender, RoutedEventArgs e) {
             int row_idx = this.entries_list.SelectedIndex, idx = this.state.domain.entries.Count - row_idx - 1;
             if ((idx < 0) || (idx >= this.state.domain.entries.Count)) { return; }
-            EntryWindow entry_window = new EntryWindow(this.state_dirty_callback, this.state, idx) { Owner = this };
+            EntryWindow entry_window = new EntryWindow(this.state, idx) { Owner = this };
             entry_window.ShowDialog();
             if (!entry_window.valid) { return; }
 
@@ -269,38 +284,16 @@ namespace CampLog {
         //TODO: remove
         private void do_test(object sender, RoutedEventArgs e) {
             CampaignSave state = new CampaignSave(new Calendar(), new CharacterSheet());
-#if false
-            Character chr = new Character("Bob");
-            chr.set_property(new List<string>() { "Skills" }, new CharDictProperty());
-            chr.set_property(new List<string>() { "Skills", "Jump" }, new CharNumProperty(7));
-            chr.set_property(new List<string>() { "Skills", "Skull Smashing" }, new CharNumProperty(42));
-            Guid guid = state.domain.state.characters.add_character(chr);
-            //SimpleCharacterWindow cw = new SimpleCharacterWindow(state.domain.state, guid) { Owner = this };
-            //cw.ShowDialog();
-            this.character_list.set_state(state.domain.state);
-#endif
-            Guid guid = state.domain.state.inventories.new_inventory("Party Loot");
-            ItemCategory wealth = new ItemCategory("Wealth", 1), weaps = new ItemCategory("Weapons", .5m), adv = new ItemCategory("Adventuring", .5m);
-            ItemSpec gem = new ItemSpec("Gem", wealth, 100, 0);
-            state.domain.state.inventories.add_entry(guid, new ItemStack(gem));
-            state.domain.state.inventories.add_entry(guid, new ItemStack(new ItemSpec("GP", wealth, 1, 0), 123));
-            state.domain.state.inventories.add_entry(guid, new ItemStack(new ItemSpec("Sword", weaps, 10, 2)));
-            state.domain.state.inventories.add_entry(guid, new ItemStack(gem));
-            ItemSpec backpack = new ItemSpec("Backpack", adv, 2, 2, null, new ContainerSpec[] { new ContainerSpec("Main Pack", 1, 100) });
-            backpack.properties["foo"] = "bar";
-            Guid bp_id = state.domain.state.inventories.add_entry(guid, new SingleItem(backpack));
-            state.domain.state.inventories.add_entry(bp_id, 0, new ItemStack(new ItemSpec("Ration", adv, 2, 1), 7));
-            state.domain.state.inventories.add_entry(bp_id, 0, new ItemStack(new ItemSpec("Bedroll", adv, 2, 2)));
-            this.inventory_list.set_state(state, state.domain.state);
-            InventoryWindow iw = new InventoryWindow(state, state.domain.state, guid);
-            iw.ShowDialog();
-            //foreach (InventoryEntry ent in state.domain.state.inventories.entries.Values) {
-            //    state.add_reference(ent.item);
-            //}
-            //ItemCategory armor = new ItemCategory("Armor", .5m);
-            //state.categories["Armor"] = new ElementReference<ItemCategory>(armor);
-            //ItemLibraryWindow ilw = new ItemLibraryWindow(state, true, "Sword") { Owner = this };
-            //ilw.ShowDialog();
+            Guid villain_id = Guid.NewGuid(), houserules_id = Guid.NewGuid();
+            state.domain.topics[villain_id] = new Topic("Baddy McVillainface", "This is the BBEG of the whole campaign, and a jerk-face.");
+            state.domain.topics[houserules_id] = new Topic("House Rules", "House rules we use for this campaign.");
+            state.domain.notes[Guid.NewGuid()] = new ExternalNote(
+                "Polymorph preserves base HP, but adjusts total HP based on new Con mod.", DateTime.Now, new HashSet<Guid>() { houserules_id }
+            );
+            TopicWindow tw = new TopicWindow(
+                new Dictionary<Guid, List<EntityRow>>(), state.domain.topics, state, state.domain.state, 0, null, houserules_id
+            ) { Owner = this };
+            tw.ShowDialog();
 #if false
             if (!iw.valid) { return; }
             List<string> action_types = new List<string>();

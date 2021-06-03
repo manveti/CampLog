@@ -27,7 +27,7 @@ namespace CampLog {
         public int CompareTo(object obj) {
             if (obj is null) { return 1; }
             TaskRow other = obj as TaskRow;
-            if (obj is null) { return 1; }
+            if (other is null) { return 1; }
             if (this.raw_timestamp == other.raw_timestamp) { return this._name.CompareTo(other._name); }
             // sort null highest rather than lowest -- tasks without due date should be treated as due infinitely far in the future
             if (this.raw_timestamp is null) { return 1; }
