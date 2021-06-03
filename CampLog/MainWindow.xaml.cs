@@ -168,10 +168,18 @@ namespace CampLog {
             Dictionary<Guid, int> topic_refs = null,
             Dictionary<Guid, ExternalNote> notes = null
         ) {
+            if (topics is not null) { this.state.domain.topics = topics; }
+            if (topic_refs is not null) { this.state.topic_refs = topic_refs; }
+            if (notes is not null) { this.state.domain.notes = notes; }
+
             if ((actions is not null) && (actions.Count > 0)) {
                 EntryWindow entry_window = new EntryWindow(this.state, actions: actions) { Owner = this };
                 entry_window.ShowDialog();
                 if (!entry_window.valid) { return; }
+
+                if (entry_window.topics is not null) { this.state.domain.topics = entry_window.topics; }
+                if (entry_window.topic_refs is not null) { this.state.topic_refs = entry_window.topic_refs; }
+                if (entry_window.notes is not null) { this.state.domain.notes = entry_window.notes; }
 
                 decimal timestamp = entry_window.timestamp_box.calendar_value;
                 DateTime created = entry_window.get_created();
@@ -198,10 +206,6 @@ namespace CampLog {
                     this.entry_rows[i].set_invalid(this.entry_rows.Count - i > this.state.domain.valid_entries);
                 }
             }
-
-            if (topics is not null) { this.state.domain.topics = topics; }
-            if (topic_refs is not null) { this.state.topic_refs = topic_refs; }
-            if (notes is not null) { this.state.domain.notes = notes; }
 
             this.refresh_lists();
         }

@@ -14,9 +14,9 @@ namespace CampLog {
         private int previous_entry_idx = -1;
         private CampaignState state;
         public List<EntryAction> actions;
-        private Dictionary<Guid, Topic> topics = null;
-        private Dictionary<Guid, int> topic_refs = null;
-        private Dictionary<Guid, ExternalNote> notes = null;
+        public Dictionary<Guid, Topic> topics = null;
+        public Dictionary<Guid, int> topic_refs = null;
+        public Dictionary<Guid, ExternalNote> notes = null;
         public ICalendarControl timestamp_box;
         private ICalendarControl timestamp_diff_box;
         private CalendarEventListControl event_list;
@@ -172,24 +172,25 @@ namespace CampLog {
             Dictionary<Guid, int> topic_refs = null,
             Dictionary<Guid, ExternalNote> notes = null
         ) {
-            if ((actions is null) || (actions.Count <= 0)) { return; }
-            decimal timestamp = this.timestamp_box.calendar_value;
-            DateTime created = this.get_created();
-            string description = this.description_box.Text;
-            int session = (int)(this.session_box.Value);
-            this.add_actions(actions);
-            Entry ent = new Entry(timestamp, created, description, session, new List<EntryAction>(this.actions));
-            foreach (EntryAction action in actions) {
-                action.apply(this.state, ent);
-            }
             if (topics is not null) { this.topics = topics; }
             if (topic_refs is not null) { this.topic_refs = topic_refs; }
             if (notes is not null) { this.notes = notes; }
-            this.event_list.set_state(this.state, timestamp);
-            this.character_list.set_state(this.state);
-            this.inventory_list.set_state(this.save_state, this.state);
+            decimal timestamp = this.timestamp_box.calendar_value;
+            if ((actions is not null) && (actions.Count > 0)) {
+                DateTime created = this.get_created();
+                string description = this.description_box.Text;
+                int session = (int)(this.session_box.Value);
+                this.add_actions(actions);
+                Entry ent = new Entry(timestamp, created, description, session, new List<EntryAction>(this.actions));
+                foreach (EntryAction action in actions) {
+                    action.apply(this.state, ent);
+                }
+                this.event_list.set_state(this.state, timestamp);
+                this.character_list.set_state(this.state);
+                this.inventory_list.set_state(this.save_state, this.state);
+                this.task_list.set_state(this.save_state, this.state, timestamp);
+            }
             this.topic_list.set_state(this.save_state, this.state, timestamp, this.topics, this.topic_refs, this.notes);
-            this.task_list.set_state(this.save_state, this.state, timestamp);
         }
 
         private void do_ok(object sender, RoutedEventArgs e) {

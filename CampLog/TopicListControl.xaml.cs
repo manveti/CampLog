@@ -192,7 +192,7 @@ namespace CampLog {
             if ((new_note is null) || (topics is null)) { return; }
             this.add_topics(topics, new_note);
             List<EntryAction> actions = new List<EntryAction>() { new ActionNoteCreate(Guid.NewGuid(), new_note) };
-            this.change_callback(actions, ent_guid);
+            this.change_callback(actions, ent_guid, this.topics, this.topic_refs, this.notes);
         }
 
         private void do_external_note_add(object sender, RoutedEventArgs e) {
