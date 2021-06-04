@@ -172,7 +172,7 @@ namespace CampLog {
             if (topic_refs is not null) { this.state.topic_refs = topic_refs; }
             if (notes is not null) { this.state.domain.notes = notes; }
 
-            if ((actions is not null) && (actions.Count > 0)) {
+            if (actions is not null) {
                 EntryWindow entry_window = new EntryWindow(this.state, actions: actions) { Owner = this };
                 entry_window.ShowDialog();
                 if (!entry_window.valid) { return; }
@@ -217,7 +217,7 @@ namespace CampLog {
         }
 
         private void add_entry(object sender, RoutedEventArgs e) {
-            this.entry_action_callback(null);
+            this.entry_action_callback(new List<EntryAction>());
         }
 
         private void remove_entry(object sender, RoutedEventArgs e) {

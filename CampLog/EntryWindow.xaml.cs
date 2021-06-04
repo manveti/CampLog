@@ -86,7 +86,7 @@ namespace CampLog {
             this.timestamp_diff_box.calendar_value = (previous_entry is null ? 0 : current_entry.timestamp - previous_entry.timestamp);
             this.timestamp_box.value_changed = this.timestamp_changed;
             this.timestamp_diff_box.value_changed = this.timestamp_diff_changed;
-            //TODO: previous entry
+            this.previous_entry_box.Text = (previous_entry is null ? "n/a" : save_state.calendar.format_timestamp(previous_entry.timestamp));
             this.description_box.Text = current_entry.description;
             this.action_list.ItemsSource = this.actions;
             this.event_list = new CalendarEventListControl(this.entry_action_callback, current_entry.guid);
@@ -135,12 +135,13 @@ namespace CampLog {
             }
             if (this.previous_entry_idx >= 0) {
                 timestamp_diff = timestamp - this.entries[this.previous_entry_idx].timestamp;
+                this.previous_entry_box.Text = this.save_state.calendar.format_timestamp(this.entries[this.previous_entry_idx].timestamp);
             }
             else {
                 timestamp_diff = 0;
+                this.previous_entry_box.Text = "n/a";
             }
             this.timestamp_diff_box.calendar_value = timestamp_diff;
-            //TODO: update diff entry
         }
 
         private void timestamp_diff_changed() {
@@ -151,7 +152,6 @@ namespace CampLog {
             }
             timestamp = this.entries[this.previous_entry_idx].timestamp + timestamp_diff;
             this.timestamp_box.calendar_value = timestamp;
-            //TODO: update diff entry
         }
 
         private void action_list_sel_changed(object sender, RoutedEventArgs e) {

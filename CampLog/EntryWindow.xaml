@@ -53,11 +53,12 @@
             <DatePicker Grid.Row="0" Grid.Column="3" VerticalAlignment="Center" Margin="1" Name="created_date_box"/>
             <GUIx:TimePicker Grid.Row="0" Grid.Column="4" VerticalAlignment="Center" Margin="1" Name="created_time_box"/>
             <!--timestamp_box created in code based on calendar-->
-            <Label Grid.Row="0" Grid.Column="7" Margin="1" Content="("/>
+            <Label Grid.Row="0" Grid.Column="7" VerticalAlignment="Center" Margin="1" Content="("/>
             <!--timestamp_diff_box created in code based on calendar-->
-            <Label Grid.Row="0" Grid.Column="9" Margin="1" Content="after entry:"/>
-            <!--TODO: some way of indicating which entry we're diffing from-->
-            <Label Grid.Row="0" Grid.Column="11" Margin="1" Content=")"/>
+            <Label Grid.Row="0" Grid.Column="9" VerticalAlignment="Center" Margin="1" Content="after entry:"/>
+            <TextBox Grid.Row="0" Grid.Column="10" VerticalAlignment="Center" Margin="1" MinWidth="150"
+                     IsReadOnly="True" Name="previous_entry_box"/>
+            <Label Grid.Row="0" Grid.Column="11" VerticalAlignment="Center" Margin="1" Content=")"/>
         </Grid>
 
         <GroupBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="7" Header="Description">
