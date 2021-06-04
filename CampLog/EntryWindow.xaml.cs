@@ -33,7 +33,10 @@ namespace CampLog {
             for (int i = 0; i < save_state.domain.entries.Count; i++) {
                 if (i != entry) { this.entries.Add(save_state.domain.entries[i]); }
             }
-            this.state = save_state.domain.state.copy();
+            if ((entry >= 0) && (entry < save_state.domain.valid_entries)) {
+                this.state = save_state.domain.get_entry_state(entry);
+            }
+            else { this.state = save_state.domain.state.copy(); }
             Entry previous_entry = null, current_entry;
             if ((entry >= 0) && (entry < save_state.domain.entries.Count)) {
                 current_entry = save_state.domain.entries[entry];
