@@ -23,9 +23,9 @@
         <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5">
             <MenuItem Header="_File">
                 <MenuItem Header="_New Campaign..." Click="new_campaign"/>
-                <MenuItem Header="_Open..."/>
-                <MenuItem Header="_Save" Name="save_opt" IsEnabled="False"/>
-                <MenuItem Header="Save _As..." Name="save_as_opt" IsEnabled="False"/>
+                <MenuItem Header="_Open..." Click="open_campaign"/>
+                <MenuItem Header="_Save" Name="save_opt" IsEnabled="False" Click="save_campaign"/>
+                <MenuItem Header="Save _As..." Name="save_as_opt" IsEnabled="False" Click="save_campaign_as"/>
                 <Separator/>
                 <MenuItem Header="E_xit"/>
             </MenuItem>

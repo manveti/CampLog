@@ -1,20 +1,13 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
+using System.IO;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.Serialization;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Xml;
 
 namespace CampLog {
     public delegate void ActionCallback(
@@ -93,14 +86,55 @@ namespace CampLog {
             this.topic_group.Content = this.topic_list;
         }
 
+        private void populate_campaign() {
+            this.save_opt.IsEnabled = true;
+            this.save_as_opt.IsEnabled = true;
+            this.calendar_cfg_opt.IsEnabled = true;
+            this.charsheet_cfg_opt.IsEnabled = true;
+            this.item_library_opt.IsEnabled = true;
+            this.character_list.set_char_sheet(this.state.character_sheet);
+            this.character_list.set_state(this.state.domain.state);
+            this.inventory_list.set_state(this.state, this.state.domain.state);
+            int valid_idx = this.state.domain.valid_entries - 1;
+            if (valid_idx < 0) { valid_idx = this.state.domain.entries.Count - 1; }
+            if (valid_idx >= 0) {
+                this.current_timestamp = this.state.domain.entries[valid_idx].timestamp;
+                this.session_num_box.Content = (this.state.domain.entries[valid_idx].session ?? 0).ToString();
+            }
+            else {
+                this.current_timestamp = this.state.calendar.default_timestamp;
+                this.session_num_box.Content = "1";
+            }
+            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp);
+            this.entry_rows.Clear();
+            for (int i = this.state.domain.entries.Count - 1; i >= 0; i--) {
+                Entry ent = this.state.domain.entries[i];
+                EntryRow row = new EntryRow(
+                    this.state.calendar.format_timestamp(ent.timestamp),
+                    i >= this.state.domain.valid_entries,
+                    (ent.session ?? 0).ToString(),
+                    ent.created.ToString("G"),
+                    ent.description
+                );
+                this.entry_rows.Add(row);
+            }
+            this.ent_add_but.IsEnabled = true;
+            this.calendar_event_list.show_past = this.state.show_past_events;
+            this.calendar_event_list.set_calendar(this.state.calendar);
+            this.calendar_event_list.set_state(this.state.domain.state, this.current_timestamp);
+            this.task_list.show_inactive = this.state.show_inactive_tasks;
+            this.task_list.set_calendar(this.state.calendar);
+            this.task_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
+            this.topic_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
+        }
+
         private void new_campaign(object sender, RoutedEventArgs e) {
             if (this.state_dirty) {
                 string msg = "Do you want to save changes to " + (this.save_path ?? "Untitled") + "?";
                 MessageBoxResult result = MessageBox.Show(msg, "Campaign Log", MessageBoxButton.YesNoCancel);
                 if (result == MessageBoxResult.Cancel) { return; }
                 if (result != MessageBoxResult.No) {
-                    //TODO: save this.state
-                    this.state_dirty = false;
+                    this.save_campaign();
                 }
             }
 
@@ -119,28 +153,64 @@ namespace CampLog {
             this.state = new CampaignSave(cal, char_sheet);
             this.state_dirty = false;
             this.save_path = null;
-            this.current_timestamp = this.state.calendar.default_timestamp;
+            this.populate_campaign();
+        }
 
-            this.save_opt.IsEnabled = true;
-            this.save_as_opt.IsEnabled = true;
-            this.calendar_cfg_opt.IsEnabled = true;
-            this.charsheet_cfg_opt.IsEnabled = true;
-            this.item_library_opt.IsEnabled = true;
-            this.character_list.set_char_sheet(char_sheet);
-            this.character_list.set_state(this.state.domain.state);
-            this.inventory_list.set_state(this.state, this.state.domain.state);
-            this.session_num_box.Content = "1";
-            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp);
-            this.entry_rows.Clear();
-            this.ent_add_but.IsEnabled = true;
-            //TODO: ent_rem_but, ent_view_but
-            this.calendar_event_list.show_past = this.state.show_past_events;
-            this.calendar_event_list.set_calendar(cal);
-            this.calendar_event_list.set_state(this.state.domain.state, this.current_timestamp);
-            this.task_list.show_inactive = this.state.show_inactive_tasks;
-            this.task_list.set_calendar(cal);
-            this.task_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
-            this.topic_list.set_state(this.state, this.state.domain.state, this.current_timestamp);
+        private void open_campaign(object sender, RoutedEventArgs e) {
+            if (this.state_dirty) {
+                string msg = "Do you want to save changes to " + (this.save_path ?? "Untitled") + "?";
+                MessageBoxResult result = MessageBox.Show(msg, "Campaign Log", MessageBoxButton.YesNoCancel);
+                if (result == MessageBoxResult.Cancel) { return; }
+                if (result != MessageBoxResult.No) {
+                    this.save_campaign();
+                }
+            }
+
+            OpenFileDialog open_dialog = new OpenFileDialog() {
+                DefaultExt = ".cmp",
+                Filter = "Campaign Files|*.cmp|All Files|*.*",
+                ValidateNames = true,
+            };
+            if (this.save_path is not null) { open_dialog.FileName = this.save_path; }
+            //TODO: if save directory defined: open_dialog.InitialDirectory = save directory
+            if (open_dialog.ShowDialog() != true) { return; }
+            this.save_path = open_dialog.FileName;
+            //TODO: save directory = System.IO.Path.GetDirectoryName(this.save_path)
+
+            DataContractSerializer serializer = new DataContractSerializer(typeof(CampaignSave));
+            using (FileStream f = new FileStream(this.save_path, FileMode.Open)) {
+                XmlDictionaryReader reader = XmlDictionaryReader.CreateTextReader(f, new XmlDictionaryReaderQuotas());
+                CampaignSave save_state = (CampaignSave)(serializer.ReadObject(reader, true));
+                this.state = save_state;
+            }
+            this.state_dirty = false;
+            this.populate_campaign();
+        }
+
+        private void save_campaign(object sender = null, RoutedEventArgs e = null) {
+            if (this.save_path is null) {
+                this.save_campaign_as();
+                return;
+            }
+
+            DataContractSerializer serializer = new DataContractSerializer(typeof(CampaignSave));
+            using (FileStream f = new FileStream(this.save_path, FileMode.Create)) {
+                serializer.WriteObject(f, this.state);
+            }
+            this.state_dirty = false;
+        }
+
+        private void save_campaign_as(object sender = null, RoutedEventArgs e = null) {
+            SaveFileDialog save_dialog = new SaveFileDialog() {
+                DefaultExt = ".cmp",
+                Filter = "Campaign Files|*.cmp|All Files|*.*",
+                ValidateNames = true,
+            };
+            //TODO: if save directory defined: save_dialog.InitialDirectory = save directory
+            if (save_dialog.ShowDialog() != true) { return; }
+            this.save_path = save_dialog.FileName;
+            //TODO: save directory = System.IO.Path.GetDirectoryName(this.save_path)
+            this.save_campaign();
         }
 
         //TODO: ...
