@@ -312,7 +312,7 @@ namespace CampLog {
                 return value;
             }
         }
-        public Dictionary<string, string> properties;
+        [DataMember] public Dictionary<string, string> properties;
         public override string name {
             get {
                 string n = this.item.name;
