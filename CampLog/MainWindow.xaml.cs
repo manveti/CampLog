@@ -105,12 +105,12 @@ namespace CampLog {
                 this.current_timestamp = this.state.calendar.default_timestamp;
                 this.session_num_box.Content = "1";
             }
-            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp);
+            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp, verbose: true);
             this.entry_rows.Clear();
             for (int i = this.state.domain.entries.Count - 1; i >= 0; i--) {
                 Entry ent = this.state.domain.entries[i];
                 EntryRow row = new EntryRow(
-                    this.state.calendar.format_timestamp(ent.timestamp),
+                    this.state.calendar.format_timestamp(ent.timestamp, verbose: true),
                     i >= this.state.domain.valid_entries,
                     (ent.session ?? 0).ToString(),
                     ent.created.ToString("G"),
@@ -172,10 +172,8 @@ namespace CampLog {
                 ValidateNames = true,
             };
             if (this.save_path is not null) { open_dialog.FileName = this.save_path; }
-            //TODO: if save directory defined: open_dialog.InitialDirectory = save directory
             if (open_dialog.ShowDialog() != true) { return; }
             this.save_path = open_dialog.FileName;
-            //TODO: save directory = System.IO.Path.GetDirectoryName(this.save_path)
 
             DataContractSerializer serializer = new DataContractSerializer(typeof(CampaignSave));
             using (FileStream f = new FileStream(this.save_path, FileMode.Open)) {
@@ -206,10 +204,8 @@ namespace CampLog {
                 Filter = "Campaign Files|*.cmp|All Files|*.*",
                 ValidateNames = true,
             };
-            //TODO: if save directory defined: save_dialog.InitialDirectory = save directory
             if (save_dialog.ShowDialog() != true) { return; }
             this.save_path = save_dialog.FileName;
-            //TODO: save directory = System.IO.Path.GetDirectoryName(this.save_path)
             this.save_campaign();
         }
 
@@ -263,9 +259,9 @@ namespace CampLog {
                 if (valid_idx < 0) { valid_idx = this.state.domain.entries.Count - 1; }
                 this.session_num_box.Content = (this.state.domain.entries[valid_idx].session ?? 0).ToString();
                 this.current_timestamp = this.state.domain.entries[valid_idx].timestamp;
-                this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp);
+                this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp, verbose: true);
                 EntryRow row = new EntryRow(
-                    this.state.calendar.format_timestamp(ent.timestamp),
+                    this.state.calendar.format_timestamp(ent.timestamp, verbose: true),
                     idx >= this.state.domain.valid_entries,
                     (ent.session ?? 0).ToString(),
                     ent.created.ToString("G"),
@@ -338,9 +334,9 @@ namespace CampLog {
             if (valid_idx < 0) { valid_idx = this.state.domain.entries.Count - 1; }
             this.session_num_box.Content = (this.state.domain.entries[valid_idx].session ?? 0).ToString();
             this.current_timestamp = this.state.domain.entries[valid_idx].timestamp;
-            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp);
+            this.current_timestamp_box.Content = this.state.calendar.format_timestamp(this.current_timestamp, verbose: true);
             EntryRow row = new EntryRow(
-                this.state.calendar.format_timestamp(ent.timestamp),
+                this.state.calendar.format_timestamp(ent.timestamp, verbose: true),
                 idx >= this.state.domain.valid_entries,
                 (ent.session ?? 0).ToString(),
                 ent.created.ToString("G"),

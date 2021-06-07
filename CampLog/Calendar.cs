@@ -5,6 +5,7 @@ using System.Windows;
 namespace CampLog {
     public static class CalendarSpecs {
         public static readonly SortedDictionary<string, CalendarFactory> specs = new SortedDictionary<string, CalendarFactory>() {
+            ["Campaign Date"] = new CampaignDateCalendarFactory(),
             ["None"] = new CalendarFactory(),
         };
     }
@@ -12,7 +13,7 @@ namespace CampLog {
 
     [Serializable]
     public class Calendar {
-        public readonly decimal default_timestamp = 0;
+        public virtual decimal default_timestamp { get => 0; }
 
         public virtual string format_timestamp(decimal timestamp, bool verbose = false) => string.Format("{0}", timestamp);
         public virtual string format_interval(decimal interval, bool verbose = false) => string.Format("{0}", interval);

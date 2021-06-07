@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -71,6 +72,7 @@ namespace CampLog {
             this.session_box.textBox.VerticalContentAlignment = VerticalAlignment.Center;
             this.session_box.Value = current_entry.session ?? 0;
             this.created_time_box.textBox.VerticalContentAlignment = VerticalAlignment.Center;
+            this.created_time_box.Pattern = CultureInfo.CurrentCulture.DateTimeFormat.LongTimePattern;
             this.created_date_box.SelectedDate = current_entry.created.Date;
             this.created_time_box.Value = current_entry.created.TimeOfDay.TotalSeconds;
             FrameworkElement timestamp_box = save_state.calendar.timestamp_control();
