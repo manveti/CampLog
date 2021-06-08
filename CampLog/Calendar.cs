@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Windows;
 
 namespace CampLog {
@@ -11,6 +12,7 @@ namespace CampLog {
     }
 
 
+    [KnownType(typeof(CampaignDateCalendar))]
     [Serializable]
     public class Calendar {
         public virtual decimal default_timestamp { get => 0; }

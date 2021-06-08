@@ -303,6 +303,10 @@ namespace CampLog {
             entry_window.ShowDialog();
             if (!entry_window.valid) { return; }
 
+            if (entry_window.topics is not null) { this.state.domain.topics = entry_window.topics; }
+            if (entry_window.topic_refs is not null) { this.state.topic_refs = entry_window.topic_refs; }
+            if (entry_window.notes is not null) { this.state.domain.notes = entry_window.notes; }
+
             decimal timestamp = entry_window.timestamp_box.calendar_value;
             DateTime created = entry_window.get_created();
             string description = entry_window.description_box.Text;
