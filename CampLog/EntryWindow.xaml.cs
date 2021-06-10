@@ -109,6 +109,7 @@ namespace CampLog {
             this.topic_list.set_state(this.save_state, this.state, current_entry.timestamp);
             this.topic_group.Content = this.topic_list;
             this.task_list = new TaskListControl(this.entry_action_callback, current_entry.guid);
+            this.task_list.set_calendar(this.save_state.calendar);
             this.task_list.set_state(this.save_state, this.state, current_entry.timestamp);
             this.task_group.Content = this.task_list;
         }

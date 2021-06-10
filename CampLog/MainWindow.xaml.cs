@@ -39,7 +39,7 @@ namespace CampLog {
             this.set_invalid(invalid);
             this._session = session;
             this._created = created;
-            this._description = description.Split("\n")[0];
+            this._description = description.Split("\r\n", 2)[0];
         }
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") {

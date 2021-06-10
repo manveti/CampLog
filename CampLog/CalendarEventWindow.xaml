@@ -7,7 +7,8 @@
         xmlns:GUIx="clr-namespace:GUIx;assembly=GUIx"
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
-        Title="Calendar Event" Width="700" Height="500">
+        SizeToContent="Width"
+        Title="Calendar Event" Width="900" Height="500">
     <Grid Name="main_grid">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
